@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.3  2011/07/22 14:05:37  folli
+;;;; Window compat
+;;;;
 ;;;; Revision 3.2  2011/07/22 13:56:47  folli
 ;;;; Xemacs compat
 ;;;;
@@ -79,7 +82,7 @@
 (defun plw-source-colorize(win)
   "Update colors for the portion visible in window"
   (when (fi::lep-open-connection-p)
-    (let ((colors (fi:eval-in-lisp (format "(:emacs-source-file \"%s\")" (buffer-file-name (window-buffer win))))))
+    (let ((colors (fi:eval-in-lisp (format "(:emacs-source-file \"%S\")" (buffer-file-name (window-buffer win))))))
       (when colors
 	(dolist (color-spec colors)
 	  (let* ((id (first color-spec))
