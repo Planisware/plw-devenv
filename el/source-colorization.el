@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.2  2011/07/22 13:56:47  folli
+;;;; Xemacs compat
+;;;;
 ;;;; Revision 3.1  2011/07/22 13:43:21  folli
 ;;;; Colorize background to know if a function has been redefined
 ;;;; or not
@@ -42,9 +45,17 @@
 ;;Force no byte compilation (elc compiled by xemacs won't be readable via emacs and
 ;; the other way around)
 
+(require 'overlay) ;;needed by Xemacs, provided by the fsf-compat package
 
-(defvar plw-source-color-ok "honeydew")
-(defvar plw-source-color-not-ok "MistyRose1")
+(defface plw-source-color-ok
+  '((t (:background "honeydew")))
+  "Face for displaying code which is actually defined in this patch"
+  :group 'plw-source-color)
+
+(defface plw-source-color-not-ok 
+  '((t (:background "MistyRose1")))
+  "Face for displaying code which has been redefined in another patch"
+  :group 'plw-source-color)
 
 (defvar plw-source-color-overlays nil "Overlays used in this buffer")
 (defvar plw-source-color-available nil "Overlays available for reuse")
@@ -94,7 +105,7 @@
 		   (setq o (make-overlay start end))
 		   (push o plw-source-color-overlays)))
 	    
-	    (overlay-put o 'face `(:background ,(if status plw-source-color-ok plw-source-color-not-ok)))
+	    (overlay-put o 'face (if status 'plw-source-color-ok 'plw-source-color-not-ok))
 	    (overlay-put o 'plw-colorize-source id)))))))
       
 ;;(define-minor-mode plw-source-color-mode
