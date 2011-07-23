@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.5  2011/07/23 13:30:16  folli
+;;;; Debug emacs windows
+;;;;
 ;;;; Revision 3.4  2011/07/22 14:05:57  folli
 ;;;; Window compat 2
 ;;;;
@@ -85,16 +88,16 @@
 (defun plw-source-colorize(win)
   "Update colors for the portion visible in window"
   (when (fi::lep-open-connection-p)
-    (let ((colors (fi:eval-in-lisp (format "(:emacs-source-file %S)" (buffer-file-name (window-buffer win))))))
-      (when colors
+    (let ((colors (fi:eval-in-lisp (format "(:emacs-source-file %S)" (buffer-file-name (window-buffer win))))))      
+      (when colors	
 	(dolist (color-spec colors)
-	  (let* ((id (first color-spec))
-		 (start (second color-spec))
-		 (end (third color-spec))
+	  (let* ((offset (with-current-buffer (window-buffer win) (point-min)))
+		 (id (first color-spec))
+		 (start (+ offset (second color-spec)))
+		 (end (+ offset (third color-spec)))
 		 (status (fourth color-spec))
 		 (o (dolist (o (overlays-in start end) nil)
-		      (when (equal-including-properties
-			     (overlay-get o 'plw-colorize-source) id)
+		      (when (equal (overlay-get o 'plw-colorize-source) id)
 			(unless (memq o plw-source-color-overlays)
 			  (push o plw-source-color-overlays))
 			(setq plw-source-color-available 
