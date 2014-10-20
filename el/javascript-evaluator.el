@@ -8,7 +8,7 @@
  '(("Warning : " . font-lock-warning-face)
    ("Error   : " . font-lock-variable-name-face)
    ("Return  : " . font-lock-builtin-face)
-   ("JS: " . font-lock-keyword-face))
+   ("JS: " . font-lock-string-face))
 )
 
 (define-derived-mode js-evaluator-mode fi:lisp-listener-mode
