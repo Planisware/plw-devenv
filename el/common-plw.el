@@ -32,6 +32,12 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.2  2014/10/28 12:57:56  troche
+;;;; * New opx2 javascript emacs mode.
+;;;; ** Add (defvar *use-opx2-js-mode* t) to your .emacs to use
+;;;; * New opx2 javascript listener based on an emacs comint mode (still in testing).
+;;;; ** Add (defvar *javascript-evaluator-mode* :comint) to your .emacs
+;;;;
 ;;;; Revision 3.1  2011/07/27 07:09:26  folli
 ;;;; Moved some common xemacs/emacs functions in commonplw.el
 ;;;;  (header added automatically)
@@ -70,11 +76,17 @@
 (add-hook 'c++-mode-hook 'two-char-indent-mode-hook)
 (add-hook 'java-mode-hook 'two-char-indent-mode-hook)
 (add-hook 'javascript-mode-hook 'two-char-indent-mode-hook)
+(add-hook 'opx2-js-mode-hook 'two-char-indent-mode-hook)
 
 ;;-------------------------- OJS customization -----------------------
 
-(add-to-list 'auto-mode-alist '("\\.OJS\\'" . c++-mode))
-(add-to-list 'auto-mode-alist '("\\.ojs\\'" . c++-mode))
+(if *use-opx2-js-mode*
+    (progn 
+      (add-to-list 'auto-mode-alist '("\\.OJS\\'" . opx2-js-mode))
+      (add-to-list 'auto-mode-alist '("\\.ojs\\'" . opx2-js-mode)))
+  (progn 
+    (add-to-list 'auto-mode-alist '("\\.OJS\\'" . c++-mode))
+    (add-to-list 'auto-mode-alist '("\\.ojs\\'" . c++-mode))))
 
 ;; <ctrl-c .> in ojs file
 (defun ojs-find-definition(tag)

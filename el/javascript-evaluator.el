@@ -32,20 +32,27 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.2  2014/10/28 12:57:56  troche
+;;;; * New opx2 javascript emacs mode.
+;;;; ** Add (defvar *use-opx2-js-mode* t) to your .emacs to use
+;;;; * New opx2 javascript listener based on an emacs comint mode (still in testing).
+;;;; ** Add (defvar *javascript-evaluator-mode* :comint) to your .emacs
+;;;;
 ;;;; Revision 3.1  2014/10/20 11:04:54  troche
 ;;;; * Correct el file
 ;;;;  (header added automatically)
 ;;;;
 
 ;; *** javascript evaluator***
-(global-set-key [f3] 'switch-to-script-evaluator)
+(when (eq *javascript-evaluator-mode* :repl)
+  (global-set-key [f3] 'switch-to-script-evaluator))
 
 ;; mode pour la coloration syntaxique
 
 (setq *js-keywords*
- '(("Warning : " . font-lock-warning-face)
-   ("Error   : " . font-lock-variable-name-face)
-   ("Return  : " . font-lock-builtin-face)
+ '(("Warning : .*" . font-lock-warning-face)
+   ("Error   : .*" . font-lock-variable-name-face)
+   ("Return  : .*" . font-lock-type-face)
    ("JS: " . font-lock-string-face))
 )
 
@@ -106,3 +113,4 @@ the buffer name is the second optional argument."
 	(fi::switch-to-buffer-new-screen buffer-name)
       (fi:open-lisp-listener -1 buffer-name 'fi::setup-tcp-connection "(format t \"Bienvenue\")(jvs::js-repl)" 'js-evaluator-mode)
       )))
+
