@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.3  2014/10/31 15:09:55  troche
+;;;; * debug
+;;;;
 ;;;; Revision 3.2  2014/10/31 15:05:57  troche
 ;;;; * autocompletion for ojs files in emacs (requires sc8567 v3.12)
 ;;;; ** to use, add (defvar *use-opx2-js-mode* t) to your emacs conf file before loading the common configuration
@@ -247,7 +250,8 @@
   (ojs-kernel-ac-init)
 
   ;; dictionary cache
-  (setq *ac-dictionary-candidates-cache* (ac-read-file-dictionary (fullpath-relative-to-current-file "devenv/el/dict/opx2-js-mode")))
+;;  (setq *ac-dictionary-candidates-cache* (ac-read-file-dictionary (fullpath-relative-to-current-file "devenv/el/dict/opx2-js-mode")))
+  (setq *ac-dictionary-candidates-cache* (ac-file-dictionary (fullpath-relative-to-current-file "devenv/el/dict/opx2-js-mode")))
   
   ;; display doc quickly
   (setq ac-quick-help-delay 0.1)
