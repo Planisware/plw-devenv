@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.4  2014/10/31 16:10:14  troche
+;;;; * match all items
+;;;;
 ;;;; Revision 3.3  2014/10/31 15:09:55  troche
 ;;;; * debug
 ;;;;
@@ -48,8 +51,12 @@
 (ac-define-source "ojs-functions"
     '((candidates . ojs-functions-ac-candidates)
       (document . ojs-functions-ac-document)
+      (action . ojs-functions-ac-action)
       (symbol . "f")
       (requires . -1)))
+
+(defun ojs-functions-ac-action ()
+  (message (ojs-functions-ac-document candidate)))
 
 (defun ojs-functions-ac-document (symbol)
   (or 
@@ -79,8 +86,12 @@
 (ac-define-source "ojs-methods"
     '((candidates . ojs-methods-ac-candidates)
       (document . ojs-methods-ac-document)
+      (action . ojs-methods-ac-action)
       (symbol . "m")
       (requires . -1)))
+
+(defun ojs-methods-ac-action ()
+  (message (ojs-methods-ac-document candidate)))
 
 (defun ojs-methods-ac-document (symbol)
   (or 
@@ -155,10 +166,12 @@
 (ac-define-source "ojs-kernel"
   '((candidates . ojs-kernel-ac-candidates)
     (document . ojs-kernel-ac-document)
-    ;;(summary . opx2-js-ac-summary)
-    ;;(prefix . ojs-ac-prefix)
+    (action . ojs-kernel-ac-action)
     (symbol . "k")
     (requires . -1)))
+
+(defun ojs-kernel-ac-action ()
+  (message (ojs-kernel-ac-document candidate)))
 
 (defvar *ojs-kernel-candidates-cache* nil)
 (defvar *ojs-kernel-documents-cache* nil)
@@ -200,35 +213,20 @@
 ;;;;; it stores the documentation in the symbol 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun ojs-find-candidates-from-regexp (regexp doc)
-  (let ((point (point))
-	(prefix "")
-	(limit 10)
-	(i 0)
-	candidate
+  (let (candidate
 	candidates
 	)
     (save-excursion
-      ;; Search backward
-      (goto-char point)
-      (while (and (or (not (integerp limit)) (< i limit))
-		  (re-search-backward regexp nil t))
+      ;; Search forward from the beginning of the file
+      (goto-char 0)
+      (while  (re-search-forward regexp nil t)
 	(setq candidate (match-string-no-properties 1))
 	(unless (member candidate candidates)
 	  (when (and doc candidate)
 	    (put (intern candidate) :document (match-string-no-properties 0)))
 	  (push candidate candidates)
-	  (incf i)))
+	  ))
       ;; Search forward
-      (goto-char (+ point (length prefix)))
-      (while (and (or (not (integerp limit)) (< i limit))
-		  (re-search-forward regexp nil t))
-	(setq candidate (match-string-no-properties 1))
-	(unless (member candidate candidates)
-	  (when (and doc candidate)
-	    (put (intern candidate) :document (match-string-no-properties 0)))
-	  (push candidate candidates)
-	  (incf i)))
-      ;;(message "%s" candidates)
       (nreverse candidates))))
 
 ;;;;; configuration of the hook
