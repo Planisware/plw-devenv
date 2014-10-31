@@ -32,6 +32,10 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.3  2014/10/31 15:05:57  troche
+;;;; * autocompletion for ojs files in emacs (requires sc8567 v3.12)
+;;;; ** to use, add (defvar *use-opx2-js-mode* t) to your emacs conf file before loading the common configuration
+;;;;
 ;;;; Revision 3.2  2014/10/28 12:57:56  troche
 ;;;; * New opx2 javascript emacs mode.
 ;;;; ** Add (defvar *use-opx2-js-mode* t) to your .emacs to use
@@ -127,9 +131,6 @@ return new alist whose car is the new pair and cdr is ALIST.
 	  alist)
       (cons (cons item value) alist)
       )))
-
-;; use opx2-js-mode
-(defvar *use-opx2-js-mode* nil)
 
 (when *use-opx2-js-mode*
   (add-hook 'c++-mode-hook 'override-c++-mode))
