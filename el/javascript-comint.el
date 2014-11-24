@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.3  2014/11/24 15:49:23  troche
+;;;; In emacs and xemacs, new binding C-x C-y to open a patch by typing only the number
+;;;;
 ;;;; Revision 3.2  2014/10/28 12:57:56  troche
 ;;;; * New opx2 javascript emacs mode.
 ;;;; ** Add (defvar *use-opx2-js-mode* t) to your .emacs to use
@@ -53,6 +56,7 @@
   ;(comint-output-filter proc (format "#%s\n" input))
   (let ((js-lisp (concat "(jvs::evaluate-javascript-string-in-string \"" (escape-quotes input) "\" nil)")))
 ;    (comint-output-filter proc (format "%s\n" js-lisp))
+;;    (comint-output-filter proc (format "%s\n" (eval-in-lisp-asynchronous-with-ret js-lisp)))
     (comint-output-filter proc (format "%s\n" (fi:eval-in-lisp js-lisp)))
     (comint-output-filter proc opx2-js-comint-prompt)
     ))
@@ -101,3 +105,46 @@
 
 (when (eq *javascript-evaluator-mode* :comint)
   (global-set-key [f3] 'switch-to-script-comint))
+
+
+(defun eval-in-lisp-asynchronous-with-ret-old (string &rest args)
+  "Apply (Emacs Lisp) format to STRING and ARGS and asychronously evaluate
+the result in the Common Lisp to which we are connected."
+  (fi::eval-in-lisp-wait-for-connection)
+  (let ((string (fi::defontify-string
+		 (if args (apply 'format string args) string))))
+    (fi::make-request 
+	;;fi::frob-case-to-lisp removed - 18jan94 smh
+     '(lep::eval-from-emacs-session :string string)
+     ;; Normal continuation
+     (() (value)
+      ;; ignore the value...
+      value)
+     ((string) (error)
+      (fi::show-error-text "error evaluating %s: %s" string error)))))
+
+(defun eval-in-lisp-asynchronous-with-ret (string &rest args)
+  "Apply (Emacs Lisp) format to STRING and ARGS and sychronously evaluate
+the result in the Common Lisp to which we are connected."
+  (fi::eval-in-lisp-wait-for-connection)
+  (let ((string (fi::defontify-string
+		    (if args (apply 'format string args) string))))
+    ;;fi::frob-case-to-lisp removed - 18jan94 smh
+    (eval-session-in-lisp-async 'lep::eval-from-emacs-session
+;;    (car (eval-session-in-lisp-async 'lep::eval-from-emacs-session
+				    ':string string)))
+
+(defun eval-session-in-lisp-async (function &rest arguments)
+  (let* ((result-cons (list nil nil nil))
+	 (session (lep::send-request-in-new-session
+		   function
+		   t
+		   arguments
+		   (list (function fi::immediate-reply-continuation)
+			 result-cons)
+		   (list (function fi::immediate-reply-error-continuation)
+			 result-cons))))
+;;    result-cons))
+    (fi::wait-for-reply-to-come-back result-cons)
+    result-cons))
+;;))

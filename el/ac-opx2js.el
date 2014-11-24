@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.6  2014/11/24 15:49:23  troche
+;;;; In emacs and xemacs, new binding C-x C-y to open a patch by typing only the number
+;;;;
 ;;;; Revision 3.5  2014/11/04 12:46:44  troche
 ;;;; * get functions methods and vars from all ojs buffers
 ;;;;
@@ -55,7 +58,7 @@
     '((candidates . ojs-functions-ac-candidates)
       (document . ojs-functions-ac-document)
       (action . ojs-functions-ac-action)
-      (symbol . "f")
+      (symbol . "f ")
       (requires . -1)))
 
 (defun ojs-functions-ac-action ()
@@ -87,7 +90,7 @@
     '((candidates . ojs-methods-ac-candidates)
       (document . ojs-methods-ac-document)
       (action . ojs-methods-ac-action)
-      (symbol . "m")
+      (symbol . "m ")
       (requires . -1)))
 
 (defun ojs-methods-ac-action ()
@@ -118,7 +121,7 @@
     '((candidates . ojs-vars-ac-candidates)
       (document . ojs-vars-ac-document)
       (action . ojs-vars-ac-action)
-      (symbol . "v")
+      (symbol . "v ")
       (requires . -1)))
 
 (defun ojs-vars-ac-action ()
@@ -130,7 +133,8 @@
 (defvar *ojs-vars-candidates-cache* nil)
 
 ;;(defvar *ojs-vars-regexp* "^[ \t]*var[ \t]+\\(\\w+\\)[ \t]+\\<=\\>[ \t]*\\(.*\\))")
-(defvar *ojs-vars-regexp* "^[ \t]*var[ \t]+\\(\\w+\\)[ \t]*=.*")
+;;(defvar *ojs-vars-regexp* "^[ \t]*var[ \t]+\\(\\w+\\)[ \t]*=.*")
+(defvar *ojs-vars-regexp* "^.*var[ \t]+\\(\\w+\\)[ \t]*\\(=\\|in\\).*")
 
 ;; on reset le cache dès qu'on sauve
 (ac-clear-variable-after-save '*ojs-vars-candidates-cache*)
@@ -143,13 +147,83 @@
       (setq *ojs-vars-candidates-cache* (ojs-find-candidates-from-regexp-in-buffers *ojs-vars-regexp*))
       ))
 
+;;; members of class
+;;; we identify them by something._variablename 
+;;; without a parenthesis (because it would be a method)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(ac-define-source "ojs-members"
+    '((candidates . ojs-members-ac-candidates)
+      (document . ojs-members-ac-document)
+      (action . ojs-members-ac-action)
+      (symbol . "mb")
+      (requires . -1)))
+
+(defun ojs-members-ac-action ()
+  (message (cdr (assoc candidate *ojs-members-candidates-cache*))))
+
+(defun ojs-members-ac-document (docstr)
+  docstr)
+
+(defvar *ojs-members-candidates-cache* nil)
+
+;;(defvar *ojs-members-regexp* "^[ \t]*var[ \t]+\\(\\w+\\)[ \t]+\\<=\\>[ \t]*\\(.*\\))")
+;;(defvar *ojs-members-regexp* "^[ \t]*var[ \t]+\\(\\w+\\)[ \t]*=.*")
+(defvar *ojs-members-regexp* "^[^//].*\\.\\(_\\w+\\)[ \t]*[.,;!=]+")
+
+;; on reset le cache dès qu'on sauve
+(ac-clear-variable-after-save '*ojs-members-candidates-cache*)
+
+;; reset du cache toutes les minutes
+;;ac-clear-variable-every-minute '*ojs-functions-candidates-cache*)
+
+(defun ojs-members-ac-candidates ()
+  (or *ojs-members-candidates-cache*
+      (setq *ojs-members-candidates-cache* (ojs-find-candidates-from-regexp-in-buffers *ojs-members-regexp*))
+      ))
+
+;;; opx2 custom classes 
+;;; strings of the form opxsomething
+;;; without a parenthesis (because it would be a method)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(ac-define-source "ojs-classes"
+    '((candidates . ojs-classes-ac-candidates)
+;      (document . ojs-classes-ac-document)
+;      (action . ojs-classes-ac-action)
+      (symbol . "c ")
+      (requires . -1)))
+
+(defun ojs-classes-ac-action ()
+  (message (cdr (assoc candidate *ojs-classes-candidates-cache*))))
+
+(defun ojs-classes-ac-document (docstr)
+  docstr)
+
+(defvar *ojs-classes-candidates-cache* nil)
+
+;;(defvar *ojs-classes-regexp* "^[ \t]*var[ \t]+\\(\\w+\\)[ \t]+\\<=\\>[ \t]*\\(.*\\))")
+;;(defvar *ojs-classes-regexp* "^[ \t]*var[ \t]+\\(\\w+\\)[ \t]*=.*")
+;;(defvar *ojs-classes-regexp* "^[^//].*\\.\\(_\\w+\\)[ \t]*[.,;)!=]*")
+(defvar *ojs-classes-regexp* "\\([oO][pP][xX]\\w+\\)")
+
+;; on reset le cache dès qu'on sauve
+(ac-clear-variable-after-save '*ojs-classes-candidates-cache*)
+
+;; reset du cache toutes les minutes
+;;ac-clear-variable-every-minute '*ojs-functions-candidates-cache*)
+
+(defun ojs-classes-ac-candidates ()
+  (or *ojs-classes-candidates-cache*
+      (setq *ojs-classes-candidates-cache* (ojs-find-candidates-from-regexp-in-buffers *ojs-classes-regexp*))
+      ))
 
 ;;; generic ojs dictionary 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (ac-define-source "ojs-dictionary"
   '((candidates . ac-dictionary-candidates)
-    (symbol . "d")))
+    (symbol . "d ")))
 
 (defvar *ac-dictionary-candidates-cache* nil)
 
@@ -165,7 +239,7 @@
   '((candidates . ojs-kernel-ac-candidates)
     (document . ojs-kernel-ac-document)
     (action . ojs-kernel-ac-action)
-    (symbol . "k")
+    (symbol . "k ")
     (requires . -1)))
 
 (defun ojs-kernel-ac-action ()
@@ -213,11 +287,21 @@
 (defun ojs-find-candidates-from-regexp (regexp &optional already-matched)
   (let (candidate
 	candidates
+	(point (point))
 	)
     (save-excursion
-      ;; Search forward from the beginning of the file
-      (goto-char 0)
+      ;; Search forward from the line after the current one
+      (forward-line 1)
+      ;;(goto-char 0)
       (while  (re-search-forward regexp nil t)
+	(setq candidate (match-string-no-properties 1))
+	(unless (or (member candidate candidates) (and already-matched (listp already-matched) (member candidate already-matched)))
+	  (push (cons candidate (match-string-no-properties 0)) candidates)
+	  ))
+      ;; search backward from the start of the current line
+      (goto-char point)
+      (beginning-of-line)
+      (while  (re-search-backward regexp nil t)
 	(setq candidate (match-string-no-properties 1))
 	(unless (or (member candidate candidates) (and already-matched (listp already-matched) (member candidate already-matched)))
 	  (push (cons candidate (match-string-no-properties 0)) candidates)
@@ -248,13 +332,14 @@
   (add-to-list 'ac-sources 'ac-source-ojs-vars)
   (add-to-list 'ac-sources 'ac-source-ojs-kernel)
   (add-to-list 'ac-sources 'ac-source-ojs-dictionary)
+  (add-to-list 'ac-sources 'ac-source-ojs-members)
+  (add-to-list 'ac-sources 'ac-source-ojs-classes)
 
   ;; initialize kernel completion
   (ojs-kernel-ac-init)
 
   ;; dictionary cache
-;;  (setq *ac-dictionary-candidates-cache* (ac-read-file-dictionary (fullpath-relative-to-current-file "devenv/el/dict/opx2-js-mode")))
-  (setq *ac-dictionary-candidates-cache* (ac-file-dictionary (fullpath-relative-to-current-file "dict/opx2-js-mode")))
+  (setq *ac-dictionary-candidates-cache* (ac-file-dictionary (concat *opx2-network-folder-work-path* "devenv/eldict/opx2-js-mode")))
   
   ;; display doc quickly
   (setq ac-quick-help-delay 0.1)
