@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.2  2014/12/01 09:54:25  mgautier
+;;;; do not fail if aouto-complete is not installed
+;;;;
 ;;;; Revision 3.1  2014/11/28 17:59:50  mgautier
 ;;;; add auto-complete for alisp
 ;;;;  (header added automatically)
@@ -41,7 +44,7 @@
 (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$"))
 (when (fboundp :doc-patch) (:doc-patch "add auto-complete for alisp"))
 
-(require 'auto-complete)
+(require 'auto-complete nil 'noerror)
 ;(require 'pos-tip)
 
 (when (featurep 'auto-complete)
