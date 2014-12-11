@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.3  2014/12/11 13:05:34  folli
+;;;; in-package is mandatory
+;;;;
 ;;;; Revision 3.2  2014/12/11 12:49:11  troche
 ;;;; * debug of opx2-redefine-function
 ;;;;
@@ -274,7 +277,7 @@
     
     (save-excursion
       ;;go back until we found a (in-package )
-      (when (re-search-backward "^\\s-*(\\([a-zA-Z0-9:\"_\\-]*:\\)?in-package \\([^)\n]*\\)" nil t)
+      (when (re-search-backward "^\\s-*(\\([a-zA-Z0-9:\"_\\-]*:\\)?in-package \\([^)\n]*\\)")
 	(if (match-string 2)
 	    (setq package (match-string 2))
 	  (setq package (match-string 1))))
