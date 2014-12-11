@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.2  2014/12/11 12:49:11  troche
+;;;; * debug of opx2-redefine-function
+;;;;
 ;;;; Revision 3.1  2011/07/21 15:16:46  folli
 ;;;; - (plw)CVS support in emacs
 ;;;; - New common files shared between xemacs & emacs
@@ -271,14 +274,14 @@
     
     (save-excursion
       ;;go back until we found a (in-package )
-      (when (re-search-backward "^\\s-*(\\([a-zA-Z0-9:\"_\\-]*:\\)?in-package \\([^)\n]*\\)")
+      (when (re-search-backward "^\\s-*(\\([a-zA-Z0-9:\"_\\-]*:\\)?in-package \\([^)\n]*\\)" nil t)
 	(if (match-string 2)
 	    (setq package (match-string 2))
 	  (setq package (match-string 1))))
 
       ;;from the beginning look for a $Id: line
       (beginning-of-buffer)
-      (when (re-search-forward "^;+\\s-*VERSION\\s-*:\\s-*\\$Id:\\s-*\\(.*\\),v\\s-*\\([0-9.]+\\)")
+      (when (re-search-forward "^;+\\s-*VERSION\\s-*:\\s-*\\$Id:\\s-*\\(.*\\),v\\s-*\\([0-9.]+\\)" nil t)
 	(setq revision (match-string 2)
 	      version (concat (match-string 1) " " (match-string 2)))))
 
