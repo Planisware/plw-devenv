@@ -32,6 +32,10 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.4  2014/12/15 18:10:00  troche
+;;;; * OPX2 javascript menu in Emacs
+;;;; * New functions to compile script
+;;;;
 ;;;; Revision 3.3  2014/10/31 15:05:57  troche
 ;;;; * autocompletion for ojs files in emacs (requires sc8567 v3.12)
 ;;;; ** to use, add (defvar *use-opx2-js-mode* t) to your emacs conf file before loading the common configuration
@@ -51,6 +55,10 @@
 ;; font-lock-type-face
 ;; font-lock-constant-face
 ;; font-lock-variable-name-face
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; syntax highlighting
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; method definition
 (defconst js-method-heading-1-re
@@ -81,7 +89,103 @@
     table)
   "Syntax table used in JavaScript mode.")
 
-(define-derived-mode opx2-js-mode javascript-mode "OPX2 javascript"
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; menu and keyboard shortcuts
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar *ojs-mode-map* (make-sparse-keymap))
+
+;; <ctrl-c .> in ojs file
+(defun ojs-find-definition(tag)
+    (interactive
+     (if current-prefix-arg
+	 '(nil)
+       (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
+    (fi::lisp-find-definition-common (concat "js::" tag) nil)
+    (sleep-for 0.5)
+    (search-forward-regexp (concat "\\(function\\|method\\) +" tag)))
+
+(defvar *ojs-compilation-buffer-name* "*OJS compilation traces*")
+
+(defun compile-ojs-file ()
+  (interactive)
+  (do-compile-and-sync-ojs-file :compile)
+  )
+
+(defun compile-and-sync-ojs-file ()
+  (interactive)
+  (do-compile-and-sync-ojs-file :compile-and-sync)
+  )
+
+(defun do-compile-and-sync-ojs-file (type)
+  ;; find the script name
+  (let* ((script-name      (file-name-base (buffer-file-name)))
+	 (script           (when (fi::lep-open-connection-p) (fi:eval-in-lisp (format "(when (fboundp 'jvs::find-script)(jvs::find-script \"%s\"))" script-name))))
+	 (buffer-name *ojs-compilation-buffer-name*)
+	 (buffer (or (get-buffer buffer-name)
+		     (get-buffer-create buffer-name)))
+	 (proc (get-buffer-process buffer))
+;	 (fi::listener-protocol :stream)
+	 )
+    (if script
+	(progn
+	  ;; go to the OJS compilation buffer
+	  (fi::switch-to-buffer-new-screen buffer-name)
+	  ;; we erase previous content
+	  (erase-buffer)
+	  ;; run a new listener if needed
+	  (unless proc
+	    (fi:open-lisp-listener
+	     -1
+	     *ojs-compilation-buffer-name*
+	     ))
+					;(function
+					;	(lambda (proc)
+					;	  (let ((str 
+					;		 (format "%d\n%d\n"
+					;			 -1 ;;(fi::session-id session)
+					;			 (fi::tcp-listener-generation proc))))
+					;	    (message str)
+					;	    str)))))
+	  (cond ((eq type :compile)
+		 (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")" script)))
+		((eq type :compile-and-sync)
+		 (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")" script))))
+	  )
+      (message "Script %s not found" script-name))))
+
+(defun trace-ojs-function(tag)
+  (interactive
+   (if current-prefix-arg
+       '(nil)
+     (list (car (fi::get-default-symbol "Lisp (un)trace function" t t)))))
+  (let ((js-symbol (concat "js::" tag)))
+    (fi:toggle-trace-definition js-symbol)))
+
+(defun set-ojs-opx2-js-mode-hook()
+  (define-key *ojs-mode-map* "\C-c." 'ojs-find-definition)
+  (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
+  (define-key *ojs-mode-map* "\C-cs" 'compile-and-sync-ojs-file)
+  (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function))
+
+;; menu
+(easy-menu-define nil *ojs-mode-map* "OPX2 Javascript Menu"
+  '("OPX2 Javascript"
+    ["Compile and load file..." compile-ojs-file
+     t]
+    ["Compile, load and synchronize file..." compile-and-sync-ojs-file
+     t]
+    ["Find function definition..." ojs-find-definition
+     t]
+    ["Trace/Untrace function..." trace-ojs-function
+     t]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; new mode definition
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-derived-mode opx2-js-mode js-mode "OPX2 javascript"
   :syntax-table opx2-js-mode-syntax-table
 
   ;; syntax highlighting
@@ -108,6 +212,9 @@
 				      '(backward-char)
 				      '(end-of-line)
 				      '(1 font-lock-variable-name-face)))))
+
+  ;; custom keymap
+  (use-local-map *ojs-mode-map*)
   
 )
 
@@ -116,6 +223,9 @@
 (defun override-c++-mode ()
   (when (equal (downcase (substring buffer-file-name -3 nil)) "ojs")
     (opx2-js-mode)))
+
+(when *use-opx2-js-mode*
+  (add-hook 'c++-mode-hook 'override-c++-mode))
 
 ;; replace for new files
 (defun put-alist (item value alist)
@@ -131,47 +241,6 @@ return new alist whose car is the new pair and cdr is ALIST.
 	  alist)
       (cons (cons item value) alist)
       )))
-
-(when *use-opx2-js-mode*
-  (add-hook 'c++-mode-hook 'override-c++-mode))
-
-;; <ctrl-c .> in ojs file
-(defun ojs-find-definition(tag)
-    (interactive
-     (if current-prefix-arg
-	 '(nil)
-       (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
-    (fi::lisp-find-definition-common (concat "js::" tag) nil)
-    (sleep-for 0.5)
-    (search-forward-regexp (concat "\\(function\\|method\\) +" tag)))
-
-(defun execute-code-in-lisp-listener (code) 
-  (let ((current-buffer (current-buffer)))
-    (execute-kbd-macro (read-kbd-macro "<f4>"))
-    (insert "T")
-    (execute-kbd-macro (read-kbd-macro "RET"))
-    (insert code)
-    (execute-kbd-macro (read-kbd-macro "RET"))
-    (switch-to-buffer (buffer-name current-buffer))))
-
-(defun eval-ojs-file()
-  (interactive)
-  (let ((eval-string (concat "(:compile-script-file \"" (substitute-char-in-string ?\x5c ?\x2f (buffer-file-name (current-buffer))) "\")")))
-    (when (fi:eval-in-lisp "intranet::*intranet-mode*")
-      (execute-code-in-lisp-listener eval-string))))
-
-(defun trace-ojs-function(tag)
-  (interactive
-   (if current-prefix-arg
-       '(nil)
-     (list (car (fi::get-default-symbol "Lisp (un)trace function" t t)))))
-  (let ((js-symbol (concat "js::" tag)))
-    (fi:toggle-trace-definition js-symbol)))
-
-(defun set-ojs-opx2-js-mode-hook()
-  (define-key opx2-js-mode-map "\C-c." 'ojs-find-definition)
-  (define-key opx2-js-mode-map "\C-ce" 'eval-ojs-file)
-  (define-key opx2-js-mode-map "\C-ct" 'trace-ojs-function))
 
 (add-hook 'opx2-js-mode-hook 'set-ojs-opx2-js-mode-hook)
 
