@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.5  2014/12/16 08:40:24  troche
+;;;; * debug
+;;;;
 ;;;; Revision 3.4  2014/12/15 18:10:00  troche
 ;;;; * OPX2 javascript menu in Emacs
 ;;;; * New functions to compile script
@@ -170,7 +173,7 @@
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function))
 
 ;; menu
-(easy-menu-define nil *ojs-mode-map* "OPX2 Javascript Menu"
+(easy-menu-define ojs-menu *ojs-mode-map* "OPX2 Javascript Menu"
   '("OPX2 Javascript"
     ["Compile and load file..." compile-ojs-file
      t]
