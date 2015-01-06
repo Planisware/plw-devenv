@@ -32,6 +32,10 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.7  2015/01/06 17:03:37  troche
+;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
+;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
+;;;;
 ;;;; Revision 3.6  2014/11/24 15:49:23  troche
 ;;;; In emacs and xemacs, new binding C-x C-y to open a patch by typing only the number
 ;;;;
@@ -51,7 +55,7 @@
 ;;;;
 (require 'auto-complete)
 
-;;; find functions defined in the current file and other open files with the same mode
+;;; find functions/methods defined in the current file and other open files with the same mode
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (ac-define-source "ojs-functions"
@@ -61,61 +65,20 @@
       (symbol . "f ")
       (requires . -1)))
 
+;; use the functions defined in opx2-js-cache.el
 (defun ojs-functions-ac-action ()
-  (message (cdr (assoc candidate *ojs-functions-candidates-cache*))))
+  (message (cdr (assoc candidate (ojs-functions-in-buffers)))))
+
+(defun ojs-functions-ac-candidates ()
+  (ojs-functions-in-buffers))
 
 (defun ojs-functions-ac-document (docstr)
   docstr)
 
-(defvar *ojs-functions-candidates-cache* nil)
-
-;; on reset le cache dès qu'on sauve
-(ac-clear-variable-after-save '*ojs-functions-candidates-cache*)
-
-;; reset du cache toutes les minutes
-;;ac-clear-variable-every-minute '*ojs-functions-candidates-cache*)
-
-;;(defvar *ojs-functions-regexp* "^[ \t]*function[ \t]+\\(\\(\\w\\|_\\)+\\)(\\(.*\\))")
-(defvar *ojs-functions-regexp* "^[ \t]*function[ \t]+\\(\\(\\w\\|_\\)+\\)(\\(.*\\))")
-
-(defun ojs-functions-ac-candidates ()
-  (or *ojs-functions-candidates-cache*
-      (setq *ojs-functions-candidates-cache* (ojs-find-candidates-from-regexp-in-buffers *ojs-functions-regexp*))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;; find methods defined in the current file
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(ac-define-source "ojs-methods"
-    '((candidates . ojs-methods-ac-candidates)
-      (document . ojs-methods-ac-document)
-      (action . ojs-methods-ac-action)
-      (symbol . "m ")
-      (requires . -1)))
-
-(defun ojs-methods-ac-action ()
-  (message (cdr (assoc candidate *ojs-methods-candidates-cache*))))
-
-(defun ojs-methods-ac-document (docstr)
-  docstr)
-  
-(defvar *ojs-methods-candidates-cache* nil)
-
-(defvar *ojs-methods-regexp* "^[ \t]*method[ \t]+\\(\\w+\\)[ \t]+\\(\\<on\\>\\)[ \t]+\\(\\w+\\)[ \t]*(\\(.*\\))")
-
-;; on reset le cache dès qu'on sauve
-(ac-clear-variable-after-save '*ojs-methods-candidates-cache*)
-
-;; reset du cache toutes les minutes
-;;ac-clear-variable-every-minute '*ojs-functions-candidates-cache*)
-
-(defun ojs-methods-ac-candidates ()
-  (or *ojs-methods-candidates-cache*
-      (setq *ojs-methods-candidates-cache* (ojs-find-candidates-from-regexp-in-buffers *ojs-methods-regexp*))
-      ))
-
-
-;;;; find vars defined in the current file
+;;;; find vars from the context : 
+;;;;  local vars of the functions 
+;;;;  script level defined functions
+;;;;  global vars from all functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ac-define-source "ojs-vars"
     '((candidates . ojs-vars-ac-candidates)
@@ -125,27 +88,16 @@
       (requires . -1)))
 
 (defun ojs-vars-ac-action ()
-  (message (cdr (assoc candidate *ojs-vars-candidates-cache*))))
+  (message (cdr (assoc candidate *ojs-buffers-vars-cache*))))
 
 (defun ojs-vars-ac-document (docstr)
   docstr)
 
-(defvar *ojs-vars-candidates-cache* nil)
-
-;;(defvar *ojs-vars-regexp* "^[ \t]*var[ \t]+\\(\\w+\\)[ \t]+\\<=\\>[ \t]*\\(.*\\))")
-;;(defvar *ojs-vars-regexp* "^[ \t]*var[ \t]+\\(\\w+\\)[ \t]*=.*")
-(defvar *ojs-vars-regexp* "^.*var[ \t]+\\(\\w+\\)[ \t]*\\(=\\|in\\).*")
-
-;; on reset le cache dès qu'on sauve
-(ac-clear-variable-after-save '*ojs-vars-candidates-cache*)
-
-;; reset du cache toutes les minutes
-;;ac-clear-variable-every-minute '*ojs-functions-candidates-cache*)
-
+;; we use the same function as the syntax highlighting
 (defun ojs-vars-ac-candidates ()
-  (or *ojs-vars-candidates-cache*
-      (setq *ojs-vars-candidates-cache* (ojs-find-candidates-from-regexp-in-buffers *ojs-vars-regexp*))
-      ))
+  (append 
+   (get-local-vars-for-function t)
+   (ojs-vars-in-buffer)))
 
 ;;; members of class
 ;;; we identify them by something._variablename 
@@ -230,9 +182,6 @@
 (defun ac-dictionary-candidates ()
   *ac-dictionary-candidates-cache*)
 
-;;(add-to-list 'ac-dictionary-directories (fullpath-relative-to-current-file "dict"))
-
-
 ;;; kernel javascript functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ac-define-source "ojs-kernel"
@@ -267,68 +216,17 @@
   )
 
 
-;;;;; generic function to find candidates based on a regexp 
-;;;;; it stores the documentation in the symbol 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(ac-define-source "ojs-doc-function"
-  '((candidates . '())
-    (document . '())
-    ;;(summary . opx2-js-ac-summary)
-    (prefix . ojs-doc-function-js-prefix)
-    (requires . -1)))
-
-(defun ojs-doc-function-js-prefix (name)
-  (message "prefix : %s" name)
-  nil)
-
-;;;;; generic function to find candidates based on a regexp 
-;;;;; it returns a candidates list containing cons (name . documentation) 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun ojs-find-candidates-from-regexp (regexp &optional already-matched)
-  (let (candidate
-	candidates
-	(point (point))
-	)
-    (save-excursion
-      ;; Search forward from the line after the current one
-      (forward-line 1)
-      ;;(goto-char 0)
-      (while  (re-search-forward regexp nil t)
-	(setq candidate (match-string-no-properties 1))
-	(unless (or (member candidate candidates) (and already-matched (listp already-matched) (member candidate already-matched)))
-	  (push (cons candidate (match-string-no-properties 0)) candidates)
-	  ))
-      ;; search backward from the start of the current line
-      (goto-char point)
-      (beginning-of-line)
-      (while  (re-search-backward regexp nil t)
-	(setq candidate (match-string-no-properties 1))
-	(unless (or (member candidate candidates) (and already-matched (listp already-matched) (member candidate already-matched)))
-	  (push (cons candidate (match-string-no-properties 0)) candidates)
-	  ))
-      ;; Search forward
-      (nreverse candidates))))
-
-(defun ojs-find-candidates-from-regexp-in-buffers (regexp )
-  (let (candidates)
-    (dolist (buffer (buffer-list))
-      (when (derived-mode-p (buffer-local-value 'major-mode buffer))
-	(with-current-buffer buffer
-	  (let ((found (ojs-find-candidates-from-regexp regexp candidates)))
-	    (setq candidates (append candidates found))))))
-    candidates))
-
 ;;;;; configuration of the hook
 
 ;; definition of a new autocomplete mode
 (defun opx2-js-setup-auto-complete-mode ()
   "Setup ac-js2 to be used with auto-complete-mode."
+;;  (message "Setting autocomplete")
   ;; js functions defined in the file
   (setq ac-sources nil)
   ;;(setq ac-sources '(ac-source-ojs-functions ac-source-ojs-methods ac-source-ojs-vars ac-source-ojs-kernel))
   
   (add-to-list 'ac-sources 'ac-source-ojs-functions)
-  (add-to-list 'ac-sources 'ac-source-ojs-methods)
   (add-to-list 'ac-sources 'ac-source-ojs-vars)
   (add-to-list 'ac-sources 'ac-source-ojs-kernel)
   (add-to-list 'ac-sources 'ac-source-ojs-dictionary)
@@ -339,7 +237,7 @@
   (ojs-kernel-ac-init)
 
   ;; dictionary cache
-  (setq *ac-dictionary-candidates-cache* (ac-file-dictionary (concat *opx2-network-folder-work-path* "devenv/eldict/opx2-js-mode")))
+  (setq *ac-dictionary-candidates-cache* (ac-file-dictionary (concat *opx2-network-folder-work-path* "devenv/el/dict/opx2-js-mode")))
   
   ;; display doc quickly
   (setq ac-quick-help-delay 0.1)

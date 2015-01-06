@@ -32,6 +32,10 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.3  2015/01/06 17:03:37  troche
+;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
+;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
+;;;;
 ;;;; Revision 3.2  2014/12/01 09:54:25  mgautier
 ;;;; do not fail if aouto-complete is not installed
 ;;;;
@@ -172,7 +176,7 @@
     "Setup ac-lisp to be used with auto-complete-mode."
     (setq ac-sources nil)
     (add-to-list 'ac-sources 'ac-source-alisp-functions 'ac-source-filename)
-    (message "ac-sources %s" ac-sources)
+;;    (message "ac-sources %s" ac-sources)
     )
 
   (add-hook 'fi:lisp-mode-hook 'alisp-setup-auto-complete-mode)

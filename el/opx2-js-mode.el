@@ -32,6 +32,10 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.6  2015/01/06 17:03:37  troche
+;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
+;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
+;;;;
 ;;;; Revision 3.5  2014/12/16 08:40:24  troche
 ;;;; * debug
 ;;;;
@@ -52,35 +56,12 @@
 ;;;;
 ;;; new emacs mode for opx2 javascript
 
-;; font-lock-function-name-face
-;; font-lock-string-face
-;; font-lock-keyword-face
-;; font-lock-type-face
-;; font-lock-constant-face
-;; font-lock-variable-name-face
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; syntax highlighting
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; method definition
-(defconst js-method-heading-1-re
-"^[ \t]*method[ \t]+\\(\\w+\\)[ \t]+\\(\\<on\\>\\)[ \t]+\\(\\w+\\)"
-"Regular expression matching the start of a method header.")
-
-;; additional keywords
-(defconst opx2-js-font-lock-keywords
-  '("method"
-    )
-)
-
-;; additional type
-(defconst opx2-js-font-lock-type
-  '("hashtable"
-    )
-)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; syntax table
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'cc-mode)
+
 (defvar opx2-js-mode-syntax-table
   (let ((table (make-syntax-table)))
     (c-populate-syntax-table table)
@@ -92,6 +73,33 @@
     table)
   "Syntax table used in JavaScript mode.")
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; auto add closing }
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun ojs-mode-insert-lcurly-on-ret ()
+  (interactive)
+  ;; do we have a { at the point ?
+  (if (looking-back "{")
+      (let ((pps (syntax-ppss)))
+	(when (and (not (or (nth 3 pps) (nth 4 pps)))) ;; EOL and not in string or comment
+	  (c-indent-line-or-region)
+	  (insert "\n\n}")
+	  (c-indent-line-or-region)
+	  (forward-line -1)
+	  (c-indent-line-or-region)))
+    (newline-and-indent)))
+
+(defun ojs-mode-insert-lcurly ()
+  (interactive)
+  (insert "{")
+  (let ((pps (syntax-ppss)))
+    (when (and (eolp) (not (or (nth 3 pps) (nth 4 pps)))) ;; EOL and not in string or comment
+      (c-indent-line-or-region)
+      (insert "\n\n}")
+      (c-indent-line-or-region)
+      (forward-line -1)
+      (c-indent-line-or-region))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; menu and keyboard shortcuts
@@ -99,15 +107,84 @@
 
 (defvar *ojs-mode-map* (make-sparse-keymap))
 
+;; we don't want to stack definition declarations
+(setq fi:maintain-definition-stack nil)
+
+(defun fi::show-found-ojs-definition (thing pathname point n-more
+					    &optional other-window-p pop-stack)
+  (if pathname
+      (if (equal pathname "top-level")
+	  (message
+	   "%s was defined somewhere at the top-level, %d more definitions"
+	   thing n-more)
+	(let ((mess "")
+	      (xb nil)
+	      (pathname (fi::ensure-translated-pathname pathname)))
+	  (when fi:filename-frobber-hook
+	    (setq pathname (funcall fi:filename-frobber-hook pathname)))
+	  (ring-insert lep::show-def-marker-ring (point-marker))
+	  (setq xb (get-file-buffer pathname))
+	  (if other-window-p
+	      (find-file-other-window pathname)
+	    (find-file pathname))
+	  (cond ((eq n-more 0)
+		 (if (lep::meta-dot-from-fspec)
+		     (message (concat mess "%ss of %s")
+			      (lep::meta-dot-what) (lep::meta-dot-from-fspec))
+		   (message (concat mess "No more %ss of %s")
+			    (lep::meta-dot-what) thing)))
+		(n-more
+		 (fi::pop-metadot-session)))
+	  (when pop-stack (fi::pop-metadot-session))))
+    (message "cannot find file for %s" thing)))
+
+(defun fi::lisp-find-ojs-definition-common (function-name other-window-p
+						      &optional what from-fspec
+						      )
+  (let ((lisp-function (concat "js::" function-name)))
+    (when (not (fi::lep-open-connection-p))
+      (error "connection to ACL is down--can't find tag"))
+    (message "Finding %s for %s..." (or what "definition") function-name)
+    (fi::push-metadot-session
+     (or what "definition")
+     lisp-function
+     from-fspec
+     (fi::make-complex-request
+      (scm::metadot-session
+       :package (fi::string-to-keyword (fi::package))
+       :type t				; used to be (or type t), but
+					; `type' is not bound in this
+					; context
+       :fspec lisp-function)
+      ((function-name other-window-p what from-fspec)
+       (pathname point n-more)
+       (fi::show-found-ojs-definition (if (symbolp function-name)
+				      (symbol-name function-name)
+				    function-name)
+				  pathname
+				  point n-more other-window-p
+				  t)
+       (cond ((equal (substring pathname -3 nil) "ojs")
+	      ;; TRO : ojs files : we search the definition of the function / method
+	      (goto-char (point-min))
+	      (re-search-forward (concat "\\(function\\|method\\)[ \t]+" function-name) (point-max) t))
+	     ((or (equal (substring pathname -3 nil) "lsp") (equal (substring pathname -4 nil) "lisp"))
+	      ;; lisp file, we try to go to the point returned by the find-definition
+	      (when point
+		(goto-char point))))
+       )
+      (() (error)
+       (when (fi::pop-metadot-session)
+	 (fi::show-error-text "%s" error)))))))
+
 ;; <ctrl-c .> in ojs file
-(defun ojs-find-definition(tag)
-    (interactive
+;; works with ojs and lisp file and properly do the search
+(defun %ojs-find-definition (tag)
+  (interactive
      (if current-prefix-arg
 	 '(nil)
        (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
-    (fi::lisp-find-definition-common (concat "js::" tag) nil)
-    (sleep-for 0.5)
-    (search-forward-regexp (concat "\\(function\\|method\\) +" tag)))
+  (fi::lisp-find-ojs-definition-common tag nil))
 
 (defvar *ojs-compilation-buffer-name* "*OJS compilation traces*")
 
@@ -129,7 +206,6 @@
 	 (buffer (or (get-buffer buffer-name)
 		     (get-buffer-create buffer-name)))
 	 (proc (get-buffer-process buffer))
-;	 (fi::listener-protocol :stream)
 	 )
     (if script
 	(progn
@@ -139,24 +215,32 @@
 	  (erase-buffer)
 	  ;; run a new listener if needed
 	  (unless proc
-	    (fi:open-lisp-listener
-	     -1
-	     *ojs-compilation-buffer-name*
-	     ))
-					;(function
-					;	(lambda (proc)
-					;	  (let ((str 
-					;		 (format "%d\n%d\n"
-					;			 -1 ;;(fi::session-id session)
-					;			 (fi::tcp-listener-generation proc))))
-					;	    (message str)
-					;	    str)))))
+	    (setq proc
+		  (fi:open-lisp-listener
+		   -1
+		   *ojs-compilation-buffer-name*
+		   )))
+	  (set-process-filter proc 'ojs-compilation-filter)
 	  (cond ((eq type :compile)
-		 (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")" script)))
+		 (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")\n" script))
+		 )
 		((eq type :compile-and-sync)
-		 (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")" script))))
+		 (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")\n" script))
+		 ))
 	  )
       (message "Script %s not found" script-name))))
+
+(defun ojs-compilation-filter (proc string)
+  (let ((case-fold-search nil))
+    (cond ((and (stringp string)
+		(string-match "\\`[[:upper:]-]+([0-9]+): \\'" string));; exit when we go back to the top level (ie :res, :pop, etc)
+	   (delete-process proc))
+	  ((and (stringp string)
+		(string-match ":EXIT-JS" string)) ;; exit when we read this, returned by the compilation functions
+	   (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))
+	   (delete-process proc))
+	  (t
+	   (fi::subprocess-filter proc string)))))
 
 (defun trace-ojs-function(tag)
   (interactive
@@ -166,59 +250,143 @@
   (let ((js-symbol (concat "js::" tag)))
     (fi:toggle-trace-definition js-symbol)))
 
-(defun set-ojs-opx2-js-mode-hook()
-  (define-key *ojs-mode-map* "\C-c." 'ojs-find-definition)
-  (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
-  (define-key *ojs-mode-map* "\C-cs" 'compile-and-sync-ojs-file)
-  (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function))
+(defvar *ignore-pattern* "// NOINT")
 
-;; menu
-(easy-menu-define ojs-menu *ojs-mode-map* "OPX2 Javascript Menu"
-  '("OPX2 Javascript"
-    ["Compile and load file..." compile-ojs-file
-     t]
-    ["Compile, load and synchronize file..." compile-and-sync-ojs-file
-     t]
-    ["Find function definition..." ojs-find-definition
-     t]
-    ["Trace/Untrace function..." trace-ojs-function
-     t]))
+;; find non international strings in buffer
+(defun find-non-international-strings ()
+  (interactive)
+
+  ;; go to the beginning of the buffer
+  ;; search all strings ie text between \"\"
+  ;; filter out some strings : write_text_key/get_text_key, "OPXstuff", etc)
+  ;; copy line number + line into a new buffer
+  (save-excursion
+    (goto-char 0)
+    (let* ((match (re-search-forward "\".+\"" (point-max) t))
+	   (i 0)
+	   (filename (buffer-name))
+	   (buffer-name "*Non international strings*")
+	   (buffer (or (get-buffer buffer-name)
+		       (get-buffer-create buffer-name)))
+	   strings
+	   )
+      (while (and (< i 10000)
+		  match)
+	(setq i (1+ i))
+	;;  we treat the whole line
+	(let ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+	  (unless (ignore-string line)
+	    (push (format "\n%s : %s" (line-number-at-pos) line) strings)))
+	(setq match (re-search-forward "\".+\"" (point-max) t)))
+      
+      ;; iterate through the found strings
+      (switch-to-buffer-other-window buffer-name)
+      (opx2-js-mode)
+      (erase-buffer)
+      
+      (insert "// Non international strings for " filename)
+      
+      (insert (format "\n// %s strings found. If you want to ignore a line, add this at the end of it: %s\n" (length strings) *ignore-pattern*))
+      
+      (dolist (str (reverse strings))
+	(insert str))
+      (goto-char 0)
+      )))
+
+(defvar *functions-to-ignore*
+  '( "get"
+     "hashtable"
+     "instanceof"
+     "color"
+     "font"
+     "matchregexp"
+     "set"
+     "sort"
+     "callmacro"
+     "fillroundrect"
+     "searchchar"
+     "serialize_a_field"
+     "write_text_key"
+     "get_text_key_message_string"
+     ))
+
+(defun ignore-string (str)
+  ;; test if the string contained in the string is meant to be international
+  ;; or is already internatioanlized
+  ;; the str in argument is the whole line
+  (or
+   ;; no comments
+   (string-match-p "[ \t]*//.*" str)  
+   ;; no opxclassname
+   (string-match-p "\"[Oo][Pp][Xx].*\"" str)
+   ;; no "functionname".call()
+   (string-match-p "\".+\".call(.*)" str)
+   ;; no lispcall "functionname" ()
+   (string-match-p "lispcall[ \t]*\".*\"" str)    
+   ;; functions to ignore
+   (let (func-ignored)
+     (dolist (func *functions-to-ignore*)
+       (when (string-match-p (format "%s[ \t]*(.*\".*\".*)" func) str)
+	 (setq func-ignored t)))
+     func-ignored)
+   ;; ignore line finishing by the ignore pattern // NOINT
+   (string-match-p (format ".*%s" *ignore-pattern*) str)
+   ;; ignore writeln("$Id
+   (string-match-p "writeln(\"$Id.*\");" str)
+   ))    
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mode definition
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-derived-mode opx2-js-mode js-mode "OPX2 javascript"
+;;(define-derived-mode opx2-js-mode prog-mode "OPX2 javascript"
+(define-derived-mode opx2-js-mode prog-mode "OPX2 javascript"
   :syntax-table opx2-js-mode-syntax-table
 
-  ;; syntax highlighting
-  ;; new keywords
-  (dolist (kw opx2-js-font-lock-keywords)
-    (font-lock-add-keywords nil (list (cons kw font-lock-keyword-face))))
+  ;; load a little bit of cc-mode for indentation
+  (c-initialize-cc-mode t)
+  (c-init-language-vars-for 'c-mode)
+  (c-common-init 'c-mode)
 
-  ;; new types
-  (dolist (kw opx2-js-font-lock-type)
-    (font-lock-add-keywords nil (list (cons kw font-lock-type-face))))
+  ;; set up syntax hightlighting
+  (setup-ojs-syntax-highlighting)
 
-  ;; method definition 
-  (font-lock-add-keywords nil (list 
-			       (list js-method-heading-1-re 1 font-lock-function-name-face)
-			       (list js-method-heading-1-re 2 font-lock-keyword-face)
-			       (list js-method-heading-1-re 3 font-lock-type-face)
-			       ))
+  ;; custom keybindings from menu
+  (define-key *ojs-mode-map* "\C-c." '%ojs-find-definition)
+  (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
+;;  (define-key *ojs-mode-map* "\C-cs" 'compile-and-sync-ojs-file)
+  (define-key *ojs-mode-map* "\C-cn" 'find-non-international-strings)
+  (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
+  (define-key *ojs-mode-map* "\C-cf" 'force-syntax-highlighting)
 
-  ;; method arguments
-  (font-lock-add-keywords nil (list 
-			       (list
-				(concat "\\<method\\>\\([ \t]+\\w+\\)?[ \t]*\\<on\\>\\([ \t]+\\w+\\)?([ \t]*\\w")
-				(list "\\(\\w+\\)\\([ \t]*).*\\)?"
-				      '(backward-char)
-				      '(end-of-line)
-				      '(1 font-lock-variable-name-face)))))
+  ;; autoindentation on new line and add a closing } if needed
+  (define-key *ojs-mode-map* (kbd "RET") 'newline-and-indent)
+;;  (define-key *ojs-mode-map* (kbd "RET") 'ojs-mode-insert-lcurly-on-ret)
+  ;; auto insert closing }
+  (define-key *ojs-mode-map* (kbd "{") 'ojs-mode-insert-lcurly)
+  
+  ;; menu
+  (easy-menu-define ojs-menu *ojs-mode-map* "OPX2 Javascript Menu"
+    '("OPX2 Javascript"
+      ["Compile and load file..." compile-ojs-file
+       t]
+;;      ["Compile, load and synchronize file..." compile-and-sync-ojs-file ;; not working yet
+;;       t]
+      ["Find function definition..." %ojs-find-definition
+       t]
+      ["Find non international strings..." find-non-international-strings
+       t]
+      ["Trace/Untrace function..." trace-ojs-function
+       t]
+      ["Force syntax hightlighting" force-syntax-highlighting
+       t]))
 
   ;; custom keymap
-  (use-local-map *ojs-mode-map*)
+  (use-local-map *ojs-mode-map*)  
   
+  ;; rebuild  function and vars cache on save and when we open a file
+  (add-hook 'after-save-hook 'ojs-reset-cache nil t)
+  (add-hook 'find-file-hook 'ojs-reset-cache nil t)
 )
 
 ;; kludge : in opx2 script, the first line sets the mode to C++, and we want to avoid that
@@ -244,6 +412,3 @@ return new alist whose car is the new pair and cdr is ALIST.
 	  alist)
       (cons (cons item value) alist)
       )))
-
-(add-hook 'opx2-js-mode-hook 'set-ojs-opx2-js-mode-hook)
-

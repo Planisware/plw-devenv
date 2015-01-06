@@ -32,10 +32,15 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.2  2015/01/06 17:03:37  troche
+;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
+;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
+;;;;
 ;;;; Revision 3.1  2014/12/30 12:06:42  troche
 ;;;;  OPX2 javascript mode cache
 ;;;;  (header added automatically)
 ;;;;
+
 ;;;;; global cache for function and methods definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -66,64 +71,41 @@
 	(js--regexp-opt-symbol (loop for item in *ojs-buffers-functions-cache*
 				     collect (car item)))))
 
-;;;;; global cache for global var definitions
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; buffer dependant cache for script-level var definitions and global vars
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defconst *ojs-file-vars-regexp*  
+  "^var[ \t]+\\(\\w+\\)[ \t]*\\(=\\|in\\|;\\).*$")
 
 (defconst *ojs-global-vars-regexp*  
   "^[ \t]*global[ \t]+var[ \t]+\\(\\w+\\)[ \t]*\\(=\\|in\\|;\\).*$")
 
-;; contains list of cons (name . documentation)
 ;; used for autocomplete 
-(defvar *ojs-buffers-global-vars-cache* nil)
+(defvar *ojs-buffers-vars-cache* nil)
 ;; contains the master regexp for syntax highlighting
-(defvar *ojs-buffers-global-vars-regexp* nil)
+(defvar *ojs-buffers-vars-cache-regexp* nil)
 
-(defun ojs-global-vars-in-buffers ()
-  (or *ojs-buffers-global-vars-cache*
-      (progn (generate-ojs-global-vars-cache)
-	     *ojs-buffers-global-vars-cache*)))
-
-(defun ojs-global-vars-in-buffers-regexp ()
-  (or *ojs-buffers-global-vars-regexp*
-      (progn (generate-ojs-global-vars-cache)
-	     *ojs-buffers-global-vars-regexp*)))
-
-(defun generate-ojs-global-vars-cache ()
-  ;; generate the documentation cache
-  (setq *ojs-buffers-global-vars-cache* (ojs-find-candidates-from-regexp-in-buffers *ojs-global-vars-regexp*))
-  ;; regexp cache
-  (setq *ojs-buffers-global-vars-regexp*
-	(js--regexp-opt-symbol (loop for item in *ojs-buffers-global-vars-cache*
-				     collect (car item)))))
-
-;;;;; buffer dependant cache for global var definitions
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defconst *ojs-vars-regexp*  
-  "^var[ \t]+\\(\\w+\\)[ \t]*\\(=\\|in\\|;\\).*$")
-
-;; used for autocomplete 
-(defvar-local *ojs-buffers-vars-cache* nil)
-;; contains the master regexp for syntax highlighting
-(defvar-local *ojs-buffers-vars-regexp* nil)
-
-(defun ojs-global-vars-in-buffers ()
+(defun ojs-vars-in-buffer ()
+  (interactive)
   (or *ojs-buffers-vars-cache*
       (progn (generate-ojs-vars-cache)
 	     *ojs-buffers-vars-cache*)))
 
-(defun ojs-global-vars-in-buffers-regexp ()
-  (or *ojs-buffers-global-vars-regexp*
+(defun ojs-vars-in-buffer-regexp ()
+  (or *ojs-buffers-vars-cache-regexp*
       (progn (generate-ojs-vars-cache)
-	     *ojs-buffers-vars-regexp*)))
+	     *ojs-buffers-vars-cache-regexp*)))
 
 (defun generate-ojs-vars-cache ()
   ;; generate the documentation cache
-  (setq *ojs-buffers-global-vars-cache* (ojs-find-candidates-from-regexp *ojs-vars-regexp*))
+  (setq *ojs-buffers-vars-cache* (append 
+				  (ojs-find-candidates-from-regexp *ojs-file-vars-regexp*)
+				  (ojs-find-candidates-from-regexp-in-buffers *ojs-global-vars-regexp*)))
   ;; regexp cache
-  (setq *ojs-buffers-global-vars-regexp*
-	(js--regexp-opt-symbol (loop for item in *ojs-buffers-global-vars-cache*
-				     collect (car item)))))
+  (setq *ojs-buffers-vars-cache-regexp*
+	(js--regexp-opt-symbol (loop for item in *ojs-buffers-vars-cache*
+				     collect (car item))))
+  )
 
 ;;;;; global cache for kernel function definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -132,12 +114,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun ojs-reset-cache ()
-  (setq *ojs-buffers-functions-cache* nil
-	*ojs-buffers-functions-cache-regexp* nil
-	*ojs-buffers-global-vars-cache* nil
-	*ojs-buffers-global-vars-regexp* nil
-	*ojs-buffers-vars-cache* nil
-	*ojs-buffers-vars-regexp* nil))
+  (setq *ojs-buffers-functions-cache* nil)
+  (setq	*ojs-buffers-functions-cache-regexp* nil)
+  (setq *ojs-buffers-vars-cache* nil)
+  (setq *ojs-buffers-vars-cache-regexp* nil))
 
 ;;;;; generic function to find candidates based on a regexp 
 ;;;;; it returns a candidates list containing cons (name . documentation) 

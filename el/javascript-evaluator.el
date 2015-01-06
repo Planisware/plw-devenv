@@ -32,6 +32,10 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.3  2015/01/06 17:03:37  troche
+;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
+;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
+;;;;
 ;;;; Revision 3.2  2014/10/28 12:57:56  troche
 ;;;; * New opx2 javascript emacs mode.
 ;;;; ** Add (defvar *use-opx2-js-mode* t) to your .emacs to use
@@ -53,12 +57,18 @@
  '(("Warning : .*" . font-lock-warning-face)
    ("Error   : .*" . font-lock-variable-name-face)
    ("Return  : .*" . font-lock-type-face)
-   ("JS: " . font-lock-string-face))
-)
+  ;; ("JS: " . font-lock-string-face)
+   )
+ )
 
-(define-derived-mode js-evaluator-mode fi:lisp-listener-mode
+(define-derived-mode js-evaluator-mode prog-mode
+  ;; js font lock
   (setq font-lock-defaults '(*js-keywords*))
+
   (setq mode-name "Javascript evaluator")
+  ;; js comments
+  (set (make-local-variable 'comment-start) "// ")
+  (set (make-local-variable 'comment-end) "")
 )
 
 (defun fi:open-lisp-listener (&optional buffer-number buffer-name
@@ -103,14 +113,33 @@ the buffer name is the second optional argument."
 	(process-send-string proc command))
 	proc)))
 
+;;; when we go back to the top level, relaunch the repl
+(defun javascript-evaluator-filter (proc string)
+  (let ((case-fold-search nil))
+    (cond ((and (stringp string)
+		(string-match "\\`[[:upper:]-]+([0-9]+): \\'" string));; exit when we go back to the top level (ie :res, :pop, etc)
+	   (process-send-string proc "(jvs::js-repl)")
+	   )
+;;	  ((and (stringp string)
+;;		(string-match ":EXIT-JS" string)) ;; exit when we read this, returned by the compilation functions
+;;	   (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))
+;;	   (delete-process proc))
+	  (t
+	   (fi::subprocess-filter proc string)))))
+
 (defun switch-to-script-evaluator ()
   (interactive)
   (let* ((buffer-name "*javascript-evaluator*")
 	 (buffer (or (get-buffer buffer-name)
 		     (get-buffer-create buffer-name)))
-	 (proc (get-buffer-process buffer)))
-    (if (fi:process-running-p proc buffer-name)
-	(fi::switch-to-buffer-new-screen buffer-name)
-      (fi:open-lisp-listener -1 buffer-name 'fi::setup-tcp-connection "(format t \"Bienvenue\")(jvs::js-repl)" 'js-evaluator-mode)
-      )))
+	 (proc (get-buffer-process buffer))
+	 (repl? (fi:eval-in-lisp "(if (fboundp 'jvs::js-repl) t nil)"))
+	 )
+    (when repl?
+      (if (fi:process-running-p proc buffer-name)
+	  (fi::switch-to-buffer-new-screen buffer-name)
+	(progn 
+	  (setq proc (fi:open-lisp-listener -1 buffer-name 'fi::setup-tcp-connection "(format t \"Bienvenue\")(jvs::js-repl)" 'js-evaluator-mode))
+	  (set-process-filter proc 'javascript-evaluator-filter))
+	))))
 
