@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.4  2015/01/12 08:54:31  troche
+;;;; * debug
+;;;;
 ;;;; Revision 3.3  2015/01/06 17:03:37  troche
 ;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
 ;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
@@ -54,13 +57,17 @@
 ;; mode pour la coloration syntaxique
 
 (setq *js-keywords*
- '(("Warning : .*" . font-lock-warning-face)
-   ("Error   : .*" . font-lock-variable-name-face)
-   ("Return  : .*" . font-lock-type-face)
+ '(("^Warning[ ]*:.*" . font-lock-warning-face)
+   ("^Error[ ]*:.*" . font-lock-variable-name-face)
+;;   ("^Return  : .*" . font-lock-type-face)
+   ("^Return[ ]*:[^\"\n]*" . font-lock-type-face)
+;;   ("^Applet used[ ]*: .*" . font-lock-function-name-face)
+   ("^Info[ ]*:.*" . font-lock-function-name-face)
   ;; ("JS: " . font-lock-string-face)
    )
  )
 
+;;(define-derived-mode js-evaluator-mode lisp-listener-mode
 (define-derived-mode js-evaluator-mode prog-mode
   ;; js font lock
   (setq font-lock-defaults '(*js-keywords*))
@@ -68,7 +75,16 @@
   (setq mode-name "Javascript evaluator")
   ;; js comments
   (set (make-local-variable 'comment-start) "// ")
+
+  (make-local-variable 'comment-start-skip)
+  (setq comment-start-skip "//[ \t]*")
+
   (set (make-local-variable 'comment-end) "")
+
+  (fi::initialize-mode-map 'fi:lisp-listener-mode-map
+			   'fi:lisp-listener-mode-super-key-map
+			   'tcp-lisp)
+  (use-local-map fi:lisp-listener-mode-map)
 )
 
 (defun fi:open-lisp-listener (&optional buffer-number buffer-name
@@ -139,7 +155,9 @@ the buffer name is the second optional argument."
       (if (fi:process-running-p proc buffer-name)
 	  (fi::switch-to-buffer-new-screen buffer-name)
 	(progn 
-	  (setq proc (fi:open-lisp-listener -1 buffer-name 'fi::setup-tcp-connection "(format t \"Bienvenue\")(jvs::js-repl)" 'js-evaluator-mode))
+;;	  (setq proc (fi:open-lisp-listener -1 buffer-name 'fi::setup-tcp-connection "(jvs::js-repl)" ))
+	  (setq proc (fi:open-lisp-listener -1 buffer-name 'fi::setup-tcp-connection "(jvs::js-repl)" 'js-evaluator-mode))
+	  (erase-buffer)
 	  (set-process-filter proc 'javascript-evaluator-filter))
 	))))
 
