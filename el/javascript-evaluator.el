@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.5  2015/01/12 12:56:28  troche
+;;;; * Displays help at evaluator startup
+;;;;
 ;;;; Revision 3.4  2015/01/12 08:54:31  troche
 ;;;; * debug
 ;;;;
@@ -155,9 +158,10 @@ the buffer name is the second optional argument."
       (if (fi:process-running-p proc buffer-name)
 	  (fi::switch-to-buffer-new-screen buffer-name)
 	(progn 
-;;	  (setq proc (fi:open-lisp-listener -1 buffer-name 'fi::setup-tcp-connection "(jvs::js-repl)" ))
 	  (setq proc (fi:open-lisp-listener -1 buffer-name 'fi::setup-tcp-connection "(jvs::js-repl)" 'js-evaluator-mode))
-	  (erase-buffer)
-	  (set-process-filter proc 'javascript-evaluator-filter))
+	  (sleep-for 0.1)
+	  (delete-region (point-min) (point-max))
+	  (set-process-filter proc 'javascript-evaluator-filter)
+	  (process-send-string proc ":help\n")
+	  )
 	))))
-
