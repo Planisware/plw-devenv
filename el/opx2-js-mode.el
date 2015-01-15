@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.7  2015/01/15 09:53:55  troche
+;;;; * C-c . improvement : Now manages ojs files and if definition is not found, try to do a regexp search
+;;;;
 ;;;; Revision 3.6  2015/01/06 17:03:37  troche
 ;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
 ;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
@@ -110,73 +113,6 @@
 ;; we don't want to stack definition declarations
 (setq fi:maintain-definition-stack nil)
 
-(defun fi::show-found-ojs-definition (thing pathname point n-more
-					    &optional other-window-p pop-stack)
-  (if pathname
-      (if (equal pathname "top-level")
-	  (message
-	   "%s was defined somewhere at the top-level, %d more definitions"
-	   thing n-more)
-	(let ((mess "")
-	      (xb nil)
-	      (pathname (fi::ensure-translated-pathname pathname)))
-	  (when fi:filename-frobber-hook
-	    (setq pathname (funcall fi:filename-frobber-hook pathname)))
-	  (ring-insert lep::show-def-marker-ring (point-marker))
-	  (setq xb (get-file-buffer pathname))
-	  (if other-window-p
-	      (find-file-other-window pathname)
-	    (find-file pathname))
-	  (cond ((eq n-more 0)
-		 (if (lep::meta-dot-from-fspec)
-		     (message (concat mess "%ss of %s")
-			      (lep::meta-dot-what) (lep::meta-dot-from-fspec))
-		   (message (concat mess "No more %ss of %s")
-			    (lep::meta-dot-what) thing)))
-		(n-more
-		 (fi::pop-metadot-session)))
-	  (when pop-stack (fi::pop-metadot-session))))
-    (message "cannot find file for %s" thing)))
-
-(defun fi::lisp-find-ojs-definition-common (function-name other-window-p
-						      &optional what from-fspec
-						      )
-  (let ((lisp-function (concat "js::" function-name)))
-    (when (not (fi::lep-open-connection-p))
-      (error "connection to ACL is down--can't find tag"))
-    (message "Finding %s for %s..." (or what "definition") function-name)
-    (fi::push-metadot-session
-     (or what "definition")
-     lisp-function
-     from-fspec
-     (fi::make-complex-request
-      (scm::metadot-session
-       :package (fi::string-to-keyword (fi::package))
-       :type t				; used to be (or type t), but
-					; `type' is not bound in this
-					; context
-       :fspec lisp-function)
-      ((function-name other-window-p what from-fspec)
-       (pathname point n-more)
-       (fi::show-found-ojs-definition (if (symbolp function-name)
-				      (symbol-name function-name)
-				    function-name)
-				  pathname
-				  point n-more other-window-p
-				  t)
-       (cond ((equal (substring pathname -3 nil) "ojs")
-	      ;; TRO : ojs files : we search the definition of the function / method
-	      (goto-char (point-min))
-	      (re-search-forward (concat "\\(function\\|method\\)[ \t]+" function-name) (point-max) t))
-	     ((or (equal (substring pathname -3 nil) "lsp") (equal (substring pathname -4 nil) "lisp"))
-	      ;; lisp file, we try to go to the point returned by the find-definition
-	      (when point
-		(goto-char point))))
-       )
-      (() (error)
-       (when (fi::pop-metadot-session)
-	 (fi::show-error-text "%s" error)))))))
-
 ;; <ctrl-c .> in ojs file
 ;; works with ojs and lisp file and properly do the search
 (defun %ojs-find-definition (tag)
@@ -184,7 +120,7 @@
      (if current-prefix-arg
 	 '(nil)
        (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
-  (fi::lisp-find-ojs-definition-common tag nil))
+  (fi::lisp-find-definition-common (concat "js::" tag) nil))
 
 (defvar *ojs-compilation-buffer-name* "*OJS compilation traces*")
 
@@ -293,28 +229,31 @@
       (goto-char 0)
       )))
 
-(defvar *functions-to-ignore*
-  '( "get"
-     "hashtable"
-     "instanceof"
-     "color"
-     "font"
-     "matchregexp"
-     "set"
-     "sort"
-     "callmacro"
-     "fillroundrect"
-     "searchchar"
-     "serialize_a_field"
-     "write_text_key"
-     "get_text_key_message_string"
-     ))
+(defconst *functions-to-ignore*
+  (regexp-opt
+   '( "get"
+      "hashtable"
+      "instanceof"
+      "color"
+      "font"
+      "matchregexp"
+      "set"
+      "sort"
+      "callmacro"
+      "fillroundrect"
+      "searchchar"
+      "serialize_a_field"
+      "write_text_key"
+      "get_text_key_message_string"
+      )))
 
 (defun ignore-string (str)
   ;; test if the string contained in the string is meant to be international
   ;; or is already internatioanlized
   ;; the str in argument is the whole line
   (or
+   ;; no empty strings
+   (string-match-p "\"\"" str)
    ;; no comments
    (string-match-p "[ \t]*//.*" str)  
    ;; no opxclassname
@@ -324,16 +263,17 @@
    ;; no lispcall "functionname" ()
    (string-match-p "lispcall[ \t]*\".*\"" str)    
    ;; functions to ignore
-   (let (func-ignored)
-     (dolist (func *functions-to-ignore*)
-       (when (string-match-p (format "%s[ \t]*(.*\".*\".*)" func) str)
-	 (setq func-ignored t)))
-     func-ignored)
+   (string-match-p *functions-to-ignore* str)
+;   (let (func-ignored)
+;     (dolist (func *functions-to-ignore*)
+;       (when (string-match-p (format "%s[ \t]*(.*\".*\".*)" func) str)
+;	 (setq func-ignored t)))
+;     func-ignored)
    ;; ignore line finishing by the ignore pattern // NOINT
    (string-match-p (format ".*%s" *ignore-pattern*) str)
    ;; ignore writeln("$Id
    (string-match-p "writeln(\"$Id.*\");" str)
-   ))    
+   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mode definition

@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.4  2015/01/15 09:53:55  troche
+;;;; * C-c . improvement : Now manages ojs files and if definition is not found, try to do a regexp search
+;;;;
 ;;;; Revision 3.3  2014/12/11 13:05:34  folli
 ;;;; in-package is mandatory
 ;;;;
@@ -329,3 +332,98 @@
     (unless ret	  
       (setq ret (list (read-string "Description:"))))
     ret))
+
+
+;; new find definition which tries to find the definition in the file if no point is returned
+;; also manages ojs files
+(defun fi::show-found-definition (thing pathname point n-more
+				  &optional other-window-p pop-stack)
+  (if pathname
+      (if (equal pathname "top-level")
+	  (message
+	   "%s was defined somewhere at the top-level, %d more definitions"
+	   thing n-more)
+	(let ((mess "")
+	      (xb nil)
+	      (pathname (fi::ensure-translated-pathname pathname)))
+	  (when fi:filename-frobber-hook
+	    (setq pathname (funcall fi:filename-frobber-hook pathname)))
+	  (ring-insert lep::show-def-marker-ring (point-marker))
+	  (setq xb (get-file-buffer pathname))
+	  (if other-window-p
+	      (find-file-other-window pathname)
+	    (find-file pathname))
+	  ;; rfe10778. why is the set-mark necessary?
+	  ;; (if xb (set-mark (point)))
+	  (if (null point)
+	      (try-to-find-in-file thing pathname)
+	    (progn
+	      (goto-char (1+ point))
+	      ;; rfe10778. why is the set-mark necessary?
+	      ;; (if (not xb) (set-mark (point)))
+	      ))
+	  (cond ((eq n-more 0)
+		 (if (lep::meta-dot-from-fspec)
+		     (message (concat mess "%ss of %s")
+			      (lep::meta-dot-what) (lep::meta-dot-from-fspec))
+		   (message (concat mess "No more %ss of %s")
+			    (lep::meta-dot-what) thing)))
+		(n-more
+ 		 (message (concat mess "%d more %ss of %s")
+			  n-more
+			  (lep::meta-dot-what)
+			  (or (lep::meta-dot-from-fspec) thing))))
+	  (when pop-stack (fi::pop-metadot-session))))
+    (message "cannot find file for %s" thing)))
+
+(defconst *defun-words*
+  (regexp-opt
+   '("defun"
+     "defmethod"
+     "defmacro"
+     "defglobal"
+     "defun-ajax"
+     "defWfun"
+     "defgeneric"
+     "deflocal")))
+
+(defun try-to-find-in-file (thing pathname)
+  ;; try to find the definition "manually" in the facile
+;;  (message "thing is %s and is a %s" thing (cond ((stringp thing) "string") ((symbolp thing) "symbol")))
+  ;; get the name of the function
+  (let* ((split (split-string thing ":+" t))
+	 (function-name (car (last split))))
+    ;; we return a value for message
+    (if 
+	(cond ((equal (substring pathname -3 nil) "ojs")
+	       ;; try to find in ojs file
+	       (goto-char (point-min))
+;;	       (message "Searching %s" (concat "\\(function\\|method\\)[ \t]+\\_<" function-name "\\_>"))
+	       (re-search-forward (concat "^[ \t]*\\(function\\|method\\)[ \t]+\\_<" function-name "\\_>") (point-max) t))
+	      ((or (equal (substring pathname -3 nil) "lsp") (equal (substring pathname -4 nil) "lisp"))
+	       ;; try to find in lisp file	       
+	       (goto-char (point-min))
+	       (or 
+		;; try to find the defun wihtout the package
+		(progn ;;(message "Searching %s" (concat "^(" *defun-words* "[ \t]+\\_<" function-name "\\_>[ \t(]+"))
+		       (re-search-forward (concat "^(" *defun-words* "[ \t(]+\\_<" function-name "\\_>[ \t(]+") (point-max) t))
+		;; try to find the defun with the package
+		(unless (equal function-name thing)
+		  ;;(message "Searching %s" (concat "^(" *defun-words* "[ \t]+\\_<" this "\\_>[ \t(]+"))
+		  (re-search-forward (concat "^(" *defun-words* "[ \t(]+\\_<" thing "\\_>[ \t(]+") (point-max) t))))
+	      (t
+	       (message "Unknown filetype %s" pathname)
+	       nil)
+	      )
+	;; we found it  so no message
+	(progn 
+	  ;; go to the beginning of the line
+	  (beginning-of-line)
+	  "")
+      (progn 
+	(fi::double-char-in-string
+	 ?%
+	 (format "The definition of %s is somewhere in this file! "
+		 thing))
+	(goto-char (point-min))))))
+      
