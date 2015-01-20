@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.5  2015/01/20 17:55:02  troche
+;;;; * find definition of methods more accurately
+;;;;
 ;;;; Revision 3.4  2015/01/15 09:53:55  troche
 ;;;; * C-c . improvement : Now manages ojs files and if definition is not found, try to do a regexp search
 ;;;;
@@ -388,11 +391,13 @@
      "deflocal")))
 
 (defun try-to-find-in-file (thing pathname)
-  ;; try to find the definition "manually" in the facile
+  ;; try to find the definition "manually" in the file
 ;;  (message "thing is %s and is a %s" thing (cond ((stringp thing) "string") ((symbolp thing) "symbol")))
-  ;; get the name of the function
+  ;; get the name of the function or the name of the method
   (let* ((split (split-string thing ":+" t))
-	 (function-name (car (last split))))
+	 (function-name (car (last split)))
+	 (method-name (let ((split-method (split-string thing "\\."))) (when (>= (length split-method) 2) (second split-method))))
+	 )
     ;; we return a value for message
     (if 
 	(cond ((equal (substring pathname -3 nil) "ojs")
@@ -406,7 +411,9 @@
 	       (or 
 		;; try to find the defun wihtout the package
 		(progn ;;(message "Searching %s" (concat "^(" *defun-words* "[ \t]+\\_<" function-name "\\_>[ \t(]+"))
-		       (re-search-forward (concat "^(" *defun-words* "[ \t(]+\\_<" function-name "\\_>[ \t(]+") (point-max) t))
+		  (if method-name
+		      (re-search-forward (concat "^(" *defun-words* "[ \t(]+\\_<" method-name "\\_>[ \t(]+") (point-max) t)
+		    (re-search-forward (concat "^(" *defun-words* "[ \t(]+\\_<" function-name "\\_>[ \t(]+") (point-max) t)))
 		;; try to find the defun with the package
 		(unless (equal function-name thing)
 		  ;;(message "Searching %s" (concat "^(" *defun-words* "[ \t]+\\_<" this "\\_>[ \t(]+"))
