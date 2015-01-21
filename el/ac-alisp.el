@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.4  2015/01/21 16:25:07  mgautier
+;;;; - add filename completion in alisp's modes
+;;;;
 ;;;; Revision 3.3  2015/01/06 17:03:37  troche
 ;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
 ;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
@@ -174,10 +177,8 @@
   ;; definition of a new autocomplete mode
   (defun alisp-setup-auto-complete-mode ()
     "Setup ac-lisp to be used with auto-complete-mode."
-    (setq ac-sources nil)
-    (add-to-list 'ac-sources 'ac-source-alisp-functions 'ac-source-filename)
-;;    (message "ac-sources %s" ac-sources)
-    )
+    (setq ac-sources '(ac-source-alisp-functions ac-source-filename))
+  )
 
   (add-hook 'fi:lisp-mode-hook 'alisp-setup-auto-complete-mode)
   (add-hook 'fi:subprocess-mode-hook 'alisp-setup-auto-complete-mode)
