@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.8  2015/01/22 14:07:51  troche
+;;;; * Display ojs compilation traces in a different window (request of C Lebaron)
+;;;;
 ;;;; Revision 3.7  2015/01/15 09:53:55  troche
 ;;;; * C-c . improvement : Now manages ojs files and if definition is not found, try to do a regexp search
 ;;;;
@@ -145,25 +148,28 @@
 	 )
     (if script
 	(progn
+;;	  (with-temp-buffer-window buffer nil nil 
 	  ;; go to the OJS compilation buffer
-	  (fi::switch-to-buffer-new-screen buffer-name)
+;;	  (fi::switch-to-buffer-new-screen buffer-name)
+	  (switch-to-buffer-other-window buffer-name t)
+;;	  (switch-to-buffer-other-frame buffer-name)
 	  ;; we erase previous content
-	  (erase-buffer)
-	  ;; run a new listener if needed
-	  (unless proc
-	    (setq proc
-		  (fi:open-lisp-listener
-		   -1
-		   *ojs-compilation-buffer-name*
-		   )))
-	  (set-process-filter proc 'ojs-compilation-filter)
-	  (cond ((eq type :compile)
-		 (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")\n" script))
-		 )
-		((eq type :compile-and-sync)
-		 (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")\n" script))
-		 ))
-	  )
+	    (erase-buffer)
+	    ;; run a new listener if needed
+	    (unless proc
+	      (setq proc
+		    (fi:open-lisp-listener
+		     -1
+		     *ojs-compilation-buffer-name*
+		     )))
+	    (set-process-filter proc 'ojs-compilation-filter)
+	    (cond ((eq type :compile)
+		   (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")\n" script))
+		   )
+		  ((eq type :compile-and-sync)
+		   (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")\n" script))
+		   ))
+	    )
       (message "Script %s not found" script-name))))
 
 (defun ojs-compilation-filter (proc string)
