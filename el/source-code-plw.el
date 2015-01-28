@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.6  2015/01/28 15:13:32  troche
+;;;; * Allow spaces between DOC and the : in docstrings of patches
+;;;;
 ;;;; Revision 3.5  2015/01/20 17:55:02  troche
 ;;;; * find definition of methods more accurately
 ;;;;
@@ -328,7 +331,7 @@
     (cond ((equal ext "lisp")
 	   (save-excursion
 	     (beginning-of-buffer)
-	     (if (re-search-forward "^;+\\s-*DOC:?\\s-*\\(.*\\)" nil t)
+	     (if (re-search-forward "^;+\\s-*DOC\\s-*:?\\s-*\\(.*\\)" nil t)
 		 (setq ret (list (match-string 1)))
 	       (error "No doc string was found")))))
 	     
