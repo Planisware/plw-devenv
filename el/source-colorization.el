@@ -32,6 +32,12 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.6  2015/02/20 09:37:09  mgautier
+;;;; - add some highlighting in lisp
+;;;; - add highlighting in listeners
+;;;;
+;;;; just define *enable-tutu-highlighting* before loading emacs-plw.el
+;;;;
 ;;;; Revision 3.5  2011/07/23 13:30:16  folli
 ;;;; Debug emacs windows
 ;;;;
@@ -125,5 +131,128 @@
 ;;	 (remove-hook 'after-change-functions 'plw-source-code-after-change t))))
 
 
+
+
+(require 'cl)
+
+(defun %alisp-regexp-opt (list kind)
+  "Like `regexp-opt', but surround the result with `\\\\_<' and `\\\\_>'."
+  (case kind
+    (:word
+     (concat "\\_<" (regexp-opt list t) "\\_>"))
+    (:func
+     (concat "(" "\\<" (regexp-opt list t) "\\>[ \\t\\n]"))))
+
+;;;**************************
+;;;   lisp face and regexp
+;;;**************************
+
+(defgroup ophx2-alisp nil
+  "Face for alisp highlighting"
+  :group 'ophx2-alisp)
+
+(defface comment-tag-face
+  '((t :foreground "green"))
+  ""
+  :group 'ophx2-alisp)
+
+(defvar comment-tag-face 'comment-tag-face)
+
+(defface opx2-hg-getset-face
+  '((t :foreground "#5f9ea0"))
+  ""
+  :group 'ophx2-alisp)
+
+(defvar opx2-hg-getset-face 'opx2-hg-getset-face)
+
+(defface opx2-hg-tnil-face
+  '((t :foreground "#7cfc00"))
+  ""
+  :group 'ophx2-alisp)
+
+(defvar opx2-hg-tnil-face 'opx2-hg-tnil-face)
+
+(defface opx2-hg-boolop-face
+  '((t :foreground "#daa520"))
+  ""
+  :group 'ophx2-alisp)
+  
+(defvar opx2-hg-boolop-face 'opx2-hg-boolop-face)
+
+(defconst opx2-hg-comment
+  (%alisp-regexp-opt
+   '("XXX" "TODO") :word))
+
+(defconst opx2-hg-alisp-tnil
+  (%alisp-regexp-opt '("t" "nil") :word))
+
+(defconst opx2-hg-alisp-getset
+  (%alisp-regexp-opt
+   '("set" "get" "setf" "getf" "setq" "gethash" "aref") :func))
+
+(defconst opx2-hg-alisp-format
+  (%alisp-regexp-opt '("format") :func))
+
+(defconst opx2-hg-alisp-boolop
+  (%alisp-regexp-opt
+   '("t" "nil" "null" "not" "and" "or" "eq" "equal" "string-equal" "=" "<" ">" "!=" "=<" "=>") :func))
+
+(setq highlight-rules-new
+     `((,opx2-hg-comment        1 comment-tag-face t)
+       (,opx2-hg-alisp-getset   1 opx2-hg-getset-face)
+       (,opx2-hg-alisp-format   1 opx2-hg-getset-face)
+       (,opx2-hg-alisp-boolop   1 opx2-hg-boolop-face)
+       (,opx2-hg-alisp-tnil     1 opx2-hg-tnil-face)))
+
+
+;;;*****************************
+;;; lisp listener highlighting
+;;;*****************************
+
+(defface lisp-shell-face
+  '((t :foreground "#99CCFF"))
+  ""
+  :group 'ophx2-alisp)
+
+(defvar lisp-shell-face 'lisp-shell-face)
+
+
+(defface lisp-shell-tcp-face
+  '((t :foreground "#66FF66"))
+  ""
+  :group 'ophx2-alisp)
+(defvar lisp-shell-tcp-face 'lisp-shell-tcp-face)
+
+
+(defface lisp-shell-nb-face
+  '((t :foreground "#cccc00"))
+  ""
+  :group 'ophx2-alisp)
+
+(defvar lisp-shell-nb-face 'lisp-shell-nb-face)
+
+(setq %hl-shell-regexp "\\(\\sw+\\)(\\([0-9]+\\)):")
+(setq hl-shell-regexp (concatenate 'string "^" %hl-shell-regexp))
+(setq hl-shell-err-regexp (concatenate 'string "^\\(\[[0-9c]*\]\\) " %hl-shell-regexp))
+
+(setq lisp-shell-hg-rules
+      `((,hl-shell-regexp      (1  lisp-shell-face) (2 lisp-shell-nb-face))
+	(,hl-shell-err-regexp  (1 font-lock-warning-face) (2  lisp-shell-face) (3 lisp-shell-nb-face))))
+
+(setq lisp-shell-tcp-hg-rules
+      `((,hl-shell-regexp      (1  lisp-shell-tcp-face) (2 lisp-shell-nb-face))
+	(,hl-shell-err-regexp  (1 font-lock-warning-face) (2  lisp-shell-tcp-face) (3 lisp-shell-nb-face))))
+	      
+
+(defvar *enable-tutu-highlighting* nil)
+
+;; apply
+(when *enable-tutu-highlighting*
+  (font-lock-add-keywords 'fi:common-lisp-mode highlight-rules-new)
+  (font-lock-add-keywords 'fi:inferior-common-lisp-mode highlight-rules-new)
+  (font-lock-add-keywords 'fi:lisp-listener-mode highlight-rules-new)
+
+  (font-lock-add-keywords 'fi:inferior-common-lisp-mode lisp-shell-hg-rules)
+  (font-lock-add-keywords 'fi:lisp-listener-mode lisp-shell-tcp-hg-rules))
 
 	 
