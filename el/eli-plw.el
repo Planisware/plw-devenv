@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.2  2015/03/06 09:09:03  mgautier
+;;;; - add better indent for letf and if macro. Just define *enable-tutu-indent* in your .emacs (minor-mode coming soon)
+;;;;
 ;;;; Revision 3.1  2011/07/21 15:16:46  folli
 ;;;; - (plw)CVS support in emacs
 ;;;; - New common files shared between xemacs & emacs
@@ -114,3 +117,12 @@
 ;;misc eli stuff
 
 (setq fi:eli-compatibility-mode nil) ;;do not try to connect on 9666 (acl <= 6.2)
+
+
+(defvar *enable-tutu-indent* nil)
+(when *enable-tutu-indent*
+  (put 'letf 'fi:common-lisp-indent-hook '(like flet))
+  (put 'letf 'fi:lisp-indent-hook '(like flet))
+  
+  (put 'if 'fi:common-lisp-indent-hook nil)
+  (put 'if 'fi:lisp-indent-hook nil))
