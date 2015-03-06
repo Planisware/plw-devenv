@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.3  2015/03/06 09:18:33  mgautier
+;;;; - add better indent for doplist and flet for every body
+;;;;
 ;;;; Revision 3.2  2015/03/06 09:09:03  mgautier
 ;;;; - add better indent for letf and if macro. Just define *enable-tutu-indent* in your .emacs (minor-mode coming soon)
 ;;;;
@@ -61,6 +64,7 @@
     (if (fi:process-running-p proc buffer-name)
 	(fi::switch-to-buffer-new-screen buffer-name)
       (fi:menu-open-lisp-listener))))
+
 
 (defun switch-to-common-lisp ()
   (interactive)
@@ -119,10 +123,14 @@
 (setq fi:eli-compatibility-mode nil) ;;do not try to connect on 9666 (acl <= 6.2)
 
 
-(defvar *enable-tutu-indent* nil)
-(when *enable-tutu-indent*
-  (put 'letf 'fi:common-lisp-indent-hook '(like flet))
-  (put 'letf 'fi:lisp-indent-hook '(like flet))
+;; indentation rules
+(put 'letf 'fi:common-lisp-indent-hook '(like flet))
+(put 'letf 'fi:lisp-indent-hook '(like flet))
+
+(put 'doplist 'fi:common-lisp-indent-hook '(like dolist))
+(put 'doplist 'fi:lisp-indent-hook '(like dolist))
   
-  (put 'if 'fi:common-lisp-indent-hook nil)
-  (put 'if 'fi:lisp-indent-hook nil))
+;;  controversial
+;;  (put 'if 'fi:common-lisp-indent-hook nil)
+;;  (put 'if 'fi:lisp-indent-hook nil)
+
