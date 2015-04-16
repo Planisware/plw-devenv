@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.9  2015/04/16 08:46:08  troche
+;;;; * don't add the closing } automatically
+;;;;
 ;;;; Revision 3.8  2015/01/22 14:07:51  troche
 ;;;; * Display ojs compilation traces in a different window (request of C Lebaron)
 ;;;;
@@ -309,7 +312,7 @@
   (define-key *ojs-mode-map* (kbd "RET") 'newline-and-indent)
 ;;  (define-key *ojs-mode-map* (kbd "RET") 'ojs-mode-insert-lcurly-on-ret)
   ;; auto insert closing }
-  (define-key *ojs-mode-map* (kbd "{") 'ojs-mode-insert-lcurly)
+;;  (define-key *ojs-mode-map* (kbd "{") 'ojs-mode-insert-lcurly)
   
   ;; menu
   (easy-menu-define ojs-menu *ojs-mode-map* "OPX2 Javascript Menu"
