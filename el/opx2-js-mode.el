@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.11  2015/04/20 12:20:00  troche
+;;;; * OJS menu proprification
+;;;;
 ;;;; Revision 3.10  2015/04/20 12:11:56  troche
 ;;;; * remove non international strings
 ;;;;
@@ -309,7 +312,7 @@
 ;;  (define-key *ojs-mode-map* "\C-cs" 'compile-and-sync-ojs-file)
 ;;  (define-key *ojs-mode-map* "\C-cn" 'find-non-international-strings)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
-  (define-key *ojs-mode-map* "\C-cf" 'force-syntax-highlighting)
+;;  (define-key *ojs-mode-map* "\C-cf" 'force-syntax-highlighting)
 
   ;; autoindentation on new line and add a closing } if needed
   (define-key *ojs-mode-map* (kbd "RET") 'newline-and-indent)
@@ -326,12 +329,13 @@
 ;;       t]
       ["Find function definition..." %ojs-find-definition
        t]
-      ["Find non international strings..." find-non-international-strings
-       t]
+;;      ["Find non international strings..." find-non-international-strings
+;;       t]
       ["Trace/Untrace function..." trace-ojs-function
        t]
-      ["Force syntax hightlighting" force-syntax-highlighting
-       t]))
+;;      ["Force syntax hightlighting" force-syntax-highlighting
+;;       t]))
+      ))
 
   ;; custom keymap
   (use-local-map *ojs-mode-map*)  
