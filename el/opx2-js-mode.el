@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.10  2015/04/20 12:11:56  troche
+;;;; * remove non international strings
+;;;;
 ;;;; Revision 3.9  2015/04/16 08:46:08  troche
 ;;;; * don't add the closing } automatically
 ;;;;
@@ -304,7 +307,7 @@
   (define-key *ojs-mode-map* "\C-c." '%ojs-find-definition)
   (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
 ;;  (define-key *ojs-mode-map* "\C-cs" 'compile-and-sync-ojs-file)
-  (define-key *ojs-mode-map* "\C-cn" 'find-non-international-strings)
+;;  (define-key *ojs-mode-map* "\C-cn" 'find-non-international-strings)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
   (define-key *ojs-mode-map* "\C-cf" 'force-syntax-highlighting)
 
