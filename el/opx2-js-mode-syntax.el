@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.3  2015/05/06 14:32:14  troche
+;;;; * idem
+;;;;
 ;;;; Revision 3.2  2015/01/06 17:03:37  troche
 ;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
 ;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
@@ -196,9 +199,9 @@
   (cond (*ojs-kernel-functions-cache*
 	 *ojs-kernel-functions-cache*)
 	(*ojs-kernel-functions-present*
-	 (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-js-functions) t nil)")))
+	 (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-all-js-functions) t nil)")))
 		(when *ojs-kernel-functions-present*
-		  (setq *ojs-kernel-functions-cache* (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-js-functions)")))))
+		  (setq *ojs-kernel-functions-cache* (format "\\(%s\\)(" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)"))))))
 		*ojs-kernel-functions-cache*))
 	(t
 	 nil)))
@@ -349,9 +352,11 @@
   ;; Variable definitions
   (push (list *ojs-vars-regexp* 1 ojs-var-definition-face) font-locks)
   ;; Functions defined in buffers
-  (push (cons 'search-buffer-functions font-lock-function-name-face) font-locks)
+;;  (push (cons 'search-buffer-functions font-lock-function-name-face) font-locks)
+  (push (list 'search-buffer-functions 1 font-lock-function-name-face) font-locks)
   ;; Kernel functions
-  (push (cons 'search-kernel-functions ojs-kernel-functions-face) font-locks)
+;;  (push (cons 'search-kernel-functions ojs-kernel-functions-face) font-locks)
+  (push (list 'search-kernel-functions 1 ojs-kernel-functions-face) font-locks)
   ;; New type
   (push (list *ojs-new-type-regexp* 1 font-lock-type-face) font-locks)
   ;; Function definition
