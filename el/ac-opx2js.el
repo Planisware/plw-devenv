@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.9  2015/05/06 16:24:01  mgautier
+;;;; - fix auto-complete in js evaluator mode
+;;;;
 ;;;; Revision 3.8  2015/05/06 14:30:33  troche
 ;;;; * always complete on backtab
 ;;;;
@@ -249,6 +252,7 @@
 )
 
 (add-hook 'opx2-js-mode-hook 'opx2-js-setup-auto-complete-mode)
+(add-hook 'js-evaluator-mode-hook 'opx2-js-setup-auto-complete-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; autocomplete configuration
@@ -256,7 +260,7 @@
 (require 'auto-complete-config)
 (ac-config-default)
 (add-to-list 'ac-modes 'opx2-js-mode)
-;;(ac-set-trigger-key "<backtab>")
+(add-to-list 'ac-modes 'js-evaluator-mode)
 (setq ac-use-menu-map t)
 (define-key ac-mode-map (read-kbd-macro "<backtab>") (lambda () (interactive) (ac-trigger-key-command t)))
 (add-to-list 'ac-dictionary-directories (fullpath-relative-to-current-file "../packages/ac-dict"))
