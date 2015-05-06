@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.6  2015/05/06 13:36:07  troche
+;;;; * show arglist on completion
+;;;;
 ;;;; Revision 3.5  2015/05/04 14:37:04  troche
 ;;;; * display the package only in the documentation
 ;;;;
@@ -86,11 +89,12 @@
 	;; insert the package at the right position
 	(when package 
 	  (backward-char (length candidate))
-	  ;; check that the package is not already there	  	  
-	  (unless (equal (buffer-substring-no-properties (point) (+ (point) (length package) 1))
+	  ;; check that the package is not already there	  	  	  
+	  (unless (equal (buffer-substring-no-properties (point) (min (+ (point) (length package) 1) (point-max)))
 			 (format "%s:" package))
 	    (insert package)
-	    (insert "::")))))))
+	    (insert "::"))
+	  (fi:lisp-arglist full-candidate))))))
 
 ;; see eli/fi-lep.el in allegro lisp install directory
 (defun alisp-functions-ac-candidates ()
@@ -176,7 +180,7 @@
 
 ;;  (ac-set-trigger-key "<backtab>")
 ;; always autocomplete on backtab
-(define-key ac-mode-map (read-kbd-macro "<backtab>") #'(lambda () (ac-trigger-key-command t)))
+(define-key ac-mode-map (read-kbd-macro "<backtab>") (lambda () (interactive) (ac-trigger-key-command t)))
 (add-to-list 'ac-modes 'fi:common-lisp-mode)
 (add-to-list 'ac-modes 'fi:inferior-common-lisp-mode)
 (add-to-list 'ac-modes 'fi:lisp-listener-mode)
