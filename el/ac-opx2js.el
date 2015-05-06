@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.8  2015/05/06 14:30:33  troche
+;;;; * always complete on backtab
+;;;;
 ;;;; Revision 3.7  2015/01/06 17:03:37  troche
 ;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
 ;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
@@ -253,5 +256,7 @@
 (require 'auto-complete-config)
 (ac-config-default)
 (add-to-list 'ac-modes 'opx2-js-mode)
-(ac-set-trigger-key "<backtab>")
+;;(ac-set-trigger-key "<backtab>")
+(setq ac-use-menu-map t)
+(define-key ac-mode-map (read-kbd-macro "<backtab>") (lambda () (interactive) (ac-trigger-key-command t)))
 (add-to-list 'ac-dictionary-directories (fullpath-relative-to-current-file "../packages/ac-dict"))
