@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.5  2015/05/12 12:39:25  troche
+;;;; * debug
+;;;;
 ;;;; Revision 3.4  2015/05/12 11:35:30  troche
 ;;;; * debug when the file is almost empty
 ;;;;
@@ -243,14 +246,14 @@
   (if *use-real-search*
       (let ((last-point (point))
 	    ;; do a first search
-	    (found-point (re-search-backward regexp (max (point-min) limit) errorp)))
+	    (found-point (re-search-backward regexp limit errorp)))
 	;; checks that we are moving to avoid loops
 	(while (and found-point
 		    (< (point) last-point)
 		    (or (er--point-is-in-comment-p)
 			(er--point-is-in-string-p)))
 	  (setq last-point found-point)
-	  (setq found-point (re-search-backward regexp (max (point-min) limit) errorp)))
+	  (setq found-point (re-search-backward regexp limit errorp)))
 	found-point))
   (re-search-backward regexp limit errorp))
 
@@ -265,9 +268,9 @@
 		    (or (er--point-is-in-comment-p)
 			(er--point-is-in-string-p)))
 	  (setq last-point found-point)
-	  (setq found-point (re-search-forward regexp (min (point-max) limit) errorp)))
+	  (setq found-point (re-search-forward regexp limit errorp)))
 	found-point))
-  (re-search-forward regexp (min (point-max) limit) errorp))
+  (re-search-forward regexp limit errorp))
 
 (defun start-of-function ()
   ;; get the start of the function
@@ -339,7 +342,7 @@
 	  ;; vars inside of the function
 	  (when (and begin-function end-function)
 	    (goto-char begin-function)
-	    (while (re-search-forward *ojs-vars-regexp* (min (point-max) end-function) t)	      
+	    (while (re-search-forward *ojs-vars-regexp* end-function t)	      
 	      (if list-of-cons
 		  (push (cons (match-string-no-properties 1) (match-string-no-properties 0)) vars)
 		(push (match-string-no-properties 1) vars)))
