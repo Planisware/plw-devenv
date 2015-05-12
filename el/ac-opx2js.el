@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.11  2015/05/12 14:11:46  troche
+;;;; * use list-all-js-functions
+;;;;
 ;;;; Revision 3.10  2015/05/12 12:50:36  troche
 ;;;; * new classes completion based on kernel
 ;;;;
@@ -191,7 +194,9 @@
     (requires . -1)))
 
 (defun ojs-kernel-ac-action ()
-  (message (ojs-kernel-ac-document candidate)))
+  (let ((doc (ojs-kernel-ac-document candidate)))
+    (when (not (equal doc ""))
+      (message doc))))
 
 (defvar *ojs-kernel-candidates-cache* nil)
 (defvar *ojs-kernel-documents-cache* nil)
@@ -199,7 +204,7 @@
 (defun ojs-kernel-ac-init ()
   ;; on récupère les symboles
   (or *ojs-kernel-candidates-cache*
-      (setq *ojs-kernel-candidates-cache* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(when (fboundp 'jvs::list-js-functions)(jvs::list-js-functions))"))))
+      (setq *ojs-kernel-candidates-cache* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(when (fboundp 'jvs::list-js-functions)(jvs::list-all-js-functions))"))))
   ;; on set les documents strings
   (or *ojs-kernel-documents-cache*
       (setq *ojs-kernel-documents-cache* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(when (fboundp 'jvs::list-js-docs)(jvs::list-js-docs))")))))
