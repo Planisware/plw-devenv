@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.10  2015/05/12 12:50:36  troche
+;;;; * new classes completion based on kernel
+;;;;
 ;;;; Revision 3.9  2015/05/06 16:24:01  mgautier
 ;;;; - fix auto-complete in js evaluator mode
 ;;;;
@@ -147,34 +150,24 @@
 
 (ac-define-source "ojs-classes"
     '((candidates . ojs-classes-ac-candidates)
-;      (document . ojs-classes-ac-document)
-;      (action . ojs-classes-ac-action)
       (symbol . "c ")
       (requires . -1)))
 
-(defun ojs-classes-ac-action ()
-  (message (cdr (assoc candidate *ojs-classes-candidates-cache*))))
-
-(defun ojs-classes-ac-document (docstr)
-  docstr)
-
 (defvar *ojs-classes-candidates-cache* nil)
 
-;;(defvar *ojs-classes-regexp* "^[ \t]*var[ \t]+\\(\\w+\\)[ \t]+\\<=\\>[ \t]*\\(.*\\))")
-;;(defvar *ojs-classes-regexp* "^[ \t]*var[ \t]+\\(\\w+\\)[ \t]*=.*")
-;;(defvar *ojs-classes-regexp* "^[^//].*\\.\\(_\\w+\\)[ \t]*[.,;)!=]*")
-(defvar *ojs-classes-regexp* "\\([oO][pP][xX]\\w+\\)")
-
 ;; on reset le cache dès qu'on sauve
-(ac-clear-variable-after-save '*ojs-classes-candidates-cache*)
+;;(ac-clear-variable-after-save '*ojs-classes-candidates-cache*)
 
 ;; reset du cache toutes les minutes
 ;;ac-clear-variable-every-minute '*ojs-functions-candidates-cache*)
 
 (defun ojs-classes-ac-candidates ()
+  *ojs-classes-candidates-cache*)
+
+(defun ojs-classes-ac-init ()
   (or *ojs-classes-candidates-cache*
-      (setq *ojs-classes-candidates-cache* (ojs-find-candidates-from-regexp-in-buffers *ojs-classes-regexp*))
-      ))
+      (setq *ojs-classes-candidates-cache* (when (fi::lep-open-connection-p) 
+					     (fi:eval-in-lisp "(when (fboundp 'jvs::list-all-js-classes) (jvs::list-all-js-classes \"[Oo][Pp][Xx][^0-9].*$\"))")))))  
 
 ;;; generic ojs dictionary 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -242,6 +235,9 @@
   ;; initialize kernel completion
   (ojs-kernel-ac-init)
 
+  ;; classes completion
+  (ojs-classes-ac-init)
+
   ;; dictionary cache
   (setq *ac-dictionary-candidates-cache* (ac-file-dictionary (concat *opx2-network-folder-work-path* "devenv/el/dict/opx2-js-mode")))
   
@@ -253,14 +249,3 @@
 
 (add-hook 'opx2-js-mode-hook 'opx2-js-setup-auto-complete-mode)
 (add-hook 'js-evaluator-mode-hook 'opx2-js-setup-auto-complete-mode)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;; autocomplete configuration
-
-(require 'auto-complete-config)
-(ac-config-default)
-(add-to-list 'ac-modes 'opx2-js-mode)
-(add-to-list 'ac-modes 'js-evaluator-mode)
-(setq ac-use-menu-map t)
-(define-key ac-mode-map (read-kbd-macro "<backtab>") (lambda () (interactive) (ac-trigger-key-command t)))
-(add-to-list 'ac-dictionary-directories (fullpath-relative-to-current-file "../packages/ac-dict"))
