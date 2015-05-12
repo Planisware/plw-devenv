@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.4  2015/05/12 11:35:30  troche
+;;;; * debug when the file is almost empty
+;;;;
 ;;;; Revision 3.3  2015/05/06 14:32:14  troche
 ;;;; * idem
 ;;;;
@@ -240,14 +243,14 @@
   (if *use-real-search*
       (let ((last-point (point))
 	    ;; do a first search
-	    (found-point (re-search-backward regexp limit errorp)))
+	    (found-point (re-search-backward regexp (max (point-min) limit) errorp)))
 	;; checks that we are moving to avoid loops
 	(while (and found-point
 		    (< (point) last-point)
 		    (or (er--point-is-in-comment-p)
 			(er--point-is-in-string-p)))
 	  (setq last-point found-point)
-	  (setq found-point (re-search-backward regexp limit errorp)))
+	  (setq found-point (re-search-backward regexp (max (point-min) limit) errorp)))
 	found-point))
   (re-search-backward regexp limit errorp))
 
@@ -262,9 +265,9 @@
 		    (or (er--point-is-in-comment-p)
 			(er--point-is-in-string-p)))
 	  (setq last-point found-point)
-	  (setq found-point (re-search-forward regexp limit errorp)))
+	  (setq found-point (re-search-forward regexp (min (point-max) limit) errorp)))
 	found-point))
-  (re-search-forward regexp limit errorp))
+  (re-search-forward regexp (min (point-max) limit) errorp))
 
 (defun start-of-function ()
   ;; get the start of the function
@@ -303,33 +306,44 @@
   (save-excursion
     ;; we ignore errors because the forward-list can fail if parenthesis are not balanced
     ;; in that case, we do nothing.
-      (let ((start-function (start-of-function)))
-	(when start-function
-	  (goto-char start-function)
-	  (let* ((begin-args (progn (while (not (looking-at "("))
-				      (forward-char))
-				    (point)))
-		 (end-args (progn (while (not (looking-at ")"))
+    (let ((start-function (start-of-function)))
+      (when start-function
+	(goto-char start-function)
+	(let* ((begin-args (progn (while (and (not (looking-at "("))
+					      (< (point) (point-max)))
 				    (forward-char))
-				  (point)))
-		 (begin-function (progn (while (not (looking-at "{"))
-					  (forward-char))
-					(point)))
-		 (end-function (end-of-function))
-		 (function-line (buffer-substring-no-properties start-function (1+ end-args) ))
-		 vars)
-	    ;; arguments
+				  (if (eq (point) (point-max))
+				      nil				   
+				    (point))))
+	       (end-args (progn (while (and (not (looking-at ")"))
+					    (< (point) (point-max)))
+				  (forward-char))
+				(if (eq (point) (point-max))
+				    nil
+				  (point))))
+	       (begin-function (progn (while (and (not (looking-at "{"))
+						  (< (point) (point-max)))
+					(forward-char))
+				      (if (eq (point) (point-max))
+					  nil
+					(point))))
+	       (end-function (end-of-function))
+	       (function-line (when end-args (buffer-substring-no-properties start-function (1+ end-args) )))
+	       vars)
+	  ;; arguments
+	  (when (and function-line begin-args end-args)
 	    (dolist (arg (split-string (buffer-substring-no-properties (1+ begin-args) end-args) "[ \t,]+" t))
 	      (if list-of-cons
 		  (push (cons arg function-line) vars)
-		(push arg vars)))
-	    ;; vars inside of the function
+		(push arg vars))))
+	  ;; vars inside of the function
+	  (when (and begin-function end-function)
 	    (goto-char begin-function)
-	    (while (re-search-forward *ojs-vars-regexp* end-function t)
+	    (while (re-search-forward *ojs-vars-regexp* (min (point-max) end-function) t)	      
 	      (if list-of-cons
 		  (push (cons (match-string-no-properties 1) (match-string-no-properties 0)) vars)
 		(push (match-string-no-properties 1) vars)))
-	    vars)))))
+	    vars))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
