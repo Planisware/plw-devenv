@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.12  2015/05/19 15:13:15  mgautier
+;;;; - add comment/uncomment shortcut
+;;;;
 ;;;; Revision 3.11  2015/04/20 12:20:00  troche
 ;;;; * OJS menu proprification
 ;;;;
@@ -313,6 +316,10 @@
 ;;  (define-key *ojs-mode-map* "\C-cn" 'find-non-international-strings)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
 ;;  (define-key *ojs-mode-map* "\C-cf" 'force-syntax-highlighting)
+
+  ;; comment / un-comment
+  (define-key *ojs-mode-map* "\C-c;" 'comment-region)
+  (define-key *ojs-mode-map* "\C-c:" 'uncomment-region)
 
   ;; autoindentation on new line and add a closing } if needed
   (define-key *ojs-mode-map* (kbd "RET") 'newline-and-indent)
