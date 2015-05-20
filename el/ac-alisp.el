@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.7  2015/05/20 15:10:05  mgautier
+;;;; - always use minibuffer to display function signature after completion (for those using a 40 characters width buffer)
+;;;;
 ;;;; Revision 3.6  2015/05/06 13:36:07  troche
 ;;;; * show arglist on completion
 ;;;;
@@ -78,6 +81,22 @@
   ""
   "")
 
+(defun lisp-arglist-minibuffer (string)
+  "see fi:lisp-arglist, always use minibufer"
+  (interactive (fi::get-default-symbol "Arglist for" t t))
+  (fi::make-request (lep::arglist-session :fspec string)
+    ;; Normal continuation
+    (() (what arglist)
+     (progn
+       (message "%s's arglist: %s" what arglist)
+       (fi::note-background-reply)))
+    ;; Error continuation
+    ((string) (error)
+     (progn
+       (message "Cannot get the arglist of %s: %s" string error)
+       (fi::note-background-reply)))))
+
+
 (defun alisp-function-ac-action()
   ;; TODO : insert the symbol when needed
   ;; get the package : everything before the first :
@@ -94,7 +113,7 @@
 			 (format "%s:" package))
 	    (insert package)
 	    (insert "::"))
-	  (fi:lisp-arglist full-candidate))))))
+	  (lisp-arglist-minibuffer full-candidate))))))
 
 ;; see eli/fi-lep.el in allegro lisp install directory
 (defun alisp-functions-ac-candidates ()
