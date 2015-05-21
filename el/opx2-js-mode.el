@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.15  2015/05/21 11:28:03  mgautier
+;;;; - \C-c\C-b save ojs file and compile
+;;;;
 ;;;; Revision 3.14  2015/05/21 07:09:05  mgautier
 ;;;; - my bad. \C-c\C-b to compile a whole ojs file
 ;;;;
@@ -148,6 +151,12 @@
 (defun compile-ojs-file ()
   (interactive)
   (do-compile-and-sync-ojs-file :compile)
+  )
+
+(defun save-and-compile-ojs-file ()
+  (interactive)
+  (save-buffer)
+  (compile-ojs-file)
   )
 
 (defun compile-and-sync-ojs-file ()
@@ -318,7 +327,7 @@
   ;; custom keybindings from menu
   (define-key *ojs-mode-map* "\C-c." '%ojs-find-definition)
   (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
-  (define-key *ojs-mode-map* "\C-c\C-b" 'compile-ojs-file)
+  (define-key *ojs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
 ;;  (define-key *ojs-mode-map* "\C-cs" 'compile-and-sync-ojs-file)
 ;;  (define-key *ojs-mode-map* "\C-cn" 'find-non-international-strings)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
