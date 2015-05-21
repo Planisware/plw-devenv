@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.13  2015/05/21 07:06:25  mgautier
+;;;; - \C-c\C-c to compile a whole ojs
+;;;;
 ;;;; Revision 3.12  2015/05/19 15:13:15  mgautier
 ;;;; - add comment/uncomment shortcut
 ;;;;
@@ -312,6 +315,7 @@
   ;; custom keybindings from menu
   (define-key *ojs-mode-map* "\C-c." '%ojs-find-definition)
   (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
+  (define-key *ojs-mode-map* "\C-c\C-c" 'compile-ojs-file)
 ;;  (define-key *ojs-mode-map* "\C-cs" 'compile-and-sync-ojs-file)
 ;;  (define-key *ojs-mode-map* "\C-cn" 'find-non-international-strings)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
