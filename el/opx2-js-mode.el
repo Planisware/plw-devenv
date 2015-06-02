@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.16  2015/06/02 12:59:38  mgautier
+;;;; - bind \C_c c to %ojs-list-who-calls (find caller of function)
+;;;;
 ;;;; Revision 3.15  2015/05/21 11:28:03  mgautier
 ;;;; - \C-c\C-b save ojs file and compile
 ;;;;
@@ -145,6 +148,13 @@
 	 '(nil)
        (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
   (fi::lisp-find-definition-common (concat "js::" tag) nil))
+
+(defun %ojs-list-who-calls (tag)
+  (interactive 
+   (if current-prefix-arg
+       '(nil)
+     (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
+  (fi:list-who-calls (concat "js::" tag)))
 
 (defvar *ojs-compilation-buffer-name* "*OJS compilation traces*")
 
@@ -326,6 +336,7 @@
 
   ;; custom keybindings from menu
   (define-key *ojs-mode-map* "\C-c." '%ojs-find-definition)
+  (define-key *ojs-mode-map* "\C-cc" '%ojs-list-who-calls)
   (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
   (define-key *ojs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
 ;;  (define-key *ojs-mode-map* "\C-cs" 'compile-and-sync-ojs-file)
