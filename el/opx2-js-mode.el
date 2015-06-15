@@ -32,6 +32,12 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.17  2015/06/15 08:44:16  troche
+;;;; * new shortcut Ctrl-c+s to synchronize script in the database from
+;;;;   emacs
+;;;; * Checks that the file we are using to compile / synchronize is
+;;;;   correct
+;;;;
 ;;;; Revision 3.16  2015/06/02 12:59:38  mgautier
 ;;;; - bind \C_c c to %ojs-list-who-calls (find caller of function)
 ;;;;
@@ -169,10 +175,15 @@
   (compile-ojs-file)
   )
 
-(defun compile-and-sync-ojs-file ()
+(defun save-compile-and-sync-ojs-file ()
   (interactive)
+  (save-buffer)
   (do-compile-and-sync-ojs-file :compile-and-sync)
   )
+
+(defun check-script-path (script-name file-name)
+  ;; checks that the path of the current file matches the one in the database
+  (when (fi::lep-open-connection-p) (fi:eval-in-lisp (format "(when (fboundp 'jvs::compare-javascript-source-file)(jvs::compare-javascript-source-file \"%s\" \"%s\"))" script-name file-name))))
 
 (defun do-compile-and-sync-ojs-file (type)
   ;; find the script name
@@ -184,12 +195,24 @@
 	 (proc (get-buffer-process buffer))
 	 )
     (if script
-	(progn
-;;	  (with-temp-buffer-window buffer nil nil 
-	  ;; go to the OJS compilation buffer
-;;	  (fi::switch-to-buffer-new-screen buffer-name)
+	(catch 'exit
+	  ;; checks that the file matches
+	  (unless (check-script-path script (buffer-file-name))
+	    (message "Impossible to %s the script because the current file does not match script source file :
+     Current file is                : %s
+     Source file in the database is : %s"
+		     (if (eq type :compile) "compile" "synchronize")
+		     (buffer-file-name)
+		     (fi:eval-in-lisp (format "(jvs::javascript-synchronize-with-file (object::get-object 'jvs::javascript \"%s\"))" script))
+		     )
+	    (throw 'exit nil))
+	  ;; check that our file is commited
+	  (when (and (eq type :compile-and-sync)
+		     (equal (fi:eval-in-lisp (format "(jvs::javascript-local-file-up-to-date \"%s\")" script)) "LOCALLY-MODIFIED"))
+	    (unless (y-or-n-p "File is not commited, do you really want to synchronize it in the database ?")
+	      (throw 'exit nil)))
+	  (save-buffer)
 	  (switch-to-buffer-other-window buffer-name t)
-;;	  (switch-to-buffer-other-frame buffer-name)
 	  ;; we erase previous content
 	    (erase-buffer)
 	    ;; run a new listener if needed
@@ -204,6 +227,7 @@
 		   (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")\n" script))
 		   )
 		  ((eq type :compile-and-sync)
+		   ;; check that the file is correct 		   
 		   (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")\n" script))
 		   ))
 	    )
@@ -339,10 +363,8 @@
   (define-key *ojs-mode-map* "\C-cc" '%ojs-list-who-calls)
   (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
   (define-key *ojs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
-;;  (define-key *ojs-mode-map* "\C-cs" 'compile-and-sync-ojs-file)
-;;  (define-key *ojs-mode-map* "\C-cn" 'find-non-international-strings)
+  (define-key *ojs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
-;;  (define-key *ojs-mode-map* "\C-cf" 'force-syntax-highlighting)
 
   ;; comment / un-comment
   (define-key *ojs-mode-map* "\C-c;" 'comment-region)
@@ -359,16 +381,12 @@
     '("OPX2 Javascript"
       ["Compile and load file..." compile-ojs-file
        t]
-;;      ["Compile, load and synchronize file..." compile-and-sync-ojs-file ;; not working yet
-;;       t]
+      ["Compile, load and synchronize file..." save-compile-and-sync-ojs-file
+       t]
       ["Find function definition..." %ojs-find-definition
        t]
-;;      ["Find non international strings..." find-non-international-strings
-;;       t]
       ["Trace/Untrace function..." trace-ojs-function
        t]
-;;      ["Force syntax hightlighting" force-syntax-highlighting
-;;       t]))
       ))
 
   ;; custom keymap
