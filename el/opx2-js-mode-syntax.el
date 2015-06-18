@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.6  2015/06/18 08:32:28  troche
+;;;; * configuration
+;;;;
 ;;;; Revision 3.5  2015/05/12 12:39:25  troche
 ;;;; * debug
 ;;;;
@@ -207,7 +210,7 @@
 	(*ojs-kernel-functions-present*
 	 (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-all-js-functions) t nil)")))
 		(when *ojs-kernel-functions-present*
-		  (setq *ojs-kernel-functions-cache* (format "\\(%s\\)(" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)"))))))
+		  (setq *ojs-kernel-functions-cache* (format "\\(%s\\)" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)"))))))
 		*ojs-kernel-functions-cache*))
 	(t
 	 nil)))
@@ -362,18 +365,21 @@
 
   ;; list of font-lock-keywords in the right order
 
+  ;; Functions defined in buffers
+;;  (push (cons 'search-buffer-functions font-lock-function-name-face) font-locks)
+  (push (list 'search-buffer-functions 1 font-lock-function-name-face) font-locks)
+
+  ;; Kernel functions
+;;  (push (cons 'search-kernel-functions ojs-kernel-functions-face) font-locks)
+  (push (list 'search-kernel-functions 1 ojs-kernel-functions-face) font-locks)
+
   ;; Variables in the function 
   (push (cons 'search-vars-from-context font-lock-variable-name-face) font-locks)
   ;; Global vars
   (push (cons 'search-global-vars font-lock-variable-name-face) font-locks)
   ;; Variable definitions
   (push (list *ojs-vars-regexp* 1 ojs-var-definition-face) font-locks)
-  ;; Functions defined in buffers
-;;  (push (cons 'search-buffer-functions font-lock-function-name-face) font-locks)
-  (push (list 'search-buffer-functions 1 font-lock-function-name-face) font-locks)
-  ;; Kernel functions
-;;  (push (cons 'search-kernel-functions ojs-kernel-functions-face) font-locks)
-  (push (list 'search-kernel-functions 1 ojs-kernel-functions-face) font-locks)
+
   ;; New type
   (push (list *ojs-new-type-regexp* 1 font-lock-type-face) font-locks)
   ;; Function definition

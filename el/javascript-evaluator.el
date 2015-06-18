@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.6  2015/06/18 08:32:28  troche
+;;;; * configuration
+;;;;
 ;;;; Revision 3.5  2015/01/12 12:56:28  troche
 ;;;; * Displays help at evaluator startup
 ;;;;
@@ -70,6 +73,8 @@
    )
  )
 
+(defvar *js-evaluator-map* (make-sparse-keymap))
+
 ;;(define-derived-mode js-evaluator-mode lisp-listener-mode
 (define-derived-mode js-evaluator-mode prog-mode
   ;; js font lock
@@ -84,10 +89,15 @@
 
   (set (make-local-variable 'comment-end) "")
 
-  (fi::initialize-mode-map 'fi:lisp-listener-mode-map
-			   'fi:lisp-listener-mode-super-key-map
-			   'tcp-lisp)
-  (use-local-map fi:lisp-listener-mode-map)
+  ;;  (fi::initialize-mode-map 'fi:lisp-listener-mode-map
+  ;;			   'fi:lisp-listener-mode-super-key-map
+  ;;			   'tcp-lisp)
+  ;; (use-local-map fi:lisp-listener-mode-map)
+  (define-key *js-evaluator-map* (kbd "\C-c.") '%ojs-find-definition)
+  (define-key *js-evaluator-map* (kbd "RET") 'fi:inferior-lisp-newline)
+
+  (use-local-map *js-evaluator-map*)
+  
 )
 
 (defun fi:open-lisp-listener (&optional buffer-number buffer-name

@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.8  2015/06/18 08:32:28  troche
+;;;; * configuration
+;;;;
 ;;;; Revision 3.7  2015/05/20 15:10:05  mgautier
 ;;;; - always use minibuffer to display function signature after completion (for those using a 40 characters width buffer)
 ;;;;
@@ -194,17 +197,3 @@
 
 (add-hook 'fi:lisp-mode-hook 'alisp-setup-auto-complete-mode)
 (add-hook 'fi:subprocess-mode-hook 'alisp-setup-auto-complete-mode)
-
-(require 'auto-complete-config)
-
-;;  (ac-set-trigger-key "<backtab>")
-;; always autocomplete on backtab
-(define-key ac-mode-map (read-kbd-macro "<backtab>") (lambda () (interactive) (ac-trigger-key-command t)))
-(add-to-list 'ac-modes 'fi:common-lisp-mode)
-(add-to-list 'ac-modes 'fi:inferior-common-lisp-mode)
-(add-to-list 'ac-modes 'fi:lisp-listener-mode)
-
-(ac-config-default)
-(setq ac-auto-start nil)
-(setq ac-use-menu-map t)
-(setq ac-quick-help-delay 0.1)

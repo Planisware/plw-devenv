@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.4  2015/06/18 08:32:28  troche
+;;;; * configuration
+;;;;
 ;;;; Revision 3.3  2015/05/06 14:31:51  troche
 ;;;; * do not match variables with the same name as a function
 ;;;;
@@ -71,7 +74,7 @@
   (setq *ojs-buffers-functions-cache* (ojs-find-candidates-from-regexp-in-buffers *ojs-function-method-definition-regexp*))
   ;; regexp cache
   (setq *ojs-buffers-functions-cache-regexp*
-	(format "\\(%s\\)(" (js--regexp-opt-symbol (loop for item in *ojs-buffers-functions-cache*
+	(format "\\(%s\\)" (js--regexp-opt-symbol (loop for item in *ojs-buffers-functions-cache*
 							 collect (car item))))))
 
 ;;;;; buffer dependant cache for script-level var definitions and global vars
