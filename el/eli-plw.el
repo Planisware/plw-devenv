@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.4  2015/06/26 13:22:20  mgautier
+;;;; bind C c-: to uncomment region
+;;;;
 ;;;; Revision 3.3  2015/03/06 09:18:33  mgautier
 ;;;; - add better indent for doplist and flet for every body
 ;;;;
@@ -110,6 +113,8 @@
   (define-key fi:common-lisp-mode-map "\C-oc" 'create-opx2)
   (define-key fi:common-lisp-mode-map "\C-oe" 'edit-opx2)
   (define-key fi:common-lisp-mode-map "\C-ou" 'unedit-opx2)
+
+  (define-key fi:common-lisp-mode-map "\C-c:" 'uncomment-region)
 
   ;;Common keys for all "lisp" modes
   (redefine-common-keys fi:common-lisp-mode-map))
