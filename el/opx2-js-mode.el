@@ -32,6 +32,11 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.18  2015/06/29 08:15:56  mgautier
+;;;; - add functions to lock/unlock dataset from buffer
+;;;; - C-cl -> lock
+;;;; - C-cu -> unlock
+;;;;
 ;;;; Revision 3.17  2015/06/15 08:44:16  troche
 ;;;; * new shortcut Ctrl-c+s to synchronize script in the database from
 ;;;;   emacs
@@ -184,6 +189,46 @@
 (defun check-script-path (script-name file-name)
   ;; checks that the path of the current file matches the one in the database
   (when (fi::lep-open-connection-p) (fi:eval-in-lisp (format "(when (fboundp 'jvs::compare-javascript-source-file)(jvs::compare-javascript-source-file \"%s\" \"%s\"))" script-name file-name))))
+
+(defun lock-status(script)
+  (message (fi:eval-in-lisp (format "(jvs::lock-status \"%s\")" script-name))))
+
+(defun do-lock-file (kind)
+  ;; find the script name
+  (let* ((script-name      (file-name-base (buffer-file-name)))
+	 (status           (lock-status script-name)))
+    (case kind
+      (:lock
+       (cond ((string-equal status "NOT-LOCKED")
+	      (fi:eval-in-lisp (format "(jvs::lock-file-by-name \"%s\")" script-name))
+	      (message "File locked"))
+	     ((string-equal status "LOCKED-BY-YOURSELF")
+	      (message "File already locked by yourself"))
+	     ((stringp status)
+	      (message "File locked by %s" status))
+	     (t
+	      (message "Err: Unable to lock file"))))
+      (:unlock
+       (cond ((string-equal status "LOCKED-BY-YOURSELF")
+	      (fi:eval-in-lisp (format "(jvs::unlock-file-by-name \"%s\")" script-name))
+	      (message "File unlocked"))
+	     ((string-equal status "NOT-LOCKED")
+	      (message "File already unlocked"))
+	     ((stringp status)
+	      (message "File locked by %s" status))
+	     (t
+	      (message "Err: Unable to lock file")))))))
+	      
+
+(defun lock-file()
+  (interactive)
+  (do-lock-file :lock))
+
+(defun unlock-file()
+  (interactive)
+  (do-lock-file :unlock))
+
+      
 
 (defun do-compile-and-sync-ojs-file (type)
   ;; find the script name
@@ -365,6 +410,9 @@
   (define-key *ojs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
   (define-key *ojs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
+
+  (define-key *ojs-mode-map* "\C-cl" 'lock-file)
+  (define-key *ojs-mode-map* "\C-cu" 'unlock-file)
 
   ;; comment / un-comment
   (define-key *ojs-mode-map* "\C-c;" 'comment-region)
