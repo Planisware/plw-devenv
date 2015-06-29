@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.19  2015/06/29 08:17:24  mgautier
+;;;; - remove useless message
+;;;;
 ;;;; Revision 3.18  2015/06/29 08:15:56  mgautier
 ;;;; - add functions to lock/unlock dataset from buffer
 ;;;; - C-cl -> lock
@@ -191,7 +194,7 @@
   (when (fi::lep-open-connection-p) (fi:eval-in-lisp (format "(when (fboundp 'jvs::compare-javascript-source-file)(jvs::compare-javascript-source-file \"%s\" \"%s\"))" script-name file-name))))
 
 (defun lock-status(script)
-  (message (fi:eval-in-lisp (format "(jvs::lock-status \"%s\")" script-name))))
+  (fi:eval-in-lisp (format "(jvs::lock-status \"%s\")" script-name)))
 
 (defun do-lock-file (kind)
   ;; find the script name
