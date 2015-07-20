@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.20  2015/07/20 16:41:40  mgautier
+;;;; - lock file with the user using emacs
+;;;;
 ;;;; Revision 3.19  2015/06/29 08:17:24  mgautier
 ;;;; - remove useless message
 ;;;;
@@ -199,11 +202,12 @@
 (defun do-lock-file (kind)
   ;; find the script name
   (let* ((script-name      (file-name-base (buffer-file-name)))
-	 (status           (lock-status script-name)))
+	 (status           (lock-status script-name))
+	 (user             (user-login-name)))
     (case kind
       (:lock
        (cond ((string-equal status "NOT-LOCKED")
-	      (fi:eval-in-lisp (format "(jvs::lock-file-by-name \"%s\")" script-name))
+	      (fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::lock-file-by-name \"%s\"))" user script-name))
 	      (message "File locked"))
 	     ((string-equal status "LOCKED-BY-YOURSELF")
 	      (message "File already locked by yourself"))
@@ -213,7 +217,7 @@
 	      (message "Err: Unable to lock file"))))
       (:unlock
        (cond ((string-equal status "LOCKED-BY-YOURSELF")
-	      (fi:eval-in-lisp (format "(jvs::unlock-file-by-name \"%s\")" script-name))
+	      (fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::unlock-file-by-name \"%s\"))" user script-name))
 	      (message "File unlocked"))
 	     ((string-equal status "NOT-LOCKED")
 	      (message "File already unlocked"))
@@ -221,7 +225,6 @@
 	      (message "File locked by %s" status))
 	     (t
 	      (message "Err: Unable to lock file")))))))
-	      
 
 (defun lock-file()
   (interactive)
