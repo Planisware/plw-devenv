@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.22  2015/09/17 14:38:24  troche
+;;;; * remove messages
+;;;;
 ;;;; Revision 3.21  2015/09/17 14:37:39  troche
 ;;;; * new function to check js syntax
 ;;;; * better ctrl+c . in js modes
@@ -329,8 +332,6 @@
 	   )
 	  ((and (stringp string)
 		(string-match ":EXIT-JS" string)) ;; exit when we read this, returned by the compilation functions
-	   (message "deleting %s %s" proc string)
-	   (message "send to filter %s" (substring string 0 (string-match ":EXIT-JS" string)))
 	   (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))
 	   ;;(delete-process proc)
 	   )	  
