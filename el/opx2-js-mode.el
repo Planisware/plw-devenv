@@ -32,6 +32,10 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.21  2015/09/17 14:37:39  troche
+;;;; * new function to check js syntax
+;;;; * better ctrl+c . in js modes
+;;;;
 ;;;; Revision 3.20  2015/07/20 16:41:40  mgautier
 ;;;; - lock file with the user using emacs
 ;;;;
@@ -157,14 +161,32 @@
 ;; we don't want to stack definition declarations
 (setq fi:maintain-definition-stack nil)
 
+;; try to get a full symbol from the position given
+(defun find-symbol-at-point (start end)
+  ;; is the previous char a : ?
+  (save-excursion
+    (goto-char start)
+    (backward-char)
+    (when (looking-at ":")
+      (while (and (not (or (looking-at "[ (]")
+			   (looking-at "^")))
+		  (> (point) (point-min)))
+	(backward-char))
+      (if (looking-at "^")
+	  (setq start (point))
+	(setq start (1+ (point))))))
+  (buffer-substring-no-properties start end))
+    
 ;; <ctrl-c .> in ojs file
 ;; works with ojs and lisp file and properly do the search
 (defun %ojs-find-definition (tag)
   (interactive
-     (if current-prefix-arg
-	 '(nil)
-       (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
-  (fi::lisp-find-definition-common (concat "js::" tag) nil))
+   (list 
+    (let ((bounds (bounds-of-thing-at-point 'symbol)))
+      (find-symbol-at-point (car bounds) (cdr bounds)))))
+  (if (string-match ":" tag)
+      (fi::lisp-find-definition-common tag nil)
+    (fi::lisp-find-definition-common (concat "js::" tag) nil)))
 
 (defun %ojs-list-who-calls (tag)
   (interactive 
@@ -234,7 +256,23 @@
   (interactive)
   (do-lock-file :unlock))
 
-      
+(defun check-ojs-region (beg end)
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end))
+                 (list (point-min) (point-max))))
+  (let* ((selection (buffer-substring-no-properties beg end))
+	 (buffer-name *ojs-compilation-buffer-name*)
+	 (buffer (or (get-buffer buffer-name)
+		     (get-buffer-create buffer-name)))
+	 (proc (get-buffer-process buffer)))
+    (unless proc
+      (setq proc
+	    (fi:open-lisp-listener
+	     -1
+	     *ojs-compilation-buffer-name*)))
+    (set-process-filter proc 'ojs-compilation-filter)
+    (process-send-string *ojs-compilation-buffer-name* (format "(javascript::check-js-syntax %S)\n" selection))))
+	 
 
 (defun do-compile-and-sync-ojs-file (type)
   ;; find the script name
@@ -271,8 +309,7 @@
 	      (setq proc
 		    (fi:open-lisp-listener
 		     -1
-		     *ojs-compilation-buffer-name*
-		     )))
+		     *ojs-compilation-buffer-name*)))
 	    (set-process-filter proc 'ojs-compilation-filter)
 	    (cond ((eq type :compile)
 		   (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")\n" script))
@@ -288,11 +325,15 @@
   (let ((case-fold-search nil))
     (cond ((and (stringp string)
 		(string-match "\\`[[:upper:]-]+([0-9]+): \\'" string));; exit when we go back to the top level (ie :res, :pop, etc)
-	   (delete-process proc))
+	   ;;(delete-process proc)
+	   )
 	  ((and (stringp string)
 		(string-match ":EXIT-JS" string)) ;; exit when we read this, returned by the compilation functions
+	   (message "deleting %s %s" proc string)
+	   (message "send to filter %s" (substring string 0 (string-match ":EXIT-JS" string)))
 	   (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))
-	   (delete-process proc))
+	   ;;(delete-process proc)
+	   )	  
 	  (t
 	   (fi::subprocess-filter proc string)))))
 
@@ -413,6 +454,7 @@
   (define-key *ojs-mode-map* "\C-c." '%ojs-find-definition)
   (define-key *ojs-mode-map* "\C-cc" '%ojs-list-who-calls)
   (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
+  (define-key *ojs-mode-map* "\C-cs" 'check-ojs-region)
   (define-key *ojs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
   (define-key *ojs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
@@ -435,6 +477,8 @@
     '("OPX2 Javascript"
       ["Compile and load file..." compile-ojs-file
        t]
+      ["Check syntax of selected region" check-ojs-region
+       t]	    
       ["Compile, load and synchronize file..." save-compile-and-sync-ojs-file
        t]
       ["Find function definition..." %ojs-find-definition
