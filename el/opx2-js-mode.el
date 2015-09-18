@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.23  2015/09/18 13:48:59  troche
+;;;; * smarter control c point in js mode
+;;;;
 ;;;; Revision 3.22  2015/09/17 14:38:24  troche
 ;;;; * remove messages
 ;;;;
@@ -124,6 +127,9 @@
     ;; "\\<xyz\\>" matches part of e.g. "_xyz" and "xyz_abc". Defines
     ;; it as word constituent for now.
     (modify-syntax-entry ?_ "w" table)
+    (modify-syntax-entry ?_ "_" table)
+    (modify-syntax-entry ?: "_" table)
+    (modify-syntax-entry ?- "_" table)
     table)
   "Syntax table used in JavaScript mode.")
 
@@ -184,19 +190,21 @@
 ;; works with ojs and lisp file and properly do the search
 (defun %ojs-find-definition (tag)
   (interactive
-   (list 
-    (let ((bounds (bounds-of-thing-at-point 'symbol)))
-      (find-symbol-at-point (car bounds) (cdr bounds)))))
+   (if current-prefix-arg
+       '(t)
+     (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
   (if (string-match ":" tag)
       (fi::lisp-find-definition-common tag nil)
     (fi::lisp-find-definition-common (concat "js::" tag) nil)))
-
+  
 (defun %ojs-list-who-calls (tag)
-  (interactive 
+  (interactive
    (if current-prefix-arg
        '(nil)
      (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
-  (fi:list-who-calls (concat "js::" tag)))
+  (if (string-match ":" tag)
+      (fi:list-who-calls tag nil)
+    (fi:list-who-calls (concat "js::" tag) nil)))
 
 (defvar *ojs-compilation-buffer-name* "*OJS compilation traces*")
 
