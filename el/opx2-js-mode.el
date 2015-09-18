@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.24  2015/09/18 14:29:27  troche
+;;;; * _ as word separator
+;;;;
 ;;;; Revision 3.23  2015/09/18 13:48:59  troche
 ;;;; * smarter control c point in js mode
 ;;;;
@@ -127,7 +130,7 @@
     ;; "\\<xyz\\>" matches part of e.g. "_xyz" and "xyz_abc". Defines
     ;; it as word constituent for now.
     (modify-syntax-entry ?_ "w" table)
-    (modify-syntax-entry ?_ "_" table)
+;;    (modify-syntax-entry ?_ "_" table)
     (modify-syntax-entry ?: "_" table)
     (modify-syntax-entry ?- "_" table)
     table)
