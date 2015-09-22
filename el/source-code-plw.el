@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.8  2015/09/22 08:32:43  troche
+;;;; * proper mode in definition buffers
+;;;;
 ;;;; Revision 3.7  2015/09/22 08:15:41  troche
 ;;;; * nicer display of callers / definitions with source file and sort possibilities
 ;;;; * C-C ! on a defgeneric lists all defined methods in a buffer
@@ -576,8 +579,8 @@ The keymap for this mode is bound to fi:definition-mode-map:
 Entry to this mode runs the fi:definition-mode-hook."
   (interactive)
   (kill-all-local-variables)
-  (setq major-mode 'fi:definition-mode)
-  (setq mode-name "Definition Mode")
+  (setq major-mode 'fi:opx2-definition-mode)
+  (setq mode-name "OPX2 definition Mode")
 
   (make-local-variable 'truncate-lines)
   (setq truncate-lines t)
