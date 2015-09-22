@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.9  2015/09/22 13:21:19  troche
+;;;; * amelioration of try-to-find-in-file
+;;;;
 ;;;; Revision 3.8  2015/09/22 08:32:43  troche
 ;;;; * proper mode in definition buffers
 ;;;;
@@ -369,6 +372,7 @@
 	    (find-file pathname))
 	  ;; rfe10778. why is the set-mark necessary?
 	  ;; (if xb (set-mark (point)))
+	  (message "this is %s point is %s" thing point)
 	  (if (null point)
 	      (try-to-find-in-file thing pathname)
 	    (progn
@@ -423,12 +427,8 @@
 		;; try to find the defun wihtout the package
 		(progn ;;(message "Searching %s" (concat "^(" *defun-words* "[ \t]+\\_<" function-name "\\_>[ \t(]+"))
 		  (if method-name
-		      (re-search-forward (concat "^(" *defun-words* "[ \t(]+\\_<" method-name "\\_>[ \t(]+") (point-max) t)
-		    (re-search-forward (concat "^(" *defun-words* "[ \t(]+\\_<" function-name "\\_>[ \t(]+") (point-max) t)))
-		;; try to find the defun with the package
-		(unless (equal function-name thing)
-		  ;;(message "Searching %s" (concat "^(" *defun-words* "[ \t]+\\_<" this "\\_>[ \t(]+"))
-		  (re-search-forward (concat "^(" *defun-words* "[ \t(]+\\_<" thing "\\_>[ \t(]+") (point-max) t))))
+		      (re-search-forward (concat "^(" *defun-words* "[ \t(]+\\_<\\(\\w+:+\\)?" method-name "\\_>[ \t(]+") (point-max) t)
+		    (re-search-forward (concat "^(" *defun-words* "[ \t(]+\\_<\\(\\w+:+\\)?" function-name "\\_>[ \t(]+") (point-max) t)))))
 	      (t
 	       (message "Unknown filetype %s" pathname)
 	       nil)
