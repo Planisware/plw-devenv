@@ -32,6 +32,10 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.7  2015/09/22 08:15:41  troche
+;;;; * nicer display of callers / definitions with source file and sort possibilities
+;;;; * C-C ! on a defgeneric lists all defined methods in a buffer
+;;;;
 ;;;; Revision 3.6  2015/01/28 15:13:32  troche
 ;;;; * Allow spaces between DOC and the : in docstrings of patches
 ;;;;
@@ -310,7 +314,8 @@
   (define-key fi:common-lisp-mode-map "\C-or" 'opx2-redefine-function)
   (define-key fi:common-lisp-mode-map "\C-od" 'opx2-add-documentation)
   (define-key fi:common-lisp-mode-map "\C-ov" 'opx2-compare-redefinition)
-  (define-key fi:common-lisp-mode-map "\C-ot" 'opx2-create-test-template))
+  (define-key fi:common-lisp-mode-map "\C-ot" 'opx2-create-test-template)
+  )
 
 (add-hook 'fi:common-lisp-mode-hook 'add-redefinition-shortcuts)
 
@@ -437,3 +442,166 @@
 		 thing))
 	(goto-char (point-min))))))
       
+
+;; new : list all methods of a defgeneric in a buffer
+(defun opx2-list-methods (&optional fspec)
+  ;;  (interactive (fi::get-default-symbol "List methods of" nil nil t))
+  (interactive (fi::get-default-symbol "List methods of" nil nil))
+  (message "Finding methods of %s..." fspec)
+  (lep::list-fspecs-common fspec
+			   'opx2-lisp::list-methods
+			   "Cannot find the callers: %s"
+			   "caller"))
+
+;;;======================== tab list display ===============================
+(defun display-list-in-current-buffer (list header-list sort-list )
+  (setq tabulated-list-format  header-list)
+  (setq tabulated-list-entries list)
+  (setq tabulated-list-sort-key sort-list)
+  (setq tabulated-list-use-header-line t)
+  (tabulated-list-init-header)
+  (tabulated-list-print))
+
+(defun print-value (val)
+  (or (and (stringp val) (substring-no-properties val
+						  (if (= (aref val 0) 34)
+						      1
+						    0)
+						  (if (= (aref val (1- (length val))) 34)
+						      (1- (length val))
+						    (length val))))
+      (and (symbolp val) (symbol-name val))
+      (and val (format "%s" val))
+      ""))
+
+;;;======================== redefinitions ==================================
+
+;; use opx2-lisp::who-calls
+(defun fi:list-who-calls (&optional fspec)
+  "List all the callers of FSPEC.  `List' means to show them in a buffer in
+definition mode.  The source for each definition can be easily found via
+key bindings in definition mode.  The default FSPEC is taken from the text
+surrounding the point.  fi:package is used to determine from which Common
+Lisp package the operation is done.  In a subprocess buffer, the package is
+tracked automatically.  In source buffer, the package is parsed at file
+visit time."
+  (interactive (fi::get-default-symbol "List who calls" nil nil))
+  ;; Since this takes a while, tell the user that it has started.
+  (message "Finding callers of %s..." fspec)
+  (lep::list-fspecs-common fspec
+			   'opx2-lisp::who-calls
+			   "Cannot find the callers: %s"
+			   "caller"))
+
+(defvar *definitions-list-headers* (vector '("Name"        80 t)
+					   '("Source file" 50 t)))
+
+(defvar *definitions-list-sort* '("Source file"))
+;;(defvar *definitions-list-sort* nil)
+
+
+;; use a tabulated list to display things nicely
+(defun lep:display-some-definitions (xpackage buffer-definitions
+				     fn-and-arguments
+				     &optional buffer-name)
+  (let ((buffer (get-buffer-create (or buffer-name "*definitions*")))
+	(i 0)
+	new-list)
+    (fi::goto-definitions-buffer
+     buffer
+     'lep::definition-mode-saved-window-configuration)
+    (save-excursion
+      (set-buffer buffer)
+      (setq buffer-read-only nil)
+      (erase-buffer)
+      (setq truncate-lines t)		;smh 22jul94
+      (fi:opx2-definition-mode)
+      (set-buffer-modified-p nil)
+      (setq buffer-read-only t)
+      (setq lep::definitions (mapcar 'car buffer-definitions))
+      (setq lep::definition-types (mapcar 'second buffer-definitions))
+      (setq lep::definition-other-args (mapcar 'third buffer-definitions))
+      (setq lep::definition-finding-function fn-and-arguments)
+      (setq fi:package xpackage)
+      (dolist (item buffer-definitions)
+	(push (list i
+		    (vector (print-value (car item))
+			    (print-value (second item))))
+	      new-list)
+	(setq i (1+ i)))
+      (display-list-in-current-buffer new-list
+				      *definitions-list-headers*
+				      *definitions-list-sort*)
+      (goto-char (point-min)))))
+
+;; use the index provided by the tabulation id 
+(defun fi:definition-mode-goto-definition ()
+  "Find the definition associated with the entry on the current line.  This
+uses the same mechanism as fi:lisp-find-definition, using dynamic
+information in the Common Lisp environment."
+  (interactive)
+  (message "Finding%s definition..."
+	   (if lep::inverse-definitions " inverse" ""))
+;;  (let* ((n (count-lines (point-min)
+  ;;			 (save-excursion (beginning-of-line) (point))))
+  (let* ((n (tabulated-list-get-id))
+	 (buffer (current-buffer))
+	 (def (nth n lep::definitions))
+	 (other (nth n lep::definition-other-args))
+	 (type (nth n lep::definition-types)))
+    (when (and (not (equal type '(nil))) lep::definition-finding-function)
+      (apply (car lep::definition-finding-function)
+	     def type buffer
+	     (append other (cdr lep::definition-finding-function))))))
+
+;;; new, based on fi:definition-mode
+(define-derived-mode fi:opx2-definition-mode tabulated-list-mode "Definitions" ()
+  "A major mode for viewing definitions of objects defined in the Common
+Lisp environment.  The definitions are put in a buffer called
+*definitions*, and each line contains the name and type of the definition.
+The type is one of:
+
+	:operator	for functions, methods, generic functions
+				and macros,
+	:type		for classes (types),
+	:setf-method	for setf methods, or
+	:variable	for constants and variables.
+
+Definition mode is used by other tools, such as the changed-definition
+commands, fi:list-who-calls as well as fi:list-buffer-definitions.
+
+The keymap for this mode is bound to fi:definition-mode-map:
+
+<font face=\"Courier New\">\\{fi:definition-mode-map}</font>
+Entry to this mode runs the fi:definition-mode-hook."
+  (interactive)
+  (kill-all-local-variables)
+  (setq major-mode 'fi:definition-mode)
+  (setq mode-name "Definition Mode")
+
+  (make-local-variable 'truncate-lines)
+  (setq truncate-lines t)
+  (fi::definition-mode-fix-buffer)
+
+  (make-local-variable 'lep::definitions)
+  (make-local-variable 'lep::definition-types)
+  (make-local-variable 'lep::definition-other-args)
+  (make-local-variable 'lep::definition-finding-function)
+  (make-local-variable 'lep::inverse-definitions)
+
+  (setq lep::inverse-definitions nil)	;In fsf Emacs a local var remains
+					;unbound unless explicitly set.
+  
+  (define-key fi:opx2-definition-mode-map "\C-_"  'fi:definition-mode-undo)
+  (define-key fi:opx2-definition-mode-map "."     'fi:definition-mode-goto-definition)
+  (define-key fi:opx2-definition-mode-map "\r"    'fi:definition-mode-goto-definition)
+  (define-key fi:opx2-definition-mode-map "\C-c"  (make-sparse-keymap))
+  (define-key fi:opx2-definition-mode-map "\C-c." 'fi:definition-mode-goto-definition)
+  (define-key fi:opx2-definition-mode-map "n"     'fi:definition-mode-goto-next)
+  (define-key fi:opx2-definition-mode-map "p"     'fi:definition-mode-goto-previous)
+  (define-key fi:opx2-definition-mode-map "t"     'fi:definition-mode-toggle-trace)
+  (define-key fi:opx2-definition-mode-map "q"     'fi:definition-mode-quit)
+
+  (use-local-map fi:opx2-definition-mode-map)
+  
+  (run-hooks 'fi:definition-mode-hook))

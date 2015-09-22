@@ -32,6 +32,10 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.5  2015/09/22 08:15:41  troche
+;;;; * nicer display of callers / definitions with source file and sort possibilities
+;;;; * C-C ! on a defgeneric lists all defined methods in a buffer
+;;;;
 ;;;; Revision 3.4  2015/06/26 13:22:20  mgautier
 ;;;; bind C c-: to uncomment region
 ;;;;
@@ -98,6 +102,8 @@
 	    (t
 	     (define-key map (kbd "<C-SPC>") 'fi:lisp-complete-symbol) ;;ctrl + space
 	     (define-key map (kbd "<A-SPC>") 'set-mark-command))))
+  ;; control c ! to list methods
+  (define-key map "\C-c!" 'opx2-list-methods)
   ;;Make supr behave correctly in xemacs (works already this way in emacs)
   ;;(define-key map "\C-?" 'delete-char)
   )
@@ -108,6 +114,8 @@
   ;; General shortcuts
   ;;(define-key fi:common-lisp-mode-map "C-M-q" 'indent-defun)
   (define-key fi:common-lisp-mode-map "\C-c\C-c" 'fi:lisp-compile-defun) ;;looks like it's not de the default
+
+  (define-key fi:common-lisp-mode-map "\C-c!" 'opx2-list-methods)
 
   ;;'OPX2' CVS bindings (defined here but specific to emacs or xemacs and defined in main .el file)
   (define-key fi:common-lisp-mode-map "\C-oc" 'create-opx2)
@@ -138,4 +146,5 @@
 ;;  controversial
 ;;  (put 'if 'fi:common-lisp-indent-hook nil)
 ;;  (put 'if 'fi:lisp-indent-hook nil)
+
 
