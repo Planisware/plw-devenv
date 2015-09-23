@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.10  2015/09/23 08:22:50  troche
+;;;; * checks that custom functions exists
+;;;;
 ;;;; Revision 3.9  2015/09/22 13:21:19  troche
 ;;;; * amelioration of try-to-find-in-file
 ;;;;
@@ -451,10 +454,14 @@
   ;;  (interactive (fi::get-default-symbol "List methods of" nil nil t))
   (interactive (fi::get-default-symbol "List methods of" nil nil))
   (message "Finding methods of %s..." fspec)
-  (lep::list-fspecs-common fspec
-			   'opx2-lisp::list-methods
-			   "Cannot find the callers: %s"
-			   "caller"))
+  (if (fi:eval-in-lisp "(if (fboundp 'opx2-lisp::list-methods) t nil)")
+      (lep::list-fspecs-common fspec
+			       'opx2-lisp::list-methods
+			       "Cannot find the methods of %s"
+			       "caller")
+    (message "list-methods function not found")))
+  
+  
 
 ;;;======================== tab list display ===============================
 (defun display-list-in-current-buffer (list header-list sort-list )
@@ -492,7 +499,9 @@ visit time."
   ;; Since this takes a while, tell the user that it has started.
   (message "Finding callers of %s..." fspec)
   (lep::list-fspecs-common fspec
-			   'opx2-lisp::who-calls
+			   (if (fi:eval-in-lisp "(if (fboundp 'opx2-lisp::who-calls) t nil)")			       
+			       'opx2-lisp::who-calls
+			     'lep::who-calls)
 			   "Cannot find the callers: %s"
 			   "caller"))
 
