@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.6  2015/09/28 12:18:07  mgautier
+;;;; vim '%' -> go to the closing/opening parenthesis if on a parenthesis or insert a %
+;;;;
 ;;;; Revision 3.5  2015/09/22 08:15:41  troche
 ;;;; * nicer display of callers / definitions with source file and sort possibilities
 ;;;; * C-C ! on a defgeneric lists all defined methods in a buffer
@@ -92,6 +95,13 @@
     (beginning-of-defun)
     (fi:indent-sexp)))
 
+(defun match-paren (arg)
+  "Go to the matching paren if on a paren; otherwise insert %."
+  (interactive "p")
+  (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
+        ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
+        (t (self-insert-command (or arg 1)))))
+
 (defvar *enable-lisp-completion* t)
 (defvar *reverse-completion-shortcuts* nil)
 
@@ -123,6 +133,9 @@
   (define-key fi:common-lisp-mode-map "\C-ou" 'unedit-opx2)
 
   (define-key fi:common-lisp-mode-map "\C-c:" 'uncomment-region)
+
+  
+  (define-key fi:common-lisp-mode-map "%" 'match-paren)
 
   ;;Common keys for all "lisp" modes
   (redefine-common-keys fi:common-lisp-mode-map))
