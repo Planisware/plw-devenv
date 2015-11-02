@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.11  2015/11/02 14:04:59  troche
+;;;; remove trace
+;;;;
 ;;;; Revision 3.10  2015/09/23 08:22:50  troche
 ;;;; * checks that custom functions exists
 ;;;;
@@ -375,7 +378,7 @@
 	    (find-file pathname))
 	  ;; rfe10778. why is the set-mark necessary?
 	  ;; (if xb (set-mark (point)))
-	  (message "this is %s point is %s" thing point)
+;;	  (message "this is %s point is %s" thing point)
 	  (if (null point)
 	      (try-to-find-in-file thing pathname)
 	    (progn
