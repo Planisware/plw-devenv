@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.8  2015/11/02 14:54:03  troche
+;;;; * force the matching of package names with -
+;;;;
 ;;;; Revision 3.7  2015/02/23 09:13:27  sspanu
 ;;;; Dirty hack for xemacs.
 ;;;;
@@ -239,7 +242,7 @@
   
   (defvar lisp-shell-nb-face 'lisp-shell-nb-face)
   
-  (setq %hl-shell-regexp "\\(\\sw+\\)(\\([0-9]+\\)):")
+  (setq %hl-shell-regexp "\\(\\(?:\\sw\\|-\\)+\\)(\\([0-9]+\\)):")
   (setq hl-shell-regexp (concatenate 'string "^" %hl-shell-regexp))
   (setq hl-shell-err-regexp (concatenate 'string "^\\(\[[0-9c]*\]\\) " %hl-shell-regexp))
   
