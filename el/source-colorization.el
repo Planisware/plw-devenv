@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.9  2015/11/05 09:49:17  mgautier
+;;;; - revert change in shell colorization due to emacs freeze
+;;;;
 ;;;; Revision 3.8  2015/11/02 14:54:03  troche
 ;;;; * force the matching of package names with -
 ;;;;
@@ -231,7 +234,7 @@
   (defface lisp-shell-tcp-face
     '((t :foreground "#66FF66"))
     ""
-    :group 'ophx2-alisp)
+    :group 'ophx2-alisp)2
   (defvar lisp-shell-tcp-face 'lisp-shell-tcp-face)
   
   
@@ -242,7 +245,8 @@
   
   (defvar lisp-shell-nb-face 'lisp-shell-nb-face)
   
-  (setq %hl-shell-regexp "\\(\\(?:\\sw\\|-\\)+\\)(\\([0-9]+\\)):")
+;  (setq %hl-shell-regexp "\\(\\(?:\\sw\\|-\\)+\\)(\\([0-9]+\\)):")
+  (setq %hl-shell-regexp "\\(\\sw+\\)(\\([0-9]+\\)):")
   (setq hl-shell-regexp (concatenate 'string "^" %hl-shell-regexp))
   (setq hl-shell-err-regexp (concatenate 'string "^\\(\[[0-9c]*\]\\) " %hl-shell-regexp))
   
