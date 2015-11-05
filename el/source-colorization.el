@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.10  2015/11/05 10:02:21  mgautier
+;;;; - rewrite thibault change
+;;;;
 ;;;; Revision 3.9  2015/11/05 09:49:17  mgautier
 ;;;; - revert change in shell colorization due to emacs freeze
 ;;;;
@@ -246,17 +249,18 @@
   (defvar lisp-shell-nb-face 'lisp-shell-nb-face)
   
 ;  (setq %hl-shell-regexp "\\(\\(?:\\sw\\|-\\)+\\)(\\([0-9]+\\)):")
-  (setq %hl-shell-regexp "\\(\\sw+\\)(\\([0-9]+\\)):")
+;  (setq %hl-shell-regexp "\\(\\sw+\\)(\\([0-9]+\\)):")
+  (setq %hl-shell-regexp "\\(\\sw+\\(-\\sw+\\)?\\)(\\([0-9]+\\)):")
   (setq hl-shell-regexp (concatenate 'string "^" %hl-shell-regexp))
   (setq hl-shell-err-regexp (concatenate 'string "^\\(\[[0-9c]*\]\\) " %hl-shell-regexp))
   
   (setq lisp-shell-hg-rules
-	`((,hl-shell-regexp      (1  lisp-shell-face) (2 lisp-shell-nb-face))
-	  (,hl-shell-err-regexp  (1 font-lock-warning-face) (2  lisp-shell-face) (3 lisp-shell-nb-face))))
+	`((,hl-shell-regexp      (1  lisp-shell-face) (3 lisp-shell-nb-face))
+	  (,hl-shell-err-regexp  (1 font-lock-warning-face) (2  lisp-shell-face) (4 lisp-shell-nb-face))))
   
   (setq lisp-shell-tcp-hg-rules
-	`((,hl-shell-regexp      (1  lisp-shell-tcp-face) (2 lisp-shell-nb-face))
-	  (,hl-shell-err-regexp  (1 font-lock-warning-face) (2  lisp-shell-tcp-face) (3 lisp-shell-nb-face))))
+	`((,hl-shell-regexp      (1  lisp-shell-tcp-face) (3 lisp-shell-nb-face))
+	  (,hl-shell-err-regexp  (1 font-lock-warning-face) (2  lisp-shell-tcp-face) (4 lisp-shell-nb-face))))
   
 
   (font-lock-add-keywords 'fi:common-lisp-mode highlight-rules-new)
