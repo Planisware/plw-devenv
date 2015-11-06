@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.9  2015/11/06 10:23:33  troche
+;;;; * proper lisp completion when you start with a package
+;;;;
 ;;;; Revision 3.8  2015/06/18 08:32:28  troche
 ;;;; * configuration
 ;;;;
@@ -75,8 +78,13 @@
 					;(prefix . alixsp-ac-prefix)
     (action . alisp-function-ac-action)
     (symbol . "al")
+    (match . alisp-ac-match)
     (requires . -1)))
 
+;; we return everything, because the list we got from the lisp is already filtered
+(defun alisp-ac-match (string list)
+  list)
+  
 (defun alisp-functions-ac-document (symbol)
   symbol)
 
