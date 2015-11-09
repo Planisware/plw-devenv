@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.7  2015/11/09 09:18:39  troche
+;;;; * control C + . working properly on defmethod
+;;;;
 ;;;; Revision 3.6  2015/09/28 12:18:07  mgautier
 ;;;; vim '%' -> go to the closing/opening parenthesis if on a parenthesis or insert a %
 ;;;;
@@ -148,7 +151,6 @@
 
 (setq fi:eli-compatibility-mode nil) ;;do not try to connect on 9666 (acl <= 6.2)
 
-
 ;; indentation rules
 (put 'letf 'fi:common-lisp-indent-hook '(like flet))
 (put 'letf 'fi:lisp-indent-hook '(like flet))
@@ -160,4 +162,154 @@
 ;;  (put 'if 'fi:common-lisp-indent-hook nil)
 ;;  (put 'if 'fi:lisp-indent-hook nil)
 
+;; detect packages and methods better
 
+
+(defun remove-package (str)
+  (let ((start (or (and (string-match "[\\w_]*:+[\\w_]*" str)
+			(match-end 0))
+		   0)))
+    (when (> start (length str))
+      (setq start 0))
+    (substring-no-properties str start)))
+
+(defun get-package-at-point ()
+  ;; try to find the package if present
+  ;; back one symbol
+  (save-excursion
+    (ignore-errors
+      (forward-sexp -1))
+    (when (looking-at "\\sw+::\?\\sw+")
+      (fi::defontify-string
+       (buffer-substring (point)
+			 (progn 
+			   (while (not (looking-at ":"))
+			     (forward-char 1))
+			   (point)))))))
+
+(defun get-method-symbol-at-point (&optional up-p)
+  ;; do we have a defmethod ?
+  (if (save-excursion
+	(ignore-errors 
+	  (forward-sexp -1)
+	  (forward-sexp -1))
+	(looking-at "defmethod"))
+      (let* ((package (or (get-package-at-point)
+			  (fi::package)))
+	     (symbol (get-simple-symbol-at-point nil package))
+	     start-class
+	     class)
+	(save-excursion
+	  ;; get the class
+	  (forward-sexp 1)	  
+	  (while (looking-at " ")
+	    (forward-char 1))
+	  ;; we are at the start of the specifier
+	  ;; we should have somethind like ((var class	    
+	  (while (looking-at "[ (]")
+	    (forward-char 1))
+	  (forward-sexp 1)	    
+	  (while (looking-at " ")
+	    (forward-char 1))	    
+	  (setq start-class (point))
+	  (forward-sexp 1)
+	  (setq class
+		(remove-package
+		 (fi::defontify-string
+		  (buffer-substring
+		   start-class
+		   (point)))))
+	  ;; do we have a package in our symbol ?
+	  (cond (package
+		 ;; try to find the "real" package of the defgeneric
+		 (setq package (fi:eval-in-lisp (format "(opx2-lisp::find-real-package \"%s\" \"%s\")" symbol package)))
+		 (format "%s::METHOD.%s.%s" (upcase package) (upcase symbol) (upcase class)))
+		(t
+		 (format "METHOD.%s.%s" (upcase symbol) (upcase class))))))
+    (get-simple-symbol-at-point nil nil)))
+
+;; comes from fi::get-symbol-at-point
+;; redefined from fi-lep.el
+(defun get-simple-symbol-at-point (&optional up-p package)
+  (let* ((symbol
+	  (cond
+	   ((looking-at "\\sw\\|\\s_")
+	    (save-excursion
+	      (while (looking-at "\\sw\\|\\s_")
+		(forward-char 1))			
+	      (fi::defontify-string
+	       (buffer-substring
+		(point)
+		(progn (forward-sexp -1)
+		       (while (looking-at "\\s'")
+			 (forward-char 1))
+		       (point))))))		
+	   (t
+	    (condition-case ()
+		(save-excursion
+		  (if up-p
+		      (let ((opoint (point)))
+			(cond ((= (following-char) ?\()
+			       (forward-char 1))
+			      ((= (preceding-char) ?\))
+			       (forward-char -1)))
+			(up-list -1)
+			(forward-char 1)
+			(if (looking-at "def")
+			    (goto-char opoint)
+			  (if (looking-at "funcall\\|apply")
+			      (progn
+				(forward-sexp 2)
+				(backward-sexp 1)
+				(if (looking-at "#'")
+				    (forward-char 2)
+				  (if (looking-at "(function")
+				      (progn
+					(forward-char 1)
+					(forward-sexp 2)
+					(backward-sexp 1)))))))))
+		  (while (looking-at "\\sw\\|\\s_")
+		    (forward-char 1))
+		  (if (re-search-backward "\\sw\\|\\s_" nil t)
+		      (progn (forward-char 1)
+			     (fi::defontify-string
+			      (buffer-substring
+			       (point)
+			       (progn (forward-sexp -1)
+				      (while (looking-at "\\s'")
+					(forward-char 1))
+				      (point)))))
+		    nil))
+	      (error nil))))))
+    (when (and symbol package) (setq symbol (remove-package symbol)))
+    (when (and symbol (not package)) (setq symbol (fi::normalize-symbol-package symbol)))
+    (or symbol
+	(if (and up-p (null symbol))
+	    (fi::get-symbol-at-point)))))
+
+;; get the full symbol at point
+;; ie the symbol
+;; and if we are on a defmethod, get the method symbol
+(defun fi::get-symbol-at-point (&optional up-p no-method)
+  (if no-method
+      (get-simple-symbol-at-point up-p nil)
+    (get-method-symbol-at-point up-p)))
+
+;; redefined from fi-utils.el
+;; optional argument method?
+(defun fi::get-default-symbol (prompt &optional up-p ignore-keywords no-method)
+  ;;  (let ((symbol-at-point (fi::get-symbol-at-point up-p no-method)))
+  (let ((symbol-at-point (fi::get-symbol-at-point up-p no-method)))
+    (if fi::use-symbol-at-point
+	(list symbol-at-point)
+      (let ((read-symbol
+	     (let ((fi::original-package (fi::package)))
+	       (fi::ensure-minibuffer-visible)
+	       (fi::completing-read
+		(if symbol-at-point
+		    (format "%s: (default %s) " prompt symbol-at-point)
+		  (format "%s: " prompt))
+		'fi::minibuffer-complete))))
+	(list (if (string= read-symbol "")
+		  symbol-at-point
+		read-symbol))))))
