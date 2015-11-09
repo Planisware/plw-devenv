@@ -32,6 +32,10 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.25  2015/11/09 15:52:03  troche
+;;;; * do not exit js synchro thread
+;;;; * Ctrl C , in javascript mode
+;;;;
 ;;;; Revision 3.24  2015/09/18 14:29:27  troche
 ;;;; * _ as word separator
 ;;;;
@@ -206,8 +210,8 @@
        '(nil)
      (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
   (if (string-match ":" tag)
-      (fi:list-who-calls tag nil)
-    (fi:list-who-calls (concat "js::" tag) nil)))
+      (fi:list-who-calls tag)
+    (fi:list-who-calls (concat "js::" tag))))
 
 (defvar *ojs-compilation-buffer-name* "*OJS compilation traces*")
 
@@ -283,7 +287,8 @@
       (setq proc
 	    (fi:open-lisp-listener
 	     -1
-	     *ojs-compilation-buffer-name*)))
+	     *ojs-compilation-buffer-name*))
+      (set-process-query-on-exit-flag (get-process buffer-name) nil))
     (set-process-filter proc 'ojs-compilation-filter)
     (process-send-string *ojs-compilation-buffer-name* (format "(javascript::check-js-syntax %S)\n" selection))))
 	 
@@ -304,10 +309,10 @@
 	    (message "Impossible to %s the script because the current file does not match script source file :
      Current file is                : %s
      Source file in the database is : %s"
-		     (if (eq type :compile) "compile" "synchronize")
-		     (buffer-file-name)
-		     (fi:eval-in-lisp (format "(jvs::javascript-synchronize-with-file (object::get-object 'jvs::javascript \"%s\"))" script))
-		     )
+				      (if (eq type :compile) "compile" "synchronize")
+				      (buffer-file-name)
+				      (fi:eval-in-lisp (format "(jvs::javascript-synchronize-with-file (object::get-object 'jvs::javascript \"%s\"))" script))
+				      )
 	    (throw 'exit nil))
 	  ;; check that our file is commited
 	  (when (and (eq type :compile-and-sync)
@@ -323,7 +328,8 @@
 	      (setq proc
 		    (fi:open-lisp-listener
 		     -1
-		     *ojs-compilation-buffer-name*)))
+		     *ojs-compilation-buffer-name*))
+	      (set-process-query-on-exit-flag (get-process buffer-name) nil))
 	    (set-process-filter proc 'ojs-compilation-filter)
 	    (cond ((eq type :compile)
 		   (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")\n" script))
@@ -464,6 +470,7 @@
 
   ;; custom keybindings from menu
   (define-key *ojs-mode-map* "\C-c." '%ojs-find-definition)
+  (define-key *ojs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
   (define-key *ojs-mode-map* "\C-cc" '%ojs-list-who-calls)
   (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
   (define-key *ojs-mode-map* "\C-cs" 'check-ojs-region)
