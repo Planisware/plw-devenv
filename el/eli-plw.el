@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.9  2015/11/10 12:38:19  troche
+;;;; * optimization of previous commit
+;;;;
 ;;;; Revision 3.8  2015/11/10 10:17:12  troche
 ;;;; * better identification of symbols in lisp modes
 ;;;;
@@ -126,9 +129,6 @@
 
 (defun set-lisp-mode ()
   (auto-fill-mode -1) ;;Disable auto lines break
-
-  ;; | is part of a symbol
-  (modify-syntax-entry ?| "_"  fi:lisp-mode-syntax-table)
   
   ;; General shortcuts
   ;;(define-key fi:common-lisp-mode-map "C-M-q" 'indent-defun)
@@ -238,10 +238,10 @@
 (defun get-simple-symbol-at-point (&optional up-p package)
   (let* ((symbol
 	  (cond
-	   ((looking-at "\\sw\\|\\s_\\|(\\|)")
+	   ((looking-at "\\sw\\|\\s_\\||")
 	    (save-excursion
-	      ;; go at the beginning of the word, we include parenthesis (they can be part of function names)
-	      (while (looking-at "\\sw\\|\\s_\\|(\\|)")
+	      ;; go at the beginning of the word, we include |
+	      (while (looking-at "\\sw\\|\\s_\\||")
 		(backward-char 1))
 	      ;; advance until we have a "real" start of worf)
 	      (while (not (looking-at "\\sw\\|\\s_"))
@@ -250,7 +250,8 @@
 	       (buffer-substring
 		(point)
 		(progn (forward-sexp 1)
-		       (while (looking-at "\\sw\\|\\s_\\|(\\|)")
+		       ;; advance if we have a |
+		       (when (looking-at "|")
 			 (forward-sexp 1))
 		       (while (looking-at "\\s'")
 			 (forward-char 1))
