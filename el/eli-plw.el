@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.10  2015/11/18 10:01:19  troche
+;;;; * New entry in ACL menu : Restart Emacs / Common Lisp connection
+;;;;
 ;;;; Revision 3.9  2015/11/10 12:38:19  troche
 ;;;; * optimization of previous commit
 ;;;;
@@ -325,3 +328,27 @@
 	(list (if (string= read-symbol "")
 		  symbol-at-point
 		read-symbol))))))
+
+(defun restart-emacs-lisp-connection ()
+  (interactive)
+  (unless (fi::lep-open-connection-p)
+    (setq fi::*connection* nil)
+    (fi::ensure-lep-connection)))
+
+(defun add-restart-item ()
+  (let ((map (cond
+	      ((eq major-mode 'fi:common-lisp-mode) fi:common-lisp-mode-map)
+	      ((eq major-mode 'fi:inferior-common-lisp-mode)
+	       fi:inferior-common-lisp-mode-map)
+	      ((eq major-mode 'fi:lisp-listener-mode)
+	       fi:lisp-listener-mode-map)
+	      (t (error "can't add these menus in this mode: %s"
+			major-mode)))))   
+    (define-key map [menu-bar acl restart-connection]
+      (fi::menu "Restart Emacs / Common Lisp connection"
+		'restart-emacs-lisp-connection
+		:enable '(not (fi::connection-open))))))
+
+(add-hook 'fi:inferior-common-lisp-mode-hook 'add-restart-item t)
+(add-hook 'fi:common-lisp-mode-hook 'add-restart-item t)
+(add-hook 'fi:lisp-listener-mode-hook 'add-restart-item t)
