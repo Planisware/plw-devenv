@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.12  2015/12/03 15:33:24  troche
+;;;; * debug of control C + . in callers / list methods buffer
+;;;;
 ;;;; Revision 3.11  2015/11/02 14:04:59  troche
 ;;;; remove trace
 ;;;;
@@ -462,8 +465,7 @@
 			       'opx2-lisp::list-methods
 			       "Cannot find the methods of %s"
 			       "caller")
-    (message "list-methods function not found")))
-  
+    (message "list-methods function not found")))  
   
 
 ;;;======================== tab list display ===============================
@@ -533,7 +535,11 @@ visit time."
       (fi:opx2-definition-mode)
       (set-buffer-modified-p nil)
       (setq buffer-read-only t)
-      (setq lep::definitions (mapcar 'car buffer-definitions))
+      (setq lep::definitions (mapcar (lambda (l)
+				       (if (third l)
+					   (format "%s::%s" (car l) (third l))
+					 (car l)))
+				     buffer-definitions))
       (setq lep::definition-types (mapcar 'second buffer-definitions))
       (setq lep::definition-other-args (mapcar 'third buffer-definitions))
       (setq lep::definition-finding-function fn-and-arguments)
