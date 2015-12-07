@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.12  2015/12/07 12:29:45  troche
+;;;; * debug
+;;;;
 ;;;; Revision 3.11  2015/12/03 15:33:24  troche
 ;;;; * debug of control C + . in callers / list methods buffer
 ;;;;
@@ -233,7 +236,7 @@
 	  ;; do we have a package in our symbol ?
 	  (cond (package
 		 ;; try to find the "real" package of the defgeneric
-		 (setq package (fi:eval-in-lisp (format "(opx2-lisp::find-real-package \"%s\")" symbol)))
+		 (setq package (fi:eval-in-lisp (format "(opx2-lisp::find-real-package \"%s\" \"%s\")" symbol package)))
 		 (format "%s::METHOD.%s.%s" (upcase package) (upcase symbol) (upcase class)))
 		(t
 		 (format "METHOD.%s.%s" (upcase symbol) (upcase class))))))
