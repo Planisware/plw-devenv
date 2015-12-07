@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.26  2015/12/07 12:30:12  troche
+;;;; * check-ojs-region new binding
+;;;;
 ;;;; Revision 3.25  2015/11/09 15:52:03  troche
 ;;;; * do not exit js synchro thread
 ;;;; * Ctrl C , in javascript mode
@@ -473,7 +476,7 @@
   (define-key *ojs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
   (define-key *ojs-mode-map* "\C-cc" '%ojs-list-who-calls)
   (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
-  (define-key *ojs-mode-map* "\C-cs" 'check-ojs-region)
+  (define-key *ojs-mode-map* "\C-cc" 'check-ojs-region)
   (define-key *ojs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
   (define-key *ojs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
