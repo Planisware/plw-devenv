@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.7  2015/12/09 10:24:11  troche
+;;;; * js evaluator syntax table
+;;;;
 ;;;; Revision 3.6  2015/06/18 08:32:28  troche
 ;;;; * configuration
 ;;;;
@@ -75,8 +78,23 @@
 
 (defvar *js-evaluator-map* (make-sparse-keymap))
 
+(defvar js-evaluator-mode-syntax-table
+  (let ((table (make-syntax-table fi:lisp-mode-syntax-table)))
+    ;; The syntax class of underscore should really be `symbol' ("_")
+    ;; but that makes matching of tokens much more complex as e.g.
+    ;; "\\<xyz\\>" matches part of e.g. "_xyz" and "xyz_abc". Defines
+    ;; it as word constituent for now.
+    (modify-syntax-entry ?_ "w" table)
+;;    (modify-syntax-entry ?_ "_" table)
+    (modify-syntax-entry ?: "_" table)
+    (modify-syntax-entry ?- "_" table)
+    (modify-syntax-entry ?. "w" table)
+    table)
+  "Syntax table used in JavaScript mode.")
+
 ;;(define-derived-mode js-evaluator-mode lisp-listener-mode
 (define-derived-mode js-evaluator-mode prog-mode
+  :syntax-table js-evaluator-mode-syntax-table
   ;; js font lock
   (setq font-lock-defaults '(*js-keywords*))
 
@@ -94,10 +112,14 @@
   ;;			   'tcp-lisp)
   ;; (use-local-map fi:lisp-listener-mode-map)
   (define-key *js-evaluator-map* (kbd "\C-c.") '%ojs-find-definition)
-  (define-key *js-evaluator-map* (kbd "RET") 'fi:inferior-lisp-newline)
-
-  (use-local-map *js-evaluator-map*)
+  (define-key *js-evaluator-map* "\C-c," 'fi:lisp-find-next-definition)
+  (define-key *js-evaluator-map* "\C-cc" '%ojs-list-who-calls)
+  (define-key *js-evaluator-map* "\C-ct" 'trace-ojs-function)
   
+  (define-key *js-evaluator-map* (kbd "RET") 'fi:inferior-lisp-newline)
+;;  (define-key *js-evaluator-map* (kbd "RET") 'javascript-evaluator-return)
+
+  (use-local-map *js-evaluator-map*)  
 )
 
 (defun fi:open-lisp-listener (&optional buffer-number buffer-name
@@ -155,6 +177,17 @@ the buffer name is the second optional argument."
 ;;	   (delete-process proc))
 	  (t
 	   (fi::subprocess-filter proc string)))))
+
+(defun js-evaluator-newline ()
+  (if (eobp)
+      (fi:subprocess-send-input)
+    (let ((start-of-last-prompt
+	   (save-excursion
+	     (or (and (re-search-backward fi::prompt-pattern nil t)
+		      (point))
+		 (point-max))))
+	  start end)
+
 
 (defun switch-to-script-evaluator ()
   (interactive)
