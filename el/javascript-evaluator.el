@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.8  2015/12/09 12:22:33  troche
+;;;; * oups
+;;;;
 ;;;; Revision 3.7  2015/12/09 10:24:11  troche
 ;;;; * js evaluator syntax table
 ;;;;
@@ -177,17 +180,6 @@ the buffer name is the second optional argument."
 ;;	   (delete-process proc))
 	  (t
 	   (fi::subprocess-filter proc string)))))
-
-(defun js-evaluator-newline ()
-  (if (eobp)
-      (fi:subprocess-send-input)
-    (let ((start-of-last-prompt
-	   (save-excursion
-	     (or (and (re-search-backward fi::prompt-pattern nil t)
-		      (point))
-		 (point-max))))
-	  start end)
-
 
 (defun switch-to-script-evaluator ()
   (interactive)
