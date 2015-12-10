@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.27  2015/12/10 14:50:40  troche
+;;;; * C-cr to compile and run selected region
+;;;;
 ;;;; Revision 3.26  2015/12/07 12:30:12  troche
 ;;;; * check-ojs-region new binding
 ;;;;
@@ -293,13 +296,42 @@
 	     *ojs-compilation-buffer-name*))
       (set-process-query-on-exit-flag (get-process buffer-name) nil))
     (set-process-filter proc 'ojs-compilation-filter)
+    (switch-to-buffer-other-window buffer-name t)
+    (erase-buffer)
     (process-send-string *ojs-compilation-buffer-name* (format "(javascript::check-js-syntax %S)\n" selection))))
-	 
+
+(defun compile-ojs-region (beg end)
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end))
+                 (list (point-min) (point-max))))
+  (let* ((selection (buffer-substring-no-properties beg end))
+	 (buffer-name *ojs-compilation-buffer-name*)
+	 (buffer (or (get-buffer buffer-name)
+		     (get-buffer-create buffer-name)))
+	 (proc (get-buffer-process buffer))
+	 (v2 (eq major-mode 'pjs-mode))
+	 )
+    (unless proc
+      (setq proc
+	    (fi:open-lisp-listener
+	     -1
+	     *ojs-compilation-buffer-name*))
+      (set-process-query-on-exit-flag (get-process buffer-name) nil))
+    (set-process-filter proc 'ojs-compilation-filter)
+    (switch-to-buffer-other-window buffer-name t)
+    (erase-buffer)
+    (process-send-string *ojs-compilation-buffer-name* (format "(jvs::emacs-check-and-compile-script %S %s)\n" selection v2))))
+
 
 (defun do-compile-and-sync-ojs-file (type)
   ;; find the script name
   (let* ((script-name      (file-name-base (buffer-file-name)))
-	 (script           (when (fi::lep-open-connection-p) (fi:eval-in-lisp (format "(when (fboundp 'jvs::find-script)(jvs::find-script \"%s\"))" script-name))))
+	 (script           (or (when (fi::lep-open-connection-p) (fi:eval-in-lisp (format "(when (fboundp 'jvs::find-script)(jvs::find-script \"%s\"))" script-name)))
+			       ;; try to get a comment //PLWSCRIPT :
+			       (save-excursion
+				 (goto-char (point-min))
+				 (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
+				   (match-string 1)))))
 	 (buffer-name *ojs-compilation-buffer-name*)
 	 (buffer (or (get-buffer buffer-name)
 		     (get-buffer-create buffer-name)))
@@ -352,7 +384,8 @@
 	   )
 	  ((and (stringp string)
 		(string-match ":EXIT-JS" string)) ;; exit when we read this, returned by the compilation functions
-	   (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))
+	   (insert "----------------------------------------------------------------------------------------------")
+	   (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))	   
 	   ;;(delete-process proc)
 	   )	  
 	  (t
@@ -476,7 +509,8 @@
   (define-key *ojs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
   (define-key *ojs-mode-map* "\C-cc" '%ojs-list-who-calls)
   (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
-  (define-key *ojs-mode-map* "\C-cc" 'check-ojs-region)
+  (define-key *ojs-mode-map* "\C-ck" 'check-ojs-region)
+  (define-key *ojs-mode-map* "\C-cr" 'compile-ojs-region)
   (define-key *ojs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
   (define-key *ojs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
@@ -503,6 +537,8 @@
        t]	    
       ["Compile, load and synchronize file..." save-compile-and-sync-ojs-file
        t]
+      ["Compile and run selected region" compile-ojs-region
+       t]
       ["Find function definition..." %ojs-find-definition
        t]
       ["Trace/Untrace function..." trace-ojs-function
@@ -520,8 +556,11 @@
 ;; kludge : in opx2 script, the first line sets the mode to C++, and we want to avoid that
 ;; so we call our function from the c++ mode hook
 (defun override-c++-mode ()
-  (when (equal (downcase (substring buffer-file-name -3 nil)) "ojs")
-    (opx2-js-mode)))
+  (cond ((equal (downcase (substring buffer-file-name -3 nil)) "ojs")
+	 (opx2-js-mode))
+	((equal (downcase (substring buffer-file-name -3 nil)) "pjs")
+	 (pjs-mode))))
+	 
 
 (when *use-opx2-js-mode*
   (add-hook 'c++-mode-hook 'override-c++-mode))
