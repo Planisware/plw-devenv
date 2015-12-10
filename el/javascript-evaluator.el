@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.9  2015/12/10 10:19:01  troche
+;;;; * debug enter in javascript evaluator
+;;;;
 ;;;; Revision 3.8  2015/12/09 12:22:33  troche
 ;;;; * oups
 ;;;;
@@ -119,7 +122,7 @@
   (define-key *js-evaluator-map* "\C-cc" '%ojs-list-who-calls)
   (define-key *js-evaluator-map* "\C-ct" 'trace-ojs-function)
   
-  (define-key *js-evaluator-map* (kbd "RET") 'fi:inferior-lisp-newline)
+  (define-key *js-evaluator-map* (kbd "RET") 'javascript-evaluator-newline)
 ;;  (define-key *js-evaluator-map* (kbd "RET") 'javascript-evaluator-return)
 
   (use-local-map *js-evaluator-map*)  
@@ -200,3 +203,18 @@ the buffer name is the second optional argument."
 	  (process-send-string proc ":help\n")
 	  )
 	))))
+
+(defvar *javascript-prompt-regexp* "^[OP]JS([0-9]+)\\(\\[[A-Za-z0-0]+\\]\\)?\\(\\[\\.+\\]\\)?: ")
+
+(defun javascript-evaluator-newline ()
+  (interactive) 
+  (if (or (eobp) (eq (line-end-position) (point-max)))
+      (fi:subprocess-send-input) ;; at the end of the buffer, we send the expression    
+    (let ((start
+	   (save-excursion
+	     (move-beginning-of-line nil)
+	     (and (re-search-forward *javascript-prompt-regexp* (line-end-position) t)
+		  (point))))
+	  (end (line-end-position)))
+      (when (and start end)
+	(fi:subprocess-input-region start end)))))
