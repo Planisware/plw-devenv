@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.6  2015/12/14 12:13:59  troche
+;;;; * only highlight functions names followed by a (
+;;;;
 ;;;; Revision 3.5  2015/12/14 10:41:09  troche
 ;;;; * pjs class members cache
 ;;;;
@@ -77,7 +80,7 @@
   (setq *ojs-buffers-functions-cache* (ojs-find-candidates-from-regexp-in-buffers *ojs-function-method-definition-regexp*))
   ;; regexp cache
   (setq *ojs-buffers-functions-cache-regexp*
-	(format "\\(%s\\)" (js--regexp-opt-symbol (loop for item in *ojs-buffers-functions-cache*
+	(format "\\(%s\\)(" (js--regexp-opt-symbol (loop for item in *ojs-buffers-functions-cache*
 							 collect (car item))))))
 ;;;;; class members in ojs2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
