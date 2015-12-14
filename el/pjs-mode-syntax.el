@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.2  2015/12/14 10:42:12  troche
+;;;; * colorization
+;;;;
 ;;;; Revision 3.1  2015/12/10 14:51:39  troche
 ;;;; * pjs mode
 ;;;;  (header added automatically)
@@ -77,7 +80,7 @@
      "function"
      )))
 
-;; ojs types
+;; pjs types
 (defconst pjs-font-lock-types
   (js--regexp-opt-symbol
    '(
@@ -92,62 +95,75 @@
      )))
 
 ;; method definition
-(defconst *ojs-method-heading*
-"^[ \t]*method[ \t]+\\(\\w+\\)[ \t]+\\(\\<on\\>\\)[ \t]+\\(\\w+\\)"
+(defconst *pjs-method-heading*
+"^\\s-*method\\s-+\\(\\w+\\)\\s-+\\(\\<on\\>\\)\\s-+\\(\\w+\\)"
 "Regular expression matching the start of a method header.")
 
 ;;method arguments
-(defconst *ojs-method-arguments-start*
-  "\\<method\\>\\([ \t]+\\w+\\)?[ \t]*\\<on\\>\\([ \t]+\\w+\\)?([ \t]*\\w")
+(defconst *pjs-method-arguments-start*
+  "\\<method\\>\\(\\s-+\\w+\\)?\\s-*\\<on\\>\\(\\s-+\\w+\\)?(\\s-*\\w")
 
 ;; function definition
-(defconst *ojs-function-heading*
-"^[ \t]*function[ \t]+\\(\\w+\\)"
+(defconst *pjs-function-heading*
+"^\\s-*function\\s-+\\(\\w+\\)"
 "Regular expression matching the start of a function header.")
 
 ;; function arguments
-(defconst *ojs-function-arguments-start*
-  "\\<function\\>\\([ \t]+\\w+\\)?[ \t]*([ \t]*\\w")
+(defconst *pjs-function-arguments-start*
+  "\\<function\\>\\(\\s-+\\w+\\)?\\s-*(\\s-*\\w")
 
 ;; function or method regexp
-(defconst *ojs-function-or-method-regexp*
-  "^[ \t]*\\(\\<function\\>\\|\\<method\\>[ \t]+\\w+[ \t]+\\<on\\>[ \t]+\\w+\\)([ \t]*\\w*)")
+(defconst *pjs-function-or-method-regexp*
+  "^\\s-*\\(\\<function\\>\\|\\<method\\>\\s-+\\w+\\s-+\\<on\\>\\s-+\\w+\\)(\\s-*\\w*)")
 
 (defconst *arguments-end*
-  "\\(\\w+\\)\\([ \t]*).*\\)?")
+  "\\(\\w+\\)\\(\\s-*).*\\)?")
 
-;; vars definition
-(defconst *ojs-vars-regexp* 
-;;  "^.*var[ \t]+\\(\\w+\\)[ \t]*\\(=\\|in\\|;\\).*$")
-  "^.*var[ \t]+\\(\\w+\\)")
+;; vars definition with optional type
+(defconst *pjs-vars-regexp* 
+;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
+  "^.*var\\s-*\\([[:word:].]+\\)?\\s-+\\(\\w+\\)\\s-*[=;]")
+
+;; class types, plc.somethinf
+(defconst *pjs-class-type*
+  "plc\\.\\w+")
 
 ;; new type(
-(defconst *ojs-new-type-regexp*
-  ".*new[ \t]+\\(\\w+\\)[ \t]*(")
+(defconst *pjs-new-type-regexp*
+  ".*new\\s-+\\(\\w+\\)\\s-*(")
 
 ;; function starts
-(defconst *ojs-function-start-regexp*
-  "\\(function\\|method\\|on new\\|on modifyafter\\|on modifybefore\\|on delete\\)")
+(defconst *pjs-function-start-regexp*
+;;  "\\(function\\|method\\|on new\\|on modifyafter\\|on modifybefore\\|on delete\\)")
+  "\\<\\(function\\|method\\)\\>")
+
+;; class definition
+(defconst *pjs-class-definition*
+  ".*class\\s-+\\(\\w+\\)")
+
+;; symbols between ##
+(defconst *pjs-symbols*
+  "#[[:alnum:]-_]+#")
 
 ;; kernel functions are in italic
-(defface ojs-kernel-functions-face
+(defface pjs-kernel-functions-face
     '((t 
        :inherit font-lock-function-name-face :slant italic))
-    "OJS kernel fonts are displayed in italic"
+    "PJS kernel fonts are displayed in italic"
     )
 
-(defvar ojs-kernel-functions-face
-  'ojs-kernel-functions-face)
+(defvar pjs-kernel-functions-face
+  'pjs-kernel-functions-face)
 
 ;; variable defintion are in bold
-(defface ojs-var-definition-face
+(defface pjs-var-definition-face
     '((t 
        :inherit font-lock-variable-name-face :weight bold))
     "variable defintion are in bold"
     )
 
-(defvar ojs-var-definition-face
-  'ojs-var-definition-face)
+(defvar pjs-var-definition-face
+  'pjs-var-definition-face)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight functions defined in the buffer
@@ -157,31 +173,53 @@
 ;; highlight kernel functions 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;(defvar *ojs-kernel-functions-cache* nil)
+(defvar *pjs-kernel-functions-cache* nil)
 
-;;(defvar *ojs-kernel-functions-present* t)
+(defvar *pjs-kernel-functions-present* t)
 
-;;(defun list-ojs-kernel-functions ()
-;;  (cond (*ojs-kernel-functions-cache*
-;;	 *ojs-kernel-functions-cache*)
-;;	(*ojs-kernel-functions-present*
-;;	 (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-all-js-functions) t nil)")))
-;;		(when *ojs-kernel-functions-present*
-;;		  (setq *ojs-kernel-functions-cache* (format "\\(%s\\)" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)"))))))
-;;		*ojs-kernel-functions-cache*))
-;;	(t
-;;	 nil)))
+(defun list-pjs-kernel-functions ()
+  (cond (*pjs-kernel-functions-cache*
+	 *pjs-kernel-functions-cache*)
+	(*pjs-kernel-functions-present*
+	 (progn (setq *pjs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-all-js-functions) t nil)")))
+		(when *pjs-kernel-functions-present*
+		  (setq *pjs-kernel-functions-cache* (format "\\(%s\\)" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)"))))))
+		*pjs-kernel-functions-cache*))
+	(t
+	 nil)))
 
-;;(defun search-kernel-functions (end)
-;;  (when (list-ojs-kernel-functions)
-;;    (let ((search-pattern (list-ojs-kernel-functions)))
-;;      (re-search-forward search-pattern end t))))
+(defun search-kernel-functions (end)
+  (when (list-pjs-kernel-functions)
+    (let ((search-pattern (list-pjs-kernel-functions)))
+      (re-search-forward search-pattern end t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; highlight locally defined vars
+;; highlight functions defined in the buffer
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;;use the ojs one
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; highlight class members 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun pjs-current-class ()
+  ;; return the current class context :
+  ;; the class if we are on a method
+  ;; todo: typed var
+  (save-excursion
+    (let ((start-function (start-of-function)))
+      (when start-function
+	(goto-char start-function)
+	(when (re-search-forward *pjs-method-heading* nil t)
+	  (let ((class-name (match-string-no-properties 3))
+		(namespace  (pjs-current-namespace)))
+	    (format "%s.%s" namespace class-name)))))))
+  
+
+(defun class-members-in-function ()
+  (gethash (pjs-current-class) (pjs-class-members)))
+
+(defun search-class-members (end)
+  (search-vars-in-context end 'class-members-in-function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; syntax hightlighting definition
@@ -201,38 +239,54 @@
   (push (list 'search-buffer-functions 1 font-lock-function-name-face) font-locks)
 
   ;; Kernel functions
-;;  (push (cons 'search-kernel-functions ojs-kernel-functions-face) font-locks)
-;;  (push (list 'search-kernel-functions 1 ojs-kernel-functions-face) font-locks)
+  (push (cons 'search-kernel-functions pjs-kernel-functions-face) font-locks)
+  (push (list 'search-kernel-functions 1 pjs-kernel-functions-face) font-locks)
 
   ;; Variables in the function 
-  (push (cons 'search-vars-from-context font-lock-variable-name-face) font-locks)
-  ;; Global vars
-;;  (push (cons 'search-global-vars font-lock-variable-name-face) font-locks)
-  ;; Variable definitions
-  (push (list *ojs-vars-regexp* 1 ojs-var-definition-face) font-locks)
+  (push (cons 'search-function-local-vars font-lock-variable-name-face) font-locks)
 
+  ;; class members
+  (push (cons 'search-class-members opx2-hg-getset-face) font-locks)
+
+  ;; Global vars
+  (push (cons 'search-global-vars font-lock-variable-name-face) font-locks)
+  
+  ;; Variable definitions
+;;  (push (list *pjs-vars-regexp* 1 font-lock-type-face) font-locks)
+;;  (push (list *pjs-vars-regexp* 2 pjs-var-definition-face) font-locks)
+
+  ;; class definitions
+  (push (list *pjs-class-definition* 1 font-lock-type-face) font-locks)
+  
   ;; New type
-  (push (list *ojs-new-type-regexp* 1 font-lock-type-face) font-locks)
+  (push (list *pjs-new-type-regexp* 1 font-lock-type-face) font-locks)
+
+  ;; symbols
+  (push (list *pjs-symbols* 0 font-lock-preprocessor-face) font-locks)  
+  
+  ;; class types, plc.something
+  (push (list *pjs-class-type* 0 font-lock-type-face) font-locks)
+  
   ;; Function definition
-  (push (list *ojs-function-heading* 1 font-lock-function-name-face) font-locks)
+  (push (list *pjs-function-heading* 1 font-lock-function-name-face) font-locks)
   ;; Function arguments
   (push (list
-	 (concat *ojs-function-arguments-start*)
+	 (concat *pjs-function-arguments-start*)
 	 (list *arguments-end*
 	       '(backward-char)
 	       '(end-of-line)
-	       '(1 ojs-var-definition-face))) font-locks)
+	       '(1 pjs-var-definition-face))) font-locks)
   ;; Method definition
-  (push (list *ojs-method-heading* 1 font-lock-function-name-face) font-locks)
-  (push (list *ojs-method-heading* 2 font-lock-keyword-face) font-locks)
-  (push (list *ojs-method-heading* 3 font-lock-type-face) font-locks)  
+  (push (list *pjs-method-heading* 1 font-lock-function-name-face) font-locks)
+  (push (list *pjs-method-heading* 2 font-lock-keyword-face) font-locks)
+  (push (list *pjs-method-heading* 3 font-lock-type-face) font-locks)  
   ;; Method arguments
   (push (list
-	 (concat *ojs-method-arguments-start*)
+	 (concat *pjs-method-arguments-start*)
 	 (list *arguments-end*
 	       '(backward-char)
 	       '(end-of-line)
-	       '(1 ojs-var-definition-face))) font-locks)
+	       '(1 pjs-var-definition-face))) font-locks)
   ;; keywords
   (push (cons pjs-font-lock-keywords font-lock-keyword-face) font-locks)
   ;; constants
@@ -251,7 +305,7 @@
 	     ))
 
   ;; regexp to mark the beginning of a function
-;;  (setq defun-prompt-regexp *ojs-function-or-method-regexp*)
+;;  (setq defun-prompt-regexp *pjs-function-or-method-regexp*)
 
   ;; fontify all the things
   (syntax-propertize (point-max))

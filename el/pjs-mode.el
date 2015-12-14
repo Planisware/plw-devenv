@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.2  2015/12/14 10:42:12  troche
+;;;; * colorization
+;;;;
 ;;;; Revision 3.1  2015/12/10 14:51:39  troche
 ;;;; * pjs mode
 ;;;;  (header added automatically)
@@ -172,8 +175,8 @@
   (use-local-map *pjs-mode-map*)  
   
   ;; rebuild  function and vars cache on save and when we open a file
-;;  (add-hook 'after-save-hook 'pjs-reset-cache nil t)
-;;  (add-hook 'find-file-hook 'pjs-reset-cache nil t)
+  (add-hook 'after-save-hook 'pjs-reset-cache nil t)
+  (add-hook 'find-file-hook 'pjs-reset-cache nil t)
   )
 
 ;; pjs files are pjs modes
