@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.7  2015/12/14 10:41:58  troche
+;;;; * debug local vars in function
+;;;;
 ;;;; Revision 3.6  2015/06/18 08:32:28  troche
 ;;;; * configuration
 ;;;;
@@ -164,7 +167,7 @@
 
 ;; function starts
 (defconst *ojs-function-start-regexp*
-  "\\(function\\|method\\|on new\\|on modifyafter\\|on modifybefore\\|on delete\\)")
+  "\\<\\(function\\|method\\|on new\\|on modifyafter\\|on modifybefore\\|on delete\\)\\>")
 
 ;; kernel functions are in italic
 (defface ojs-kernel-functions-face
@@ -224,9 +227,35 @@
 ;; highlight locally defined vars
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; vars from the current function
-(defun search-vars-from-context (end)
-  (re-search-forward (js--regexp-opt-symbol (get-local-vars-for-function nil)) end t))
+(defun search-function-local-vars (end)
+  (search-vars-in-context end 'list-local-vars-in-function))
+
+(defun list-local-vars-in-function ()
+  (get-local-vars-for-function nil))
+
+;; highligh vars in the context of the current function
+(defun search-vars-in-context (end var-list-function)
+  (let (found)
+    (catch 'exit
+      (while (or (not found)
+		 (< (point) end))
+	(cond ((inside-function)
+	       (cond ((setq found (re-search-forward (js--regexp-opt-symbol (funcall var-list-function)) (min (end-of-function) end) t))
+		      ;; we have found something, we can return
+		      (throw 'exit found))
+		     ((> end (end-of-function))
+		      ;; our search goes after the end of the function, move to the end of the function and let the loop do its job		    
+		      (goto-char (end-of-function)))
+		     (t
+		      ;; we found nothing, exit nil and the search must stop, exit
+		      (throw 'exit nil))))
+	      ;; we are outside a function, go to the next function
+	      ((goto-start-of-next-function end)
+	       (setq found (re-search-forward (js--regexp-opt-symbol (funcall var-list-function)) (min (end-of-function) end) t)))
+	      (t
+	       ;; nothing to see here, exit
+	       (throw 'exit nil))))
+      found)))
 
 ;; script-level and global vars.
 (defun search-global-vars (end)
@@ -302,6 +331,14 @@
      ;; if this failed, we return the end of the buffet
      (point-max))))
 
+;; go to the start of the next function, but not after end
+(defun goto-start-of-next-function (end)
+  (re-real-search-forward *ojs-function-start-regexp* end t))
+
+(defun inside-function ()
+  (when (start-of-function)
+    t))
+
 (defun get-local-vars-for-function (list-of-cons)
   ;; if list-of-cons is t, we return a list of cons (variable . documentation)
   ;; if it is nil, we return a list of variable
@@ -374,7 +411,7 @@
   (push (list 'search-kernel-functions 1 ojs-kernel-functions-face) font-locks)
 
   ;; Variables in the function 
-  (push (cons 'search-vars-from-context font-lock-variable-name-face) font-locks)
+  (push (cons 'search-function-local-vars font-lock-variable-name-face) font-locks)
   ;; Global vars
   (push (cons 'search-global-vars font-lock-variable-name-face) font-locks)
   ;; Variable definitions
