@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.8  2015/12/14 15:33:23  troche
+;;;; * debug
+;;;;
 ;;;; Revision 3.7  2015/12/14 10:41:58  troche
 ;;;; * debug local vars in function
 ;;;;
@@ -167,7 +170,7 @@
 
 ;; function starts
 (defconst *ojs-function-start-regexp*
-  "\\<\\(function\\|method\\|on new\\|on modifyafter\\|on modifybefore\\|on delete\\)\\>")
+  "^\\<\\(class\\|function\\|method\\|on new\\|on modifyafter\\|on modifybefore\\|on delete\\)\\>.*{")
 
 ;; kernel functions are in italic
 (defface ojs-kernel-functions-face
@@ -235,25 +238,52 @@
 
 ;; highligh vars in the context of the current function
 (defun search-vars-in-context (end var-list-function)
-  (let (found)
+;;  ;;(message "Searching %s to %s" (point) end)
+  (let (found last-point)
     (catch 'exit
-      (while (or (not found)
-		 (< (point) end))
+      (while (and (not found)
+		  (< (point) end)
+		  (if (not (equal (point) last-point)) ;; make sure we move to avoid infinite loops
+		      t
+		    (progn (message "We did not move, exit %s" (point))
+			   nil))
+		  
+		  )
+	(setq last-point (point))
 	(cond ((inside-function)
-	       (cond ((setq found (re-search-forward (js--regexp-opt-symbol (funcall var-list-function)) (min (end-of-function) end) t))
-		      ;; we have found something, we can return
-		      (throw 'exit found))
-		     ((> end (end-of-function))
-		      ;; our search goes after the end of the function, move to the end of the function and let the loop do its job		    
-		      (goto-char (end-of-function)))
-		     (t
-		      ;; we found nothing, exit nil and the search must stop, exit
-		      (throw 'exit nil))))
+	       ;;(message "inside function %s" (point))
+	       (let ((end-of-fun (cdr (function-boundaries))))
+		 (cond ((null end-of-fun)
+			;;(message "no end of function, exit")
+			(throw 'exit nil))		       
+		       ((setq found (re-search-forward (js--regexp-opt-symbol (funcall var-list-function)) (min end-of-fun end) t))
+			;; we have found something, we can return
+			;;(message "we found %s at point %s, return" (match-string 1) (point))
+			(throw 'exit found))
+		       ((> end end-of-fun)
+			;; our search goes after the end of the function, move to the end of the function and let the loop do its job		    
+			(goto-char end-of-fun)
+			(forward-char)
+			;;(message "Got to the end of the function %s" (point))
+			)
+		       (t
+			;;(message "Nothing found, exit %s" (point))
+			;; we found nothing, exit nil and the search must stop, exit
+			(throw 'exit nil)))))
 	      ;; we are outside a function, go to the next function
 	      ((goto-start-of-next-function end)
-	       (setq found (re-search-forward (js--regexp-opt-symbol (funcall var-list-function)) (min (end-of-function) end) t)))
+	       (let ((end-of-fun (cdr (function-boundaries))))
+		 ;;(message "went to start of next function %s" (point))
+		 (cond ((null end-of-fun)
+			;;(message "no enf of function found")
+			(throw 'exit nil))
+		       (t
+			(setq found (re-search-forward (js--regexp-opt-symbol (funcall var-list-function)) (min end-of-fun end) t)))))
+	       ;;(message "->found is %s" found)
+	       )
 	      (t
-	       ;; nothing to see here, exit
+	       ;; no next function in our scope, exit
+	       ;;(message "exit nil")
 	       (throw 'exit nil))))
       found)))
 
@@ -304,39 +334,36 @@
 	found-point))
   (re-search-forward regexp limit errorp))
 
-(defun start-of-function ()
-  ;; get the start of the function
+(defun function-boundaries ()
+  ;; returns either a cons of (start end) containing the beginning and the end of the function
+  ;; or nil if we are not in a function
   (save-excursion
-    (let ((start-point (point))
-	  (function-start (re-real-search-backward *ojs-function-start-regexp* nil t)))
-      ;; we have a function-start, check that we don't have a } between the point and the function start
+    (let* ((start-point (point))
+	   (function-start (re-real-search-backward *ojs-function-start-regexp* nil t)))
       (when function-start
-	(if (string-match "^}$" (buffer-substring-no-properties function-start start-point))
-	    nil
-	  function-start)))))
-
-(defun end-of-function ()
-  ;; we consider we are at the { beginning the function
-  ;; we try the forward-list first
-  (save-excursion
-    (or
-     (condition-case nil
-	 (progn (forward-list) (point))
-       ;; return nil when we have a scan error
-       (scan-error nil))
-     ;; search the single }
-     (re-real-search-forward "^}$" nil t)
-     ;; search the beginning of the next function
-     (re-real-search-forward *ojs-function-start-regexp* nil t)
-     ;; if this failed, we return the end of the buffet
-     (point-max))))
+	(while (and (not (looking-at "{"))
+		    (< (point) (line-end-position)))
+	  (forward-char))
+	(when (looking-at "{")
+	  (let ((function-end (or (condition-case nil
+				      (progn (forward-list) (point))
+				    ;; return nil when we have a scan error
+				    (scan-error nil))
+				  ;; try to find a lonely }, search only until the next start of function
+				  (re-search-forward "^}$" (save-excursion (re-search-forward *ojs-function-start-regexp* nil t)
+									   (line-beginning-position))
+						     t))))
+	    (when (and function-end
+		       (>= function-end start-point))
+	      (cons function-start function-end))))))))
+    
 
 ;; go to the start of the next function, but not after end
 (defun goto-start-of-next-function (end)
   (re-real-search-forward *ojs-function-start-regexp* end t))
 
 (defun inside-function ()
-  (when (start-of-function)
+  (when (function-boundaries)
     t))
 
 (defun get-local-vars-for-function (list-of-cons)
@@ -349,28 +376,22 @@
   (save-excursion
     ;; we ignore errors because the forward-list can fail if parenthesis are not balanced
     ;; in that case, we do nothing.
-    (let ((start-function (start-of-function)))
-      (when start-function
-	(goto-char start-function)
-	(let* ((begin-args (progn (while (and (not (looking-at "("))
-					      (< (point) (point-max)))
+    (let ((function-boundaries (function-boundaries)))
+      (when function-boundaries
+	(let* ((start-function (goto-char (car function-boundaries)))
+	       (begin-args (progn (while (and (not (looking-at "("))
+					      (< (point) (line-end-position)))
 				    (forward-char))
-				  (if (eq (point) (point-max))
-				      nil				   
-				    (point))))
+				  (if (looking-at "(") (point) nil)))
 	       (end-args (progn (while (and (not (looking-at ")"))
-					    (< (point) (point-max)))
+					    (< (point) (line-end-position)))
 				  (forward-char))
-				(if (eq (point) (point-max))
-				    nil
-				  (point))))
+				(if (looking-at ")") (point) nil)))
 	       (begin-function (progn (while (and (not (looking-at "{"))
-						  (< (point) (point-max)))
+						  (< (point) (line-end-position)))
 					(forward-char))
-				      (if (eq (point) (point-max))
-					  nil
-					(point))))
-	       (end-function (end-of-function))
+				      (if (looking-at "{") (point) nil)))
+	       (end-function (cdr function-boundaries))
 	       (function-line (when end-args (buffer-substring-no-properties start-function (1+ end-args) )))
 	       vars)
 	  ;; arguments
