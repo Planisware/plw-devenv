@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.28  2015/12/14 10:41:33  troche
+;;;; * debug V2 detection
+;;;;
 ;;;; Revision 3.27  2015/12/10 14:50:40  troche
 ;;;; * C-cr to compile and run selected region
 ;;;;
@@ -309,7 +312,7 @@
 	 (buffer (or (get-buffer buffer-name)
 		     (get-buffer-create buffer-name)))
 	 (proc (get-buffer-process buffer))
-	 (v2 (eq major-mode 'pjs-mode))
+	 (v2 (if (eq major-mode 'pjs-mode) "cl:t" "nil"))
 	 )
     (unless proc
       (setq proc
