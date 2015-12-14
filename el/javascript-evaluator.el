@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.10  2015/12/14 10:40:45  troche
+;;;; * prompt debug
+;;;;
 ;;;; Revision 3.9  2015/12/10 10:19:01  troche
 ;;;; * debug enter in javascript evaluator
 ;;;;
@@ -204,7 +207,7 @@ the buffer name is the second optional argument."
 	  )
 	))))
 
-(defvar *javascript-prompt-regexp* "^[OP]JS([0-9]+)\\(\\[[A-Za-z0-0]+\\]\\)?\\(\\[\\.+\\]\\)?: ")
+(defvar *javascript-prompt-regexp* "^[OP]JS([0-9]+)\\(\\[[A-Za-z0-9]+\\]\\)?\\(\\[\\.+\\]\\)?: ")
 
 (defun javascript-evaluator-newline ()
   (interactive) 
