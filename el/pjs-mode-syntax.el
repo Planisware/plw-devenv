@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.3  2015/12/14 15:34:18  troche
+;;;; * var with types
+;;;;
 ;;;; Revision 3.2  2015/12/14 10:42:12  troche
 ;;;; * colorization
 ;;;;
@@ -120,9 +123,21 @@
   "\\(\\w+\\)\\(\\s-*).*\\)?")
 
 ;; vars definition with optional type
-(defconst *pjs-vars-regexp* 
+(defconst *pjs-vars-with-type-regexp* 
 ;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
-  "^.*var\\s-*\\([[:word:].]+\\)?\\s-+\\(\\w+\\)\\s-*[=;]")
+  "^.*var\\s-*\\([[:word:].]+\\)\\s-+\\(\\w+\\)\\s-*[=;]")
+
+(defconst *pjs-vars-no-type-regexp* 
+;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
+  "^.*var\\s-+\\(\\w+\\)\\s-*[=;]")
+
+(defconst *pjs-var-in-with-type-regexp* 
+;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
+  "^.*var\\s-*\\([[:word:].]+\\)\\s-+\\(\\w+\\)\\s-+\\(in\\)")
+
+(defconst *pjs-var-in-no-type-regexp* 
+;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
+  "^.*var\\s-+\\(\\w+\\)\\s-+\\(in\\)")
 
 ;; class types, plc.somethinf
 (defconst *pjs-class-type*
@@ -183,12 +198,12 @@
 	(*pjs-kernel-functions-present*
 	 (progn (setq *pjs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-all-js-functions) t nil)")))
 		(when *pjs-kernel-functions-present*
-		  (setq *pjs-kernel-functions-cache* (format "\\(%s\\)" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)"))))))
+		  (setq *pjs-kernel-functions-cache* (format "\\(\\(?:plw\\)?\\.%s\\)" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)"))))))
 		*pjs-kernel-functions-cache*))
 	(t
 	 nil)))
 
-(defun search-kernel-functions (end)
+(defun search-pjs-kernel-functions (end)
   (when (list-pjs-kernel-functions)
     (let ((search-pattern (list-pjs-kernel-functions)))
       (re-search-forward search-pattern end t))))
@@ -206,7 +221,7 @@
   ;; the class if we are on a method
   ;; todo: typed var
   (save-excursion
-    (let ((start-function (start-of-function)))
+    (let ((start-function (car (function-boundaries))))
       (when start-function
 	(goto-char start-function)
 	(when (re-search-forward *pjs-method-heading* nil t)
@@ -239,8 +254,8 @@
   (push (list 'search-buffer-functions 1 font-lock-function-name-face) font-locks)
 
   ;; Kernel functions
-  (push (cons 'search-kernel-functions pjs-kernel-functions-face) font-locks)
-  (push (list 'search-kernel-functions 1 pjs-kernel-functions-face) font-locks)
+  (push (cons 'search-pjs-kernel-functions pjs-kernel-functions-face) font-locks)
+  (push (list 'search-pjs-kernel-functions 1 pjs-kernel-functions-face) font-locks)
 
   ;; Variables in the function 
   (push (cons 'search-function-local-vars font-lock-variable-name-face) font-locks)
@@ -251,9 +266,21 @@
   ;; Global vars
   (push (cons 'search-global-vars font-lock-variable-name-face) font-locks)
   
-  ;; Variable definitions
-;;  (push (list *pjs-vars-regexp* 1 font-lock-type-face) font-locks)
-;;  (push (list *pjs-vars-regexp* 2 pjs-var-definition-face) font-locks)
+  ;; Variable definitions with type
+  (push (list *pjs-vars-with-type-regexp* 1 font-lock-type-face) font-locks)
+  (push (list *pjs-vars-with-type-regexp* 2 pjs-var-definition-face) font-locks)
+
+  ;; variable definition without type
+  (push (list *pjs-vars-no-type-regexp* 1 pjs-var-definition-face) font-locks)
+
+  ;; var in with type
+  (push (list *pjs-var-in-with-type-regexp* 1 font-lock-type-face) font-locks)
+  (push (list *pjs-var-in-with-type-regexp* 2 pjs-var-definition-face) font-locks)
+  (push (list *pjs-var-in-with-type-regexp* 3 font-lock-keyword-face) font-locks)
+
+  ;; var in without type
+  (push (list *pjs-var-in-no-type-regexp* 1 pjs-var-definition-face) font-locks)
+  (push (list *pjs-var-in-no-type-regexp* 2 font-lock-keyword-face) font-locks)  
 
   ;; class definitions
   (push (list *pjs-class-definition* 1 font-lock-type-face) font-locks)
