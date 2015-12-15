@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.7  2015/12/15 13:39:11  troche
+;;;; * debug
+;;;;
 ;;;; Revision 3.6  2015/12/14 12:13:59  troche
 ;;;; * only highlight functions names followed by a (
 ;;;;
@@ -178,7 +181,7 @@
 				  (ojs-find-candidates-from-regexp (if (eq major-mode 'pjs-mode)
 								       *pjs-file-vars-regexp*
 								     *ojs-file-vars-regexp*))
-				  (when (eq major-mode 'ojs-mode)
+				  (when (eq major-mode 'opx2-js-mode)
 				    (ojs-find-candidates-from-regexp-in-buffers *ojs-global-vars-regexp*))))
   ;; regexp cache
   (setq *ojs-buffers-vars-cache-regexp*
