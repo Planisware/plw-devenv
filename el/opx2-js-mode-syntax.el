@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.9  2015/12/15 13:39:48  troche
+;;;; * limit size of regexps in kernel functions
+;;;;
 ;;;; Revision 3.8  2015/12/14 15:33:23  troche
 ;;;; * debug
 ;;;;
@@ -210,21 +213,38 @@
 
 (defvar *ojs-kernel-functions-present* t)
 
+(defvar *regexp-elements-limit* 500)
+
+(defun partition-list (list length)
+  (loop
+     while list
+     collect (subseq list 0 (min (length list) length))
+     do (setf list (nthcdr (min (length list) length) list))))
+
 (defun list-ojs-kernel-functions ()
   (cond (*ojs-kernel-functions-cache*
 	 *ojs-kernel-functions-cache*)
 	(*ojs-kernel-functions-present*
-	 (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-all-js-functions) t nil)")))
-		(when *ojs-kernel-functions-present*
-		  (setq *ojs-kernel-functions-cache* (format "\\(%s\\)" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)"))))))
-		*ojs-kernel-functions-cache*))
+	 (setq *ojs-kernel-functions-cache*
+	       (let ((functions-list (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-all-js-functions) t nil)")))
+					    (sort (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)")) 'string<)))
+		     regexp-list)
+		 (dolist (sublist (partition-list functions-list *regexp-elements-limit*))
+		   (push (format "\\(%s\\)" (js--regexp-opt-symbol sublist)) regexp-list))
+		 regexp-list)))
 	(t
 	 nil)))
 
 (defun search-kernel-functions (end)
-  (when (list-ojs-kernel-functions)
-    (let ((search-pattern (list-ojs-kernel-functions)))
-      (re-search-forward search-pattern end t))))
+  (let ((found end)
+	(start (point)))
+    (dolist (regexp (list-ojs-kernel-functions))
+      (goto-char start)
+      (setq found (or (re-search-forward regexp found t)
+		      found)))
+    (if (eq found end)
+	nil
+      found)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight locally defined vars
@@ -350,9 +370,11 @@
 				    ;; return nil when we have a scan error
 				    (scan-error nil))
 				  ;; try to find a lonely }, search only until the next start of function
-				  (re-search-forward "^}$" (save-excursion (re-search-forward *ojs-function-start-regexp* nil t)
-									   (line-beginning-position))
-						     t))))
+				  (re-search-forward "^}$" (save-excursion (or (when (re-search-forward *ojs-function-start-regexp* nil t)
+										 (line-beginning-position))
+									       (point-max)))
+						     t)
+				  )))
 	    (when (and function-end
 		       (>= function-end start-point))
 	      (cons function-start function-end))))))))
@@ -424,11 +446,9 @@
   ;; list of font-lock-keywords in the right order
 
   ;; Functions defined in buffers
-;;  (push (cons 'search-buffer-functions font-lock-function-name-face) font-locks)
   (push (list 'search-buffer-functions 1 font-lock-function-name-face) font-locks)
 
   ;; Kernel functions
-;;  (push (cons 'search-kernel-functions ojs-kernel-functions-face) font-locks)
   (push (list 'search-kernel-functions 1 ojs-kernel-functions-face) font-locks)
 
   ;; Variables in the function 
@@ -436,7 +456,7 @@
   ;; Global vars
   (push (cons 'search-global-vars font-lock-variable-name-face) font-locks)
   ;; Variable definitions
-  (push (list *ojs-vars-regexp* 1 ojs-var-definition-face) font-locks)
+;;  (push (list *ojs-vars-regexp* 1 ojs-var-definition-face) font-locks)
 
   ;; New type
   (push (list *ojs-new-type-regexp* 1 font-lock-type-face) font-locks)
