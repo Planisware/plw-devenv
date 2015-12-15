@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.11  2015/12/15 16:51:54  troche
+;;;; * ; is not a comment in javascript evaluator
+;;;;
 ;;;; Revision 3.10  2015/12/14 10:40:45  troche
 ;;;; * prompt debug
 ;;;;
@@ -98,6 +101,7 @@
     (modify-syntax-entry ?: "_" table)
     (modify-syntax-entry ?- "_" table)
     (modify-syntax-entry ?. "w" table)
+    (modify-syntax-entry ?\; "." table)
     table)
   "Syntax table used in JavaScript mode.")
 
