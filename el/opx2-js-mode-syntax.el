@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.10  2015/12/18 15:08:14  troche
+;;;; * real-search is back (and working this time)
+;;;;
 ;;;; Revision 3.9  2015/12/15 13:39:48  troche
 ;;;; * limit size of regexps in kernel functions
 ;;;;
@@ -148,7 +151,7 @@
 
 ;; function definition
 (defconst *ojs-function-heading*
-"^[ \t]*function[ \t]+\\(\\w+\\)"
+"^\\s-*function\\s-+\\(\\w+\\)"
 "Regular expression matching the start of a function header.")
 
 ;; function arguments
@@ -157,7 +160,7 @@
 
 ;; function or method regexp
 (defconst *ojs-function-or-method-regexp*
-  "^[ \t]*\\(\\<function\\>\\|\\<method\\>[ \t]+\\w+[ \t]+\\<on\\>[ \t]+\\w+\\)([ \t]*\\w*)")
+  "^\\s-*\\(?:\\<function\\>\\s-+\\([[:word:]_]+\\)\\|\\<method\\>\\s-+\\([[:word:]_]+\\)\\s-+\\<on\\>\\s-+\\([[:word:]_]+\\)\\)\\s-*([[:word:]_,]*)")
 
 (defconst *arguments-end*
   "\\(\\w+\\)\\([ \t]*).*\\)?")
@@ -203,7 +206,7 @@
 
 (defun search-buffer-functions (end)
   (let ((search-pattern (ojs-functions-in-buffers-regexp)))
-    (re-search-forward search-pattern end t)))
+    (re-real-search-forward search-pattern end t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight kernel functions 
@@ -240,7 +243,7 @@
 	(start (point)))
     (dolist (regexp (list-ojs-kernel-functions))
       (goto-char start)
-      (setq found (or (re-search-forward regexp found t)
+      (setq found (or (re-real-search-forward regexp (or found end) t)
 		      found)))
     (if (eq found end)
 	nil
@@ -254,7 +257,7 @@
   (search-vars-in-context end 'list-local-vars-in-function))
 
 (defun list-local-vars-in-function ()
-  (get-local-vars-for-function nil))
+  (js--regexp-opt-symbol (get-local-vars-for-function nil)))
 
 ;; highligh vars in the context of the current function
 (defun search-vars-in-context (end var-list-function)
@@ -276,7 +279,9 @@
 		 (cond ((null end-of-fun)
 			;;(message "no end of function, exit")
 			(throw 'exit nil))		       
-		       ((setq found (re-search-forward (js--regexp-opt-symbol (funcall var-list-function)) (min end-of-fun end) t))
+		       ((setq found (let ((list (funcall var-list-function)))
+				      (when list
+					(re-real-search-forward list (min end-of-fun end) t))))
 			;; we have found something, we can return
 			;;(message "we found %s at point %s, return" (match-string 1) (point))
 			(throw 'exit found))
@@ -298,7 +303,9 @@
 			;;(message "no enf of function found")
 			(throw 'exit nil))
 		       (t
-			(setq found (re-search-forward (js--regexp-opt-symbol (funcall var-list-function)) (min end-of-fun end) t)))))
+			(setq found (let ((list (funcall var-list-function)))
+				      (when list
+					(re-real-search-forward list (min end-of-fun end) t)))))))
 	       ;;(message "->found is %s" found)
 	       )
 	      (t
@@ -309,7 +316,7 @@
 
 ;; script-level and global vars.
 (defun search-global-vars (end)
-  (re-search-forward (ojs-vars-in-buffer-regexp) end t))
+  (re-real-search-forward (ojs-vars-in-buffer-regexp) end t))
 
 ;; searches only in non string and non comments 
 
@@ -322,13 +329,18 @@
   "The char that is the current quote delimiter"
   (nth 3 (syntax-ppss)))
 
-(defvar *use-real-search* nil)
+(defvar *use-real-search* t)
 
+;; like re-real-search-backward but searches text that is not
+;; inside comments or strings
 (defun re-real-search-backward (regexp limit errorp)
   (if *use-real-search*
-      (let ((last-point (point))
+      (let ((original-match-data (match-data))
+	    (case-fold-search t) ;; case insensitive search
+	    (orig-point (point))
+	    (last-point (point))
 	    ;; do a first search
-	    (found-point (re-search-backward regexp limit errorp)))
+	    (found-point (re-search-backward regexp limit errorp)))	
 	;; checks that we are moving to avoid loops
 	(while (and found-point
 		    (< (point) last-point)
@@ -336,12 +348,22 @@
 			(er--point-is-in-string-p)))
 	  (setq last-point found-point)
 	  (setq found-point (re-search-backward regexp limit errorp)))
-	found-point))
-  (re-search-backward regexp limit errorp))
+	(if found-point
+	    found-point
+	  ;; reset everything
+	  (progn (goto-char orig-point)
+		 (set-match-data original-match-data)
+		 nil)))
+    (re-search-backward regexp limit errorp)))
 
+;; like re-search-forward but searches text that is not
+;; inside comments or strings
 (defun re-real-search-forward (regexp limit errorp)
   (if *use-real-search*
-      (let ((last-point (point))
+      (let ((original-match-data (match-data))
+	    (case-fold-search t) ;; case insensitive search
+	    (orig-point (point))
+	    (last-point (point))
 	    ;; do a first search
 	    (found-point (re-search-forward regexp limit errorp)))
 	;; checks that we are moving to avoid loops
@@ -351,8 +373,13 @@
 			(er--point-is-in-string-p)))
 	  (setq last-point found-point)
 	  (setq found-point (re-search-forward regexp limit errorp)))
-	found-point))
-  (re-search-forward regexp limit errorp))
+	(if found-point
+	    found-point
+	  ;; reset everything
+	  (progn (goto-char orig-point)
+		 (set-match-data original-match-data)
+		 nil)))
+    (re-search-forward regexp limit errorp)))
 
 (defun function-boundaries ()
   ;; returns either a cons of (start end) containing the beginning and the end of the function
@@ -370,7 +397,7 @@
 				    ;; return nil when we have a scan error
 				    (scan-error nil))
 				  ;; try to find a lonely }, search only until the next start of function
-				  (re-search-forward "^}$" (save-excursion (or (when (re-search-forward *ojs-function-start-regexp* nil t)
+				  (re-real-search-forward "^}$" (save-excursion (or (when (re-real-search-forward *ojs-function-start-regexp* nil t)
 										 (line-beginning-position))
 									       (point-max)))
 						     t)
@@ -425,7 +452,7 @@
 	  ;; vars inside of the function
 	  (when (and begin-function end-function)
 	    (goto-char begin-function)
-	    (while (re-search-forward *ojs-vars-regexp* end-function t)	      
+	    (while (re-real-search-forward *ojs-vars-regexp* end-function t)	      
 	      (if list-of-cons
 		  (push (cons (match-string-no-properties 1) (match-string-no-properties 0)) vars)
 		(push (match-string-no-properties 1) vars)))
@@ -456,30 +483,30 @@
   ;; Global vars
   (push (cons 'search-global-vars font-lock-variable-name-face) font-locks)
   ;; Variable definitions
-;;  (push (list *ojs-vars-regexp* 1 ojs-var-definition-face) font-locks)
+  (push (list *ojs-vars-regexp* 1 ojs-var-definition-face) font-locks)
 
   ;; New type
   (push (list *ojs-new-type-regexp* 1 font-lock-type-face) font-locks)
   ;; Function definition
   (push (list *ojs-function-heading* 1 font-lock-function-name-face) font-locks)
-  ;; Function arguments
+  ;;  Function arguments
   (push (list
-	 (concat *ojs-function-arguments-start*)
-	 (list *arguments-end*
-	       '(backward-char)
-	       '(end-of-line)
-	       '(1 ojs-var-definition-face))) font-locks)
+  	 (concat *ojs-function-arguments-start*)
+  	 (list *arguments-end*
+  	       '(backward-char)
+  	       '(end-of-line)
+  	       '(1 ojs-var-definition-face))) font-locks)
   ;; Method definition
   (push (list *ojs-method-heading* 1 font-lock-function-name-face) font-locks)
   (push (list *ojs-method-heading* 2 font-lock-keyword-face) font-locks)
   (push (list *ojs-method-heading* 3 font-lock-type-face) font-locks)  
   ;; Method arguments
   (push (list
-	 (concat *ojs-method-arguments-start*)
-	 (list *arguments-end*
-	       '(backward-char)
-	       '(end-of-line)
-	       '(1 ojs-var-definition-face))) font-locks)
+  	 (concat *ojs-method-arguments-start*)
+  	 (list *arguments-end*
+  	       '(backward-char)
+  	       '(end-of-line)
+  	       '(1 ojs-var-definition-face))) font-locks)
   ;; keywords
   (push (cons opx2-js-font-lock-keywords font-lock-keyword-face) font-locks)
   ;; constants
