@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.8  2015/12/18 15:08:46  troche
+;;;; * use real-search
+;;;;
 ;;;; Revision 3.7  2015/12/15 13:39:11  troche
 ;;;; * debug
 ;;;;
@@ -94,13 +97,8 @@
 ;; return the current namespace 
 (defun pjs-current-namespace ()
   (save-excursion
-    (let* ((found (re-search-backward *pjs-namespace-definition* nil t))
+    (let* ((found (re-real-search-backward *pjs-namespace-definition* nil t))
 	   (namespace (when found (match-string-no-properties 1))))
-      (while (and found
-		  (not (eq (get-text-property (point) 'face) 'font-lock-keyword-face)))
-	(setq found (re-search-backward *pjs-namespace-definition* nil t))
-	(when found
-	  (setq namespace (match-string-no-properties 1))))
       (if found namespace "plw"))))
   
 
@@ -132,7 +130,7 @@
     (unless (hash-table-p *pjs-buffers-class-members-cache-regexp*)
       (setq *pjs-buffers-class-members-cache-regexp* (make-hash-table :test 'equal)))
     
-    (while (re-search-forward *pjs-class-declaration-regexp* nil t)
+    (while (re-real-search-forward *pjs-class-declaration-regexp* nil t)
       ;; we are at the beginning of a class
       (let* ((class-name (match-string-no-properties 1))
 	     (namespace  (pjs-current-namespace))
@@ -140,8 +138,8 @@
 	     )
 	(when members
 	  (puthash (format "%s.%s" namespace class-name) members *pjs-buffers-class-members-cache*)
-	  (puthash (format "%s.%s" namespace class-name) (js--regexp-opt-symbol (loop for item in members
-										      collect item))
+	  (puthash (format "%s.%s" namespace class-name) (format "\\(?:this\\.\\|[^.]\\)%s" (js--regexp-opt-symbol (loop for item in members
+														       collect item)))
 		   *pjs-buffers-class-members-cache-regexp*)
 	  )))))
 	 
@@ -201,11 +199,6 @@
   (setq *ojs-buffers-vars-cache* nil)
   (setq *ojs-buffers-vars-cache-regexp* nil))
 
-(defun pjs-reset-cache ()
-  (ojs-reset-cache)
-  (setq *pjs-buffers-class-members-cache* nil)
-  (setq *pjs-buffers-class-members-cache-regexp* nil))
-
 ;;;;; generic function to find candidates based on a regexp 
 ;;;;; it returns a candidates list containing cons (name . documentation) 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -217,7 +210,7 @@
     (save-excursion
       ;; Search forward from the line after the current one
       (forward-line 1)
-      (while  (re-search-forward regexp nil t)
+      (while  (re-real-search-forward regexp nil t)
 	(setq candidate (match-string-no-properties 1))
 	(unless (or (member candidate candidates) (and already-matched (listp already-matched) (member candidate already-matched)))
 	  (push (cons candidate (match-string-no-properties 0)) candidates)
@@ -225,7 +218,7 @@
       ;; search backward from the start of the current line
       (goto-char point)
       (beginning-of-line)
-      (while  (re-search-backward regexp nil t)
+      (while  (re-real-search-backward regexp nil t)
 	(setq candidate (match-string-no-properties 1))
 	(unless (or (member candidate candidates) (and already-matched (listp already-matched) (member candidate already-matched)))
 	  (push (cons candidate (match-string-no-properties 0)) candidates)
