@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.4  2015/12/18 15:09:40  troche
+;;;; * better syntax colorations
+;;;;
 ;;;; Revision 3.3  2015/12/14 15:34:18  troche
 ;;;; * var with types
 ;;;;
@@ -42,6 +45,35 @@
 ;;;; * pjs mode
 ;;;;  (header added automatically)
 ;;;;
+
+;;; FACES ;;;
+
+;; kernel functions : yellow in italic
+(defface pjs-kernel-functions-face
+    '((t 
+       :inherit font-lock-function-name-face :slant italic))
+    "PJS kernel fonts are displayed in italic"
+    )
+
+(defvar pjs-kernel-functions-face
+  'pjs-kernel-functions-face)
+
+;; global variable definution : Red in bold
+(defface pjs-var-definition-face
+    '((t 
+       :inherit font-lock-variable-name-face :weight bold))
+    "variable defintion are in bold"
+    )
+
+(defvar pjs-var-definition-face
+  'pjs-var-definition-face)
+
+
+;; functions of the current namespace
+
+;; symbols : light blue
+
+
 ;; constants
 (defconst pjs-font-lock-constants
   (js--regexp-opt-symbol
@@ -56,32 +88,47 @@
 ;; languages keywords
 (defconst pjs-font-lock-keywords
   (js--regexp-opt-symbol
-   '("namespace"
-     "class"
-     "with"
-     "where"
-     "order by"
-     "group by"
-     "inverse"
-     "break"
+   '("order by"
+     "default"
+     "on"
+     "let"
      "case"
-     "catch"
-     "else"
-     "for"
-     "goto"
-     "if"
-     "instanceof"
-     "new"
-     "return"
+     "continue"
+     "protected"
      "switch"
+     "false"
+     "return"
+     "void"
+     "undefined"
+     "for"
+     "catch"
      "try"
-     "typeof"
-     "var"
-     "while"
-     "foreach"
+     "in"
      "method"
+     "extends"
+     "break"
+     "typeof"
+     "with"
+     "namespace"
+     "finally"
+     "instanceof"
+     "true"
+     "if"
+     "this"
+     "context"
+     "group by"
+     "applet"
+     "else"
+     "throw"
+     "var"
+     "do"
+     "where"
+     "import"
+     "while"
      "function"
-     )))
+     "super"
+     "new"
+     "return values")))
 
 ;; pjs types
 (defconst pjs-font-lock-types
@@ -160,29 +207,32 @@
 (defconst *pjs-symbols*
   "#[[:alnum:]-_]+#")
 
-;; kernel functions are in italic
-(defface pjs-kernel-functions-face
-    '((t 
-       :inherit font-lock-function-name-face :slant italic))
-    "PJS kernel fonts are displayed in italic"
-    )
-
-(defvar pjs-kernel-functions-face
-  'pjs-kernel-functions-face)
-
-;; variable defintion are in bold
-(defface pjs-var-definition-face
-    '((t 
-       :inherit font-lock-variable-name-face :weight bold))
-    "variable defintion are in bold"
-    )
-
-(defvar pjs-var-definition-face
-  'pjs-var-definition-face)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; highlight functions defined in the buffer
+;; highlight namespace functions (current and other namespaces) 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar *pjs-namespace-functions-cache* nil)
+
+(defvar *pjs-namespace-functions-present* t)
+
+(defun list-pjs-namespace-functions ()
+  (cond (*pjs-namespace-functions-cache*
+	 *pjs-namespace-functions-cache*)
+	(*pjs-namespace-functions-present*
+	 (setq *pjs-namespace-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::get-all-namespace-members) t nil)")))
+	 (when *pjs-namespace-functions-present*
+	   (setq *pjs-namespace-functions-cache* (make-hash-table :test 'equal))
+	   (dolist (ns (fi:eval-in-lisp "(jvs::get-all-namespace-members)"))
+	     (puthash (car ns) (js--regexp-opt-symbol (second (cdr ns))) *pjs-namespace-functions-cache*))		  
+	   *pjs-namespace-functions-cache*))
+	(t
+	 nil)))
+
+(defun search-pjs-current-namespace-functions (end)
+  (let* ((namespace (pjs-current-namespace))
+	 (functions (list-pjs-namespace-functions))
+	 (ns-functions (when functions (gethash (upcase namespace) functions))))
+    (re-real-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-functions) end t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight kernel functions 
@@ -206,7 +256,7 @@
 (defun search-pjs-kernel-functions (end)
   (when (list-pjs-kernel-functions)
     (let ((search-pattern (list-pjs-kernel-functions)))
-      (re-search-forward search-pattern end t))))
+      (re-real-search-forward search-pattern end t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight functions defined in the buffer
@@ -224,14 +274,16 @@
     (let ((start-function (car (function-boundaries))))
       (when start-function
 	(goto-char start-function)
-	(when (re-search-forward *pjs-method-heading* nil t)
-	  (let ((class-name (match-string-no-properties 3))
+	(when (or (re-real-search-forward *pjs-method-heading*   (line-end-position) t)
+		  (re-real-search-forward *pjs-class-definition* (line-end-position) t))
+	  (let ((class-name (or (match-string-no-properties 3)
+				(match-string-no-properties 1)))
 		(namespace  (pjs-current-namespace)))
 	    (format "%s.%s" namespace class-name)))))))
   
 
 (defun class-members-in-function ()
-  (gethash (pjs-current-class) (pjs-class-members)))
+  (gethash (pjs-current-class) (pjs-class-members-regexp)))
 
 (defun search-class-members (end)
   (search-vars-in-context end 'class-members-in-function))
@@ -250,8 +302,8 @@
   ;; list of font-lock-keywords in the right order
 
   ;; Functions defined in buffers
-;;  (push (cons 'search-buffer-functions font-lock-function-name-face) font-locks)
-  (push (list 'search-buffer-functions 1 font-lock-function-name-face) font-locks)
+  
+  (push (list 'search-pjs-current-namespace-functions 1 font-lock-function-name-face) font-locks)
 
   ;; Kernel functions
   (push (cons 'search-pjs-kernel-functions pjs-kernel-functions-face) font-locks)
@@ -261,10 +313,10 @@
   (push (cons 'search-function-local-vars font-lock-variable-name-face) font-locks)
 
   ;; class members
-  (push (cons 'search-class-members opx2-hg-getset-face) font-locks)
+  (push (list 'search-class-members 1 opx2-hg-getset-face) font-locks)
 
   ;; Global vars
-  (push (cons 'search-global-vars font-lock-variable-name-face) font-locks)
+  (push (cons 'search-global-vars pjs-var-definition-face) font-locks)
   
   ;; Variable definitions with type
   (push (list *pjs-vars-with-type-regexp* 1 font-lock-type-face) font-locks)
@@ -341,3 +393,11 @@
 (defun force-syntax-highlighting ()
   (interactive)
   (font-lock-fontify-buffer))
+
+(defun pjs-reset-cache ()
+  (ojs-reset-cache)
+  (setq *pjs-buffers-class-members-cache* nil)
+  (setq *pjs-buffers-class-members-cache-regexp* nil)
+  (setq *pjs-namespace-functions-cache* nil)
+  (setq *pjs-kernel-functions-cache*  nil)
+  )
