@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.29  2015/12/18 15:09:12  troche
+;;;; * go to error when we have a script compilation error
+;;;;
 ;;;; Revision 3.28  2015/12/14 10:41:33  troche
 ;;;; * debug V2 detection
 ;;;;
@@ -326,6 +329,8 @@
     (process-send-string *ojs-compilation-buffer-name* (format "(jvs::emacs-check-and-compile-script %S %s)\n" selection v2))))
 
 
+(defvar *compiled-script-window* nil)
+
 (defun do-compile-and-sync-ojs-file (type)
   ;; find the script name
   (let* ((script-name      (file-name-base (buffer-file-name)))
@@ -340,6 +345,7 @@
 		     (get-buffer-create buffer-name)))
 	 (proc (get-buffer-process buffer))
 	 )
+    (setq *compiled-script-window* (selected-window))
     (if script
 	(catch 'exit
 	  ;; checks that the file matches
@@ -380,19 +386,41 @@
       (message "Script %s not found" script-name))))
 
 (defun ojs-compilation-filter (proc string)
-  (let ((case-fold-search nil))
-    (cond ((and (stringp string)
-		(string-match "\\`[[:upper:]-]+([0-9]+): \\'" string));; exit when we go back to the top level (ie :res, :pop, etc)
-	   ;;(delete-process proc)
-	   )
-	  ((and (stringp string)
-		(string-match ":EXIT-JS" string)) ;; exit when we read this, returned by the compilation functions
-	   (insert "----------------------------------------------------------------------------------------------")
-	   (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))	   
-	   ;;(delete-process proc)
-	   )	  
-	  (t
-	   (fi::subprocess-filter proc string)))))
+  (cond ((and (stringp string)
+	      (string-match "At line:\\([0-9]+\\),character:\\([0-9]+\\)" string))
+	 ;; we move the point on the original buffer to the error
+	 (let ((line (string-to-number (match-string 1 string)))
+	       (point (string-to-number (match-string 2 string)))
+	       (buf (current-buffer)))
+	   (with-current-buffer (window-buffer *compiled-script-window*)
+	     (when (> line 0)
+	       (goto-line line)
+	       (beginning-of-line)
+	       (when (> point 0)		   
+		 (forward-char point))
+	       (set-window-point *compiled-script-window* (point)))))
+	 (fi::subprocess-filter proc string))
+	((and (stringp string)
+	      (string-match "In (\\([[:word:]_-]+\\)):" string))
+	 (let ((function-name (match-string-no-properties 1 string)))
+	   (with-current-buffer (window-buffer *compiled-script-window*)
+	     (when function-name
+	       (goto-char (point-min))		 
+	       (when (re-real-search-forward (format "function\\s-+%s\\s-*([[:word:]_,]*)" (downcase function-name)) nil t)
+		 (set-window-point *compiled-script-window* (point))))))
+	 (fi::subprocess-filter proc string))
+	((and (stringp string)
+	      (string-match "\\`[[:upper:]-]+([0-9]+): \\'" string)) ;; exit when we go back to the top level (ie :res, :pop, etc)
+	 ;;(delete-process proc)
+	 )
+	((and (stringp string)
+	      (string-match ":EXIT-JS" string)) ;; exit when we read this, returned by the compilation functions
+	 (insert "----------------------------------------------------------------------------------------------")
+	 (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))	   
+	 ;;(delete-process proc)
+	 )	  
+	(t
+	 (fi::subprocess-filter proc string))))
 
 (defun trace-ojs-function(tag)
   (interactive
