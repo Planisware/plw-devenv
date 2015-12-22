@@ -32,6 +32,10 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.5  2015/12/22 12:32:06  troche
+;;;; * use local environment
+;;;; * type detection (first version)
+;;;;
 ;;;; Revision 3.4  2015/12/18 15:09:40  troche
 ;;;; * better syntax colorations
 ;;;;
@@ -146,12 +150,12 @@
 
 ;; method definition
 (defconst *pjs-method-heading*
-"^\\s-*method\\s-+\\(\\w+\\)\\s-+\\(\\<on\\>\\)\\s-+\\(\\w+\\)"
+"^\\s-*method\\s-+\\(\\w+\\)\\s-+\\(\\<on\\>\\)\\s-+\\([[:word:].]+\\)"
 "Regular expression matching the start of a method header.")
 
 ;;method arguments
 (defconst *pjs-method-arguments-start*
-  "\\<method\\>\\(\\s-+\\w+\\)?\\s-*\\<on\\>\\(\\s-+\\w+\\)?(\\s-*\\w")
+  "\\<method\\>\\(\\s-+\\w+\\)?\\s-*\\<on\\>\\(\\s-+[[:word:].]+\\)?(\\s-*\\w")
 
 ;; function definition
 (defconst *pjs-function-heading*
@@ -259,10 +263,6 @@
       (re-real-search-forward search-pattern end t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; highlight functions defined in the buffer
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight class members 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -279,14 +279,66 @@
 	  (let ((class-name (or (match-string-no-properties 3)
 				(match-string-no-properties 1)))
 		(namespace  (pjs-current-namespace)))
-	    (format "%s.%s" namespace class-name)))))))
+	    (cons namespace class-name)))))))
   
-
 (defun class-members-in-function ()
-  (gethash (pjs-current-class) (pjs-class-members-regexp)))
+  (let ((type (pjs-current-class)))
+    (when type
+      (pjs-class-members-regexp (car type) (cdr type)))))
 
 (defun search-class-members (end)
   (search-vars-in-context end 'class-members-in-function))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; highlight method / members depending on variable type
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; get the variable type from context :
+;; if the variable is local to the function, search a var <type> varname =
+;; TODO: if it is a global var of the namespace, check its type
+;; TODO: if it is a member of a classe, check the type from the class.
+(defun get-variable-type-in-context (varname)
+  (let ((context (get-local-function-environment)))
+    (when context
+      (second (gethash (downcase varname) (getf context :vars))))))
+
+(defconst *pjs-vars-with-members-or-methods*
+  "\\<\\(\\w+\\)\\>\\.\\<\\w[[:word:]0-9]*\\>\\((\\)")
+
+(defconst *pjs-standard-types*
+  '("string"
+    "boolean"
+    "number"
+    "vector"
+    "array"
+    "hashtable"))
+
+(defun convert-pjs-type (type)
+  (cond ((member type *pjs-standard-types*)
+	 (cons "plw" type))
+	(t
+	 (let ((strings (split-string type ".")))
+	   (cond ((= (length strings 1))
+		  (cons (pjs-current-namespace) (car strings)))
+		 (t
+		  (cons (car strings) (second strings))))))))
+
+(defun search-vars-with-members-or-methods (end)
+  (let ((match-data (match-data))
+	continue)
+    (if (catch 'exit
+	  (while (re-real-search-forward *pjs-vars-with-members-or-methods* end t)
+	    (let* ((var-name (match-string-no-properties 1))
+		   (member   (match-string-no-properties 2))
+		   (type     (convert-pjs-type (get-variable-type-in-context var-name))))
+	      (when type
+		(let ((members (pjs-class-members (car type) (cdr type)))
+		      (methods (pjs-class-methods (car type) (cdr type))))
+		  (when (or (member member members)
+			    (member member methods))
+		    (throw 'exit (point))))))))
+	(progn (set-match-data match-data)
+	       nil))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; syntax hightlighting definition
@@ -376,12 +428,18 @@
   ;; comments
   (set (make-local-variable 'comment-start) "// ")
   (set (make-local-variable 'comment-end) "")
- 
+
   (set (make-local-variable 'font-lock-defaults)
        (list font-locks
 	     nil  ;; fontify strings and comments
 	     t    ;; case insensitive fontifying
+	     nil
+	     nil
 	     ))
+
+  (font-lock-mode)
+  ;; build the cache before fontifying 
+  (jit-lock-register 'build-local-vars-cache)
 
   ;; regexp to mark the beginning of a function
 ;;  (setq defun-prompt-regexp *pjs-function-or-method-regexp*)
