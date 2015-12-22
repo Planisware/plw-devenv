@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.13  2015/12/22 15:47:49  troche
+;;;; * oops
+;;;;
 ;;;; Revision 3.12  2015/12/22 15:47:25  troche
 ;;;; * deactivate
 ;;;;
@@ -452,10 +455,10 @@
   (push (list 'search-buffer-functions 1 font-lock-function-name-face) font-locks)
 
   ;; Kernel functions
-;;  (push (list 'search-kernel-functions 1 ojs-kernel-functions-face) font-locks)
+  (push (list 'search-kernel-functions 1 ojs-kernel-functions-face) font-locks)
 
   ;; Variables in the function 
-;;  (push (cons 'search-function-local-vars font-lock-variable-name-face) font-locks)
+  (push (cons 'search-function-local-vars font-lock-variable-name-face) font-locks)
   ;; Global vars
   (push (cons 'search-global-vars font-lock-variable-name-face) font-locks)
   ;; Variable definitions
