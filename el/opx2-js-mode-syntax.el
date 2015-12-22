@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.11  2015/12/22 12:31:37  troche
+;;;; * use get-local-function-environment
+;;;;
 ;;;; Revision 3.10  2015/12/18 15:08:14  troche
 ;;;; * real-search is back (and working this time)
 ;;;;
@@ -216,7 +219,7 @@
 
 (defvar *ojs-kernel-functions-present* t)
 
-(defvar *regexp-elements-limit* 500)
+(defvar *regexp-elements-limit* 1000)
 
 (defun partition-list (list length)
   (loop
@@ -229,8 +232,8 @@
 	 *ojs-kernel-functions-cache*)
 	(*ojs-kernel-functions-present*
 	 (setq *ojs-kernel-functions-cache*
-	       (let ((functions-list (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-all-js-functions) t nil)")))
-					    (sort (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)")) 'string<)))
+	       (let ((functions-list (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-js-functions) t nil)")))
+					    (sort (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-js-functions)")) 'string<)))
 		     regexp-list)
 		 (dolist (sublist (partition-list functions-list *regexp-elements-limit*))
 		   (push (format "\\(%s\\)" (js--regexp-opt-symbol sublist)) regexp-list))
@@ -415,49 +418,19 @@
   (when (function-boundaries)
     t))
 
-(defun get-local-vars-for-function (list-of-cons)
+(defun get-local-vars-for-function (list-of-cons) 
   ;; if list-of-cons is t, we return a list of cons (variable . documentation)
   ;; if it is nil, we return a list of variable
-  ;; we move to the beginning of the function
-  ;; test if we are inside a function ie
-  ;; if we have a function/method word backward
-  ;; and that this word is before the next closing } we find
-  (save-excursion
-    ;; we ignore errors because the forward-list can fail if parenthesis are not balanced
-    ;; in that case, we do nothing.
-    (let ((function-boundaries (function-boundaries)))
-      (when function-boundaries
-	(let* ((start-function (goto-char (car function-boundaries)))
-	       (begin-args (progn (while (and (not (looking-at "("))
-					      (< (point) (line-end-position)))
-				    (forward-char))
-				  (if (looking-at "(") (point) nil)))
-	       (end-args (progn (while (and (not (looking-at ")"))
-					    (< (point) (line-end-position)))
-				  (forward-char))
-				(if (looking-at ")") (point) nil)))
-	       (begin-function (progn (while (and (not (looking-at "{"))
-						  (< (point) (line-end-position)))
-					(forward-char))
-				      (if (looking-at "{") (point) nil)))
-	       (end-function (cdr function-boundaries))
-	       (function-line (when end-args (buffer-substring-no-properties start-function (1+ end-args) )))
-	       vars)
-	  ;; arguments
-	  (when (and function-line begin-args end-args)
-	    (dolist (arg (split-string (buffer-substring-no-properties (1+ begin-args) end-args) "[ \t,]+" t))
-	      (if list-of-cons
-		  (push (cons arg function-line) vars)
-		(push arg vars))))
-	  ;; vars inside of the function
-	  (when (and begin-function end-function)
-	    (goto-char begin-function)
-	    (while (re-real-search-forward *ojs-vars-regexp* end-function t)	      
-	      (if list-of-cons
-		  (push (cons (match-string-no-properties 1) (match-string-no-properties 0)) vars)
-		(push (match-string-no-properties 1) vars)))
-	    vars))))))
-
+  ;; the jit-lock-register function prepared a nice cache for us
+  (let ((context (get-local-function-environment))
+	res)
+    (when context
+      (maphash '(lambda (k v)
+		  (if list-of-cons
+		      (push (cons k (car v)) res)
+		    (push k res)))
+	       (getf context :vars))
+      res)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; syntax hightlighting definition
@@ -524,6 +497,10 @@
 	     t    ;; case insensitive fontifying
 	     ))
 
+  (font-lock-mode)
+  ;; build the cache before fontifying 
+  (jit-lock-register 'build-local-vars-cache)  
+  
   ;; regexp to mark the beginning of a function
 ;;  (setq defun-prompt-regexp *ojs-function-or-method-regexp*)
 
