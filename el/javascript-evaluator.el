@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.12  2015/12/28 12:32:20  mgautier
+;;;; error message when the ojs repl is not found
+;;;;
 ;;;; Revision 3.11  2015/12/15 16:51:54  troche
 ;;;; * ; is not a comment in javascript evaluator
 ;;;;
@@ -199,17 +202,20 @@ the buffer name is the second optional argument."
 	 (proc (get-buffer-process buffer))
 	 (repl? (fi:eval-in-lisp "(if (fboundp 'jvs::js-repl) t nil)"))
 	 )
-    (when repl?
-      (if (fi:process-running-p proc buffer-name)
-	  (fi::switch-to-buffer-new-screen buffer-name)
-	(progn 
-	  (setq proc (fi:open-lisp-listener -1 buffer-name 'fi::setup-tcp-connection "(jvs::js-repl)" 'js-evaluator-mode))
-	  (sleep-for 0.1)
-	  (delete-region (point-min) (point-max))
-	  (set-process-filter proc 'javascript-evaluator-filter)
-	  (process-send-string proc ":help\n")
-	  )
-	))))
+    (cond (repl?
+	   (if (fi:process-running-p proc buffer-name)
+	       (fi::switch-to-buffer-new-screen buffer-name)
+	     (progn 
+	       (setq proc (fi:open-lisp-listener -1 buffer-name 'fi::setup-tcp-connection "(jvs::js-repl)" 'js-evaluator-mode))
+	       (sleep-for 0.1)
+	       (delete-region (point-min) (point-max))
+	       (set-process-filter proc 'javascript-evaluator-filter)
+	       (process-send-string proc ":help\n")
+	       )))
+	  (t
+	   (fi::switch-to-buffer-new-screen buffer-name)
+	   (print "javascript repl not found" buffer)
+	   ))))
 
 (defvar *javascript-prompt-regexp* "^[OP]JS([0-9]+)\\(\\[[A-Za-z0-9]+\\]\\)?\\(\\[\\.+\\]\\)?: ")
 
