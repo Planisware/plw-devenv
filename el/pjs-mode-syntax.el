@@ -448,7 +448,7 @@
 	 ;; simple arguments
 	 (list *pjs-arguments-end*
 	       '(backward-char)
-	       '(re-search-backward "(")
+	       '(re-search-backward "(" (line-beginning-position) t)
 	       '(1 pjs-var-definition-face))
 	 ;; arguments with types
 	 (list *pjs-arguments-type-end*
@@ -469,7 +469,7 @@
 	  ;; simple arguments
 	  (list *pjs-arguments-end*
 		'(backward-char)
-		'(re-search-backward "(")
+		'(re-search-backward "(" (line-beginning-position) t)
 		'(1 pjs-var-definition-face))
 	  ;; arguments with types
 	  (list *pjs-arguments-type-end*
