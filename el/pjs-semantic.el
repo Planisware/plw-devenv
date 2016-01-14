@@ -31,6 +31,7 @@
 	  (k (car list) (car list))
 	  (v (second list) (second list))
 	  )
+
 	((null list))
       (push k new-list)
       (if (memq k *semantic-pjs-tag-list-attributes*)
