@@ -93,7 +93,9 @@
 	       (push var var-list))
 	     ;;)
 	     ;; take the local variables of the parent
-	     (append var-list (semantic-collect-local-vars-from-tag (semantic-find-tag-parent-by-overlay tag) point))))
+	     (let ((parent (semantic-find-tag-parent-by-overlay tag)))
+	       (unless (eq parent tag)
+		 (append var-list (semantic-collect-local-vars-from-tag (semantic-find-tag-parent-by-overlay tag) point))))))
 	  ((semantic-tag-p tag)
 	   (semantic-collect-local-vars-from-tag (semantic-current-tag-parent) (point)))
 	  (t

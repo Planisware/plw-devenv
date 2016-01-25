@@ -381,29 +381,36 @@
 ;; we consider we are at the point between the var and its "father"
 ;; we return a cons (namespace . classname)
 (defun get-variable-type-in-context (point )
+  ;; use the parser
   (save-match-data
     (save-excursion
       (goto-char point)
       (when (re-search-backward (format "\\<%s\\>" *pjs-variable-name*) (line-beginning-position) t)
-	(let ((varname (downcase (match-string-no-properties 0)))
-	      context)
-	  (cond ((looking-back "\\.")
-		 ;; we have a dot, try to get the type of the "father"
-		 (let ((father-type (get-variable-type-in-context (match-beginning 0))))
-		   (when father-type
-		     (get-member-type (car father-type) (cdr father-type) varname))))
-		;; local variable of the function, try to get the type
-		((and (setq context (get-local-function-environment))
-		      (consp context))
-		 (if (string= (downcase varname) "this")
-		     (convert-pjs-type (getf context :class))
-		   (let ((res (second (gethash (downcase varname) (getf context :vars)))))
-		     (when res
-		       (convert-pjs-type res)))))
-		;; member of a typed variable
-		()
-		;; namespace var with type
-		()))))))
+  	(let ((varname (downcase (match-string-no-properties 0)))  	      
+	      var-tag)
+  	  (cond ((looking-back "\\.")
+  		 ;; we have a dot, try to get the type of the "father"
+  		 (let ((father-type (get-variable-type-in-context (match-beginning 0))))
+  		   (when father-type
+  		     (get-member-type (car father-type) (cdr father-type) varname))))
+		;; this of a method
+		((string= (downcase varname) "this")
+		 (let ((current-tag (car (semantic-find-tag-by-overlay))))
+		   (when (and current-tag
+			      (eq (semantic-tag-class current-tag) 'function))
+		     (convert-pjs-type (semantic-tag-get-attribute current-tag :on-class)))))
+  		;; local variable of the function, try to get the type
+  		((setq var-tag (car (semantic-find-tags-by-name varname (semantic-something-to-tag-table (semantic-get-local-variables)))))
+		 (convert-pjs-type (semantic-tag-get-attribute var-tag :type)))
+  		;; member of a typed variable
+  		()
+  		;; namespace var with type
+  		()
+		(t
+;;		 (message "nothing found :(")
+		 nil)
+		))))))
+  
 
 (defconst *pjs-vars-with-members-or-methods*
     (format "\\.\\<\\(%s\\)\\>" *pjs-variable-name*))
