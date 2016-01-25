@@ -219,37 +219,49 @@
 (defvar-resetable *pjs-namespace-classes-cache* nil 'pjs-compile)
 (defvar-resetable *pjs-namespace-classes-regexp-cache* nil 'pjs-compile)
 
-(defun list-pjs-namespace-functions-regexp ()
+(defun list-pjs-namespace-functions-regexp (namespace)
   (unless *pjs-namespace-functions-regexp-cache*
     (init-pjs-namespace-cache))
-  *pjs-namespace-functions-regexp-cache*)
+  (gethash (upcase namespace) *pjs-namespace-functions-regexp-cache*))
 
-(defun list-pjs-namespace-variables-regexp ()
+(defun list-pjs-namespace-functions (namespace)
+  (unless *pjs-namespace-functions-cache*
+    (init-pjs-namespace-cache))
+  (gethash (upcase namespace) *pjs-namespace-functions-cache*))
+
+(defun list-pjs-namespace-variables-regexp (namespace)
   (unless *pjs-namespace-variables-regexp-cache*
     (init-pjs-namespace-cache))
-  *pjs-namespace-variables-regexp-cache*)
+  (gethash (upcase namespace) *pjs-namespace-variables-regexp-cache*))
 
-(defun list-pjs-namespace-classes-regexp ()
+(defun list-pjs-namespace-variables (namespace)
+  (unless *pjs-namespace-variables-cache*
+    (init-pjs-namespace-cache))
+  (gethash (upcase namespace) *pjs-namespace-variables-cache*))
+
+(defun list-pjs-namespace-classes-regexp (namespace)
   (unless *pjs-namespace-classes-regexp-cache*
     (init-pjs-namespace-cache))
-  *pjs-namespace-classes-regexp-cache*)
+  (gethash (upcase namespace) *pjs-namespace-classes-regexp-cache*))
+
+(defun list-pjs-namespace-classes (namespace)
+  (unless *pjs-namespace-classes-cache*
+    (init-pjs-namespace-cache))
+  (gethash (upcase namespace) *pjs-namespace-classes-cache*))
 
 (defun search-pjs-current-namespace-functions (end)
   (let* ((namespace (pjs-current-namespace))
-	 (functions (list-pjs-namespace-functions-regexp))
-	 (ns-functions (when functions (gethash (upcase namespace) functions))))
+	 (ns-functions (list-pjs-namespace-functions-regexp namespace)))
     (re-real-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-functions) end t)))
 
 (defun search-pjs-current-namespace-variables (end)
   (let* ((namespace (pjs-current-namespace))
-	 (variables (list-pjs-namespace-variables-regexp))
-	 (ns-variables (when variables (gethash (upcase namespace) variables))))
+	 (ns-variables (list-pjs-namespace-variables-regexp namespace)))
     (re-real-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-variables) end t)))
 
 (defun search-pjs-current-namespace-classes (end)
   (let* ((namespace (pjs-current-namespace))
-	 (classes (list-pjs-namespace-classes-regexp))
-	 (ns-classes (when classes (gethash (upcase namespace) classes))))
+	 (ns-classes (list-pjs-namespace-classes-regexp namespace)))
     (re-real-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-classes) end t)))
 
 (defun init-pjs-namespace-cache ()

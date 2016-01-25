@@ -59,4 +59,5 @@
 
   ;; js modes
   (add-to-list 'ac-modes 'opx2-js-mode)
+  (add-to-list 'ac-modes 'pjs-mode)
   (add-to-list 'ac-modes 'js-evaluator-mode))
