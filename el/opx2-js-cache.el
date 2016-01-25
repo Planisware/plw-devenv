@@ -67,13 +67,15 @@
 
 (defvar *js-vars-to-reset* nil)
 
-(defmacro defvar-resetable (varname def when)
+(defmacro defvar-resetable (varname def when &optional local)
+  (unless (hash-table-p *js-vars-to-reset*)
+    (setq *js-vars-to-reset* (make-hash-table :test 'eq)))
   `(progn
-     (unless (hash-table-p *js-vars-to-reset*)
-       (setq *js-vars-to-reset* (make-hash-table :test 'eq)))
      (dolist (w (if (consp ,when) ,when (list ,when)))
        (pushnew ',varname (gethash w *js-vars-to-reset*)))
-     (defvar ,varname ,def)))  
+     ,(if local
+	  `(defvar-local ,varname ,def)
+	`(defvar ,varname ,def))))
 
 ;;;;; global cache for function and methods definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -128,12 +130,19 @@
 (defconst *pjs-namespace-definition*
   (format "^\\s-*\\<namespace\\>\\s-+\\(%s\\);" *js-namespace-name*))
 
-;; return the current namespace 
+;; TODO : multiple namespaces in one file !
+
+(defvar-resetable *pjs-buffer-namespace* nil 'pjs-compile t)
+
+;; return the current namespace
 (defun pjs-current-namespace ()
-  (save-excursion
-    (let* ((found (re-real-search-backward *pjs-namespace-definition* nil t))
-	   (namespace (when found (downcase (match-string-no-properties 1)))))
-      (if found namespace "plw"))))
+  (or *pjs-buffer-namespace*      
+      (save-excursion
+	(goto-char (point-min))
+	(setq *pjs-buffer-namespace*
+	      (let* ((found (re-real-search-forward *pjs-namespace-definition* nil t))
+		     (namespace (when found (downcase (match-string-no-properties 1)))))
+		(if found namespace "plw"))))))
 
 ;; contains list of cons (name . documentation)
 ;; used for autocomplete 

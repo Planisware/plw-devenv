@@ -143,6 +143,9 @@
      "hashtable"
      )))
 
+(defconst *pjs-variable-name*
+  "\\(?:\\.\\.\\.\\)?[_a-zA-Z][_a-zA-Z0-9]*")
+
 ;; method definition
 (defconst *pjs-method-heading*
   (format "^\\s-*\\<method\\>\\s-+\\(%s\\)\\s-+\\(\\<on\\>\\)\\s-+\\(%s\\)" *js-function-name* *js-type*)
@@ -150,7 +153,7 @@
 
 ;;method arguments
 (defconst *pjs-method-arguments-start*
-  (format "\\<method\\>\\s-+\\(%s\\)?\\s-*\\<on\\>\\s-+\\(%s\\)?(" *js-function-name* *js-type*))
+  (format "\\<method\\>\\s-+\\(%s\\)?\\s-*\\<on\\>\\s-+\\(%s\\)?\\s-*(" *js-function-name* *js-type*))
 
 ;; function definition
 (defconst *pjs-function-heading*
@@ -162,27 +165,27 @@
   (format "\\<function\\>\\s-+\\(%s\\)?\\s-*(" *js-function-name*))
 
 (defconst *pjs-arguments-end*
-  (format "\\s-*\\(\\<%s\\>\\)\\s-*\\(?::.+\\)?[),]" *js-variable-name*))
+  (format "\\s-*\\(\\<%s\\>\\)\\s-*\\(?::.+\\)?[),]" *pjs-variable-name*))
 
 (defconst *pjs-arguments-type-end*
-  (format "\\s-*\\(\\<%s\\>\\)\\s-+\\(\\<%s\\>\\)\\s-*\\(?::.+\\)?[),]" *js-type* *js-variable-name*))
+  (format "\\s-*\\(\\<%s\\>\\)\\s-+\\(\\<%s\\>\\)\\s-*\\(?::.+\\)?[),]" *js-type* *pjs-variable-name*))
 
 ;; vars definition with optional type
 (defconst *pjs-vars-with-type-regexp* 
 ;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
-  (format "^.*\\<var\\>\\s-*\\(%s\\)\\s-+\\(%s\\)\\s-*[=;]" *js-type* *js-variable-name*))
+  (format "^.*\\<var\\>\\s-*\\(%s\\)\\s-+\\(%s\\)\\s-*[=;]" *js-type* *pjs-variable-name*))
 
 (defconst *pjs-vars-no-type-regexp* 
 ;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
-  (format "^.*\\<var\\>\\s-+\\(%s\\)\\s-*[=;]" *js-variable-name*))
+  (format "^.*\\<var\\>\\s-+\\(%s\\)\\s-*[=;]" *pjs-variable-name*))
 
 (defconst *pjs-var-in-with-type-regexp* 
 ;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
-  (format "^.*\\<var\\>\\s-*\\(%s\\)\\s-+\\(%s\\)\\s-+\\(in\\)" *js-type* *js-variable-name*))
+  (format "^.*\\<var\\>\\s-*\\(%s\\)\\s-+\\(%s\\)\\s-+\\(in\\)" *js-type* *pjs-variable-name*))
 
 (defconst *pjs-var-in-no-type-regexp* 
 ;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
-  (format "^.*\\<var\\>\\s-+\\(%s\\)\\s-+\\(in\\)" *js-variable-name*))
+  (format "^.*\\<var\\>\\s-+\\(%s\\)\\s-+\\(in\\)" *pjs-variable-name*))
 
 ;; class types, plc.somethinf
 (defconst *pjs-class-type*
@@ -272,6 +275,47 @@
     (puthash (car ns) (third (cdr ns))  *pjs-namespace-classes-cache*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; local vars based on grammar
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'pjs-semantic)
+
+(defun pjs-start-of-next-block (tag) ;; (&optional (tag (semantic-current-tag)))
+  (catch 'exit
+    (let ((next-tag (semantic-find-tag-by-overlay-next)))
+      (while next-tag
+	(cond ((> (semantic-tag-start next-tag) (semantic-tag-end tag))
+	       (throw 'exit (semantic-tag-end tag)))
+	      ((eq (semantic-tag-class next-tag) 'block)
+	       (throw 'exit (semantic-tag-start next-tag)))
+	      (t
+	       (setq next-tag (semantic-find-tag-by-overlay-next (semantic-tag-start next-tag)))))))
+    (semantic-tag-end tag)))
+
+(defun search-pjs-local-vars (end)
+  (catch 'exit
+    (while (< (point) end)
+      (let ((current-tag (car (last (semantic-find-tag-by-overlay (point))))))
+	(cond ((null current-tag)
+	       (let ((next-tag (semantic-find-tag-by-overlay-next)))
+		 (if next-tag
+		     (goto-char (semantic-tag-start next-tag))
+		   (throw 'exit nil))))
+	      ((semantic-tag-p current-tag)	       
+	       (let ((local-vars (semantic-get-local-variables))
+		     ;; end is the start of the next block or the end of the current tag
+		     (end (min end
+			       (or (pjs-start-of-next-block current-tag)
+				   (semantic-tag-end current-tag)))))
+;;		 (message "local-vars %s" local-vars)
+		 (when (re-real-search-forward (js--regexp-opt-symbol (mapcar 'car local-vars)) end t)
+		   (throw 'exit (point)))
+		 ;; we didn't find anything, go to the end
+		 (goto-char end)))
+	      (t
+	       (message "nothing ??")))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight kernel functions 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -328,7 +372,7 @@
   (save-match-data
     (save-excursion
       (goto-char point)
-      (when (re-search-backward (format "\\<%s\\>" *js-variable-name*) (line-beginning-position) t)
+      (when (re-search-backward (format "\\<%s\\>" *pjs-variable-name*) (line-beginning-position) t)
 	(let ((varname (downcase (match-string-no-properties 0)))
 	      context)
 	  (cond ((looking-back "\\.")
@@ -350,8 +394,8 @@
 		()))))))
 
 (defconst *pjs-vars-with-members-or-methods*
-    (format "\\.\\<\\(%s\\)\\>" *js-variable-name*))
-;;  (format "\\<\\(%s\\)\\>\\.\\<\\(%s\\)\\>\\(?:(\\)?" *js-variable-name* *js-variable-name*))
+    (format "\\.\\<\\(%s\\)\\>" *pjs-variable-name*))
+;;  (format "\\<\\(%s\\)\\>\\.\\<\\(%s\\)\\>\\(?:(\\)?" *pjs-variable-name* *pjs-variable-name*))
 
 (defconst *pjs-standard-types*
   '("string"
@@ -392,8 +436,7 @@
 
   ;; list of font-lock-keywords in the right order
 
-  ;; Functions defined in buffers
-  
+  ;; Functions defined in buffers  
   (push (list 'search-pjs-current-namespace-functions 1 font-lock-function-name-face) font-locks)
 
   ;; Kernel functions
@@ -401,7 +444,8 @@
   (push (list 'search-pjs-kernel-functions 1 pjs-kernel-functions-face) font-locks)
 
   ;; Variables in the function 
-  (push (cons 'search-function-local-vars font-lock-variable-name-face) font-locks)
+  ;;  (push (cons 'search-function-local-vars font-lock-variable-name-face) font-locks)
+  (push (cons 'search-pjs-local-vars font-lock-variable-name-face) font-locks)
 
   ;; members and methods based on type of var
   (push (list 'search-vars-with-members-or-methods 1 opx2-hg-getset-face) font-locks)
@@ -444,7 +488,7 @@
   (push (list *pjs-function-heading* 1 font-lock-function-name-face) font-locks)
   ;; Function arguments
   (push (list
-	 (concat *pjs-method-arguments-start*)
+	 (concat *pjs-function-arguments-start*)
 	 ;; simple arguments
 	 (list *pjs-arguments-end*
 	       '(backward-char)
@@ -465,7 +509,7 @@
   (push (list *pjs-method-heading* 3 font-lock-type-face) font-locks)  
   ;; Method arguments
   (push (list
-	  (concat *pjs-function-arguments-start*)
+	  (concat *pjs-method-arguments-start*)
 	  ;; simple arguments
 	  (list *pjs-arguments-end*
 		'(backward-char)
@@ -501,7 +545,7 @@
 
   (font-lock-mode)
   ;; build the cache before fontifying 
-  (jit-lock-register 'build-local-vars-cache)
+;;  (jit-lock-register 'build-local-vars-cache)
 
   ;; fontify all the things
   (syntax-propertize (point-max))
