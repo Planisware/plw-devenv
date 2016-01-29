@@ -277,14 +277,15 @@
     (setq *pjs-namespace-variables-regexp-cache* (make-hash-table :test 'equal)))
   (unless (hash-table-p *pjs-namespace-classes-regexp-cache*)    
     (setq *pjs-namespace-classes-regexp-cache* (make-hash-table :test 'equal)))    
-  
-  (dolist (ns (fi:eval-in-lisp "(jvs::get-all-namespace-members)"))
-    (puthash (car ns) (js--regexp-opt-symbol (car (cdr ns)))    *pjs-namespace-variables-regexp-cache*)
-    (puthash (car ns) (js--regexp-opt-symbol (second (cdr ns))) *pjs-namespace-functions-regexp-cache*)
-    (puthash (car ns) (js--regexp-opt-symbol (third (cdr ns)))  *pjs-namespace-classes-regexp-cache*)
-    (puthash (car ns) (car (cdr ns))    *pjs-namespace-variables-cache*)
-    (puthash (car ns) (second (cdr ns)) *pjs-namespace-functions-cache*)
-    (puthash (car ns) (third (cdr ns))  *pjs-namespace-classes-cache*)))
+
+  (when (fi::lep-open-connection-p)
+    (dolist (ns (fi:eval-in-lisp "(jvs::get-all-namespace-members)"))
+      (puthash (car ns) (js--regexp-opt-symbol (car (cdr ns)))    *pjs-namespace-variables-regexp-cache*)
+      (puthash (car ns) (js--regexp-opt-symbol (second (cdr ns))) *pjs-namespace-functions-regexp-cache*)
+      (puthash (car ns) (js--regexp-opt-symbol (third (cdr ns)))  *pjs-namespace-classes-regexp-cache*)
+      (puthash (car ns) (car (cdr ns))    *pjs-namespace-variables-cache*)
+      (puthash (car ns) (second (cdr ns)) *pjs-namespace-functions-cache*)
+      (puthash (car ns) (third (cdr ns))  *pjs-namespace-classes-cache*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; local vars based on grammar

@@ -1,4 +1,8 @@
-(defun font-lock-fontify-keywords-region (start end &optional loudly)
+(defvar *profile-font-lock* t)
+(defvar *profile-font-lock-threshold* 0.1)
+  
+
+(defun font-lock-fontify-keywords-region-with-profiling (start end &optional loudly)
   "Fontify according to `font-lock-keywords' between START and END.
 START should be at the beginning of a line.
 LOUDLY, if non-nil, allows progress-meter bar."
@@ -9,6 +13,7 @@ LOUDLY, if non-nil, allows progress-meter bar."
 	(keywords (cddr font-lock-keywords))
 	(bufname (buffer-name)) (count 0)
         (pos (make-marker))
+	(curtime (float-time (current-time)))
 	keyword matcher highlights)
     ;;
     ;; Fontify each item in `font-lock-keywords' from `start' to `end'.
@@ -17,6 +22,11 @@ LOUDLY, if non-nil, allows progress-meter bar."
 			  (make-string (cl-incf count) ?.)))
       ;;
       ;; Find an occurrence of `matcher' from `start' to `end'.
+      (when *profile-font-lock*
+	(let ((exec-time (- (float-time (current-time)) curtime)))
+	  (when (> exec-time *profile-font-lock-threshold*)
+	    (message "Font lock report %s : %s sec" keyword (- (float-time (current-time)) curtime))))
+	(setq curtime (float-time (current-time))))
       (setq keyword (car keywords) matcher (car keyword))
       (goto-char start)
       (while (and (< (point) end)

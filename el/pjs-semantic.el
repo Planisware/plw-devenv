@@ -2,6 +2,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'semantic)
+;;(require 'semantic/edit)
 
 (defconst *semantic-pjs-tag-list-attributes*
   '( :members
@@ -10,30 +11,123 @@
      :children
      :local-vars))
 
+(defun pjs-semantic-tag-block-p (tag)
+  (memq (semantic-tag-class tag) '(block function type)))
+
+(defun pjs-semantic-tag-var-p (tag)
+  (eq (semantic-tag-class tag) 'variable))
+
+;; same as semantic-find-tag-by-overlay but returns only "block" tags (block / functions / classes)
+(defun pjs-semantic-find-block-tag-by-overlay (&optional positionormarker buffer)
+  (let (res)
+    (dolist (tag (semantic-find-tag-by-overlay positionormarker buffer))
+      (when (pjs-semantic-tag-block-p tag)
+	(push tag res)))
+    (reverse res)))		 
+
+(setq semantic-edits-verbose-flag t)
+  
 (defvar-local *semantic-parse-cache* nil)
 
+;;(defconst *pjs-start-block-regexp* (format "^\\s-*\\(\\(function\\|method\\)\\s-+\\<%s\\>\\s-*(.*)\\|class\\s-+\\<%s\\>\\)\\s-*{" *js-function-name* *js-function-name*))
+;; try the "lazy" version first
+(defconst *pjs-start-block-regexp* "^\\s-*\\(function\\|method\\|class\\).*{")
+
+(defvar *pjs-parse-changes* nil)
+
+(defun pjs-semantic-parse-changes ()
+  "Incrementally reparse the current buffer.
+Incremental parser allows semantic to only reparse those sections of
+the buffer that have changed.  This function depends on
+`semantic-edits-change-function-handle-changes' setting up change
+overlays in the current buffer.  Those overlays are analyzed against
+the semantic cache to see what needs to be changed."
+  (let ((*pjs-parse-changes* t)
+	(changed-tags
+         ;; Don't use `semantic-safe' here to explicitly catch errors
+         ;; and reset the parse tree.
+         (catch 'semantic-parse-changes-failed
+	   (semantic-edits-incremental-parser-1)
+           ;; (if debug-on-error
+	   ;;     ;;               (pjs-semantic-edits-incremental-parser-1)
+	   ;;     (semantic-edits-incremental-parser-1)
+           ;;   (condition-case err
+	   ;; 	 ;; (pjs-semantic-edits-incremental-parser-1)
+	   ;; 	 (semantic-edits-incremental-parser-1)
+           ;;     (error
+           ;;      (message "incremental parser error: %S"
+	   ;; 		 (error-message-string err))
+           ;;      t))))))
+	   )))
+    (message "changed-tags %s" changed-tags)
+    (when (eq changed-tags t)
+      ;; Force a full reparse.
+      (semantic-edits-incremental-fail)
+      (setq changed-tags nil))
+    (when (eq changed-tags :error)
+      (message "Error, setting up to date")
+      (semantic-parse-tree-set-up-to-date))
+    changed-tags))
+
+;; parse the buffer block by block
+(defun pjs-semantic-parse-buffer ()
+  (save-excursion
+    (goto-char (point-min))
+    (let (res
+	  (cur-point (point)))      
+      (condition-case err
+	  (while (< (point) (point-max))
+	    (let ((next-function (re-search-forward *pjs-start-block-regexp* nil t)))
+	      (if next-function
+		  (let* ((start-inter cur-point)
+			 (end-inter (1- (line-beginning-position)))
+			 (start-block (line-beginning-position))
+			 (end-block (progn (backward-char) (forward-sexp)(point)))
+			 (inter-tags    (pjs-semantic-parse-region-1 start-inter end-inter))
+			 (block-tags    (pjs-semantic-parse-region-1 start-block end-block)))
+		    (setq cur-point (point))
+		    (when (and inter-tags (not (eq inter-tags 1))) (setq res (append res inter-tags)))
+		    (when (and block-tags (not (eq block-tags 1))) (setq res (append res block-tags))))
+		(let ((end-tags (pjs-semantic-parse-region-1 (point) (point-max))))
+		  (when (and end-tags (not (eq end-tags 1))) (setq res (append res end-tags)))
+		  (goto-char (point-max))))))
+	(scan-error nil))
+      res)))
+
+(defun pjs-semantic-parse-region (start end &optional nonterminal depth returnonerror)
+  (if (and (eq start (point-min))
+	   (eq end (point-max)))
+      (pjs-semantic-parse-buffer)
+    (pjs-semantic-parse-region-1 start end nonterminal depth returnonerror)))
+
 ;; we cache the last result for each region
-(defun semantic-pjs-parse-region (start end &optional nonterminal depth returnonerror)
-  (unless *semantic-parse-cache*
-    (setq *semantic-parse-cache* (make-hash-table :test 'eq)))
-  (when (fi::lep-open-connection-p)
-    (let ((tags (fi:eval-in-lisp "(jvs::semantics-generate-tags %S)" (buffer-substring-no-properties start end)))
-;;	  (tags (fi:eval-in-lisp "(when (fboundp 'jvs::semantics-generate-tags-for-file) (jvs::semantics-generate-tags-for-file %S))" (buffer-file-name)))
+(defun pjs-semantic-parse-region-1 (start end &optional nonterminal depth returnonerror)
+  (when (fi::lep-open-connection-p)   
+    (let ((context 10)
+	  (tags (fi:eval-in-lisp "(jvs::semantics-generate-tags %S)" (buffer-substring-no-properties start end)))
 	  res)
-      (message "Parsing %s to %s with %s : %s tags found" start end nonterminal (length tags))
-      (cond (tags
+      (message "Parsing %s [%s:%s] [%s->%s] with %s : %s tags found"
+	       *pjs-parse-changes*
+	       start
+	       end
+	       (buffer-substring-no-properties start (+ context start))
+	       (buffer-substring-no-properties (- end context) end)
+	       nonterminal
+	       (if (listp tags) (length tags) tags))
+      (cond ((and (eq tags 1) *pjs-parse-changes*)
+	     (throw 'semantic-parse-changes-failed :error))
+	    ((listp tags)
 	     ;; cook the tags	
 	     (dolist (tag tags)
 	       (when (and tag
 			  (= (length tag) 7))
-		 (push (semantic-pjs-expand-tag tag) res)))
-	     (puthash (intern (format "%s.%s" start end))
-		      (reverse res)
-		      *semantic-parse-cache*))
+		 (push (pjs-semantic-expand-tag tag start) res)))
+	     (let ((res2 (reverse res)))
+	       res2))
 	    (t
-	     (gethash (intern (format "%s.%s" start end)) *semantic-parse-cache*))))))
+	     nil)))))
 
-(defun semantic-pjs-expand-tag (tag)
+(defun pjs-semantic-expand-tag (tag start)
   ;; iterate through the members
   (let (new-list
 	(attr-list (third tag)))        
@@ -45,78 +139,72 @@
 	((null list))
       (push k new-list)
       (if (memq k *semantic-pjs-tag-list-attributes*)
-	  (push (mapcar 'semantic-pjs-expand-tag v) new-list)
+	  (push (mapcar #'(lambda (tag) (pjs-semantic-expand-tag tag start)) v) new-list)
 	(push v new-list))) 	
     (setf (third tag) (reverse new-list))
+    ;; lisp positions are off by one
+    (setf (sixth tag) (+ (sixth tag) start))
+    (setf (seventh tag) (+ (seventh tag) start))
+    ;; TODO : (semantic--tag-put-property (car l) 'reparse-symbol $nterm)
+    ;; use the reparse symbol ??
     (car (semantic--tag-expand tag))))
 
-(defun semantic-tag-local-vars (tag)
-  (semantic-tag-get-attribute tag :local-vars))
+(defun pjs-semantic-tag-local-vars (tag)
+  (mapcan #'(lambda (c) (when (pjs-semantic-tag-var-p c) (list c))) (pjs-semantic-tag-children tag)))
 
-(defun semantic-tag-children (tag)
+(defun pjs-semantic-tag-children (tag)
   (semantic-tag-get-attribute tag :children))
+
+;; depends of the type
+;; function : -> children
+;; block    : -> children
+;; class    : -> members
 
 (defun pjs-semantic-tag-components (tag)
   ;; returns the children of the tags
-  (let (res
-	(attr-list (third tag)))
-    (dolist (member attr-list)
-      (when (memq (car member) *semantic-pjs-tag-list-attributes*)
-	(push res (second member))))
-    res))
-
-(defun pjs-semantic-tag-components (tag)
-  ;; iterate through the members
-  (let (new-list
-	(attr-list (third tag)))        
-    (do* ((list attr-list (cddr list))
-	  (k (car list) (car list))
-	  (v (second list) (second list))
-	  )
-	((null list))
-      (when (memq k *semantic-pjs-tag-list-attributes*)
-	(setq new-list (append new-list v))))
-    new-list))
+  (cond ((memq (semantic-tag-class tag) '(function block))
+	 (pjs-semantic-tag-children tag))
+	((eq (semantic-tag-class tag) 'type)
+	 (semantic-tag-get-attribute tag :members))))
 
 ;; recursively collect tags
 ;; if not inside a "block" (block / function ) tag, take the parent
-(defun semantic-collect-local-vars-from-tag (tag point)
+(defun pjs-semantic-collect-local-vars-from-tag (tag)
   (let (var-list)
-    (cond ((memq (semantic-tag-class tag) '(block function))
-	   (catch 'exit
-	     ;; collect arguments
-	     (dolist (arg (semantic-tag-function-arguments tag))
-	       (push arg var-list))
-	     ;; iterate on local vars of the tags
-	     (dolist (var (semantic-tag-local-vars tag))
-	       ;;	(when (> point (semantic-tag-start var))
-	       (push var var-list))
-	     ;;)
-	     ;; take the local variables of the parent
-	     (let ((parent (semantic-find-tag-parent-by-overlay tag)))
-	       (unless (eq parent tag)
-		 (append var-list (semantic-collect-local-vars-from-tag (semantic-find-tag-parent-by-overlay tag) point))))))
+    (cond ((null tag)
+	   nil)
+	  ((memq (semantic-tag-class tag) '(block function))
+	   ;; iterate on local vars of the tags
+	   (dolist (var (pjs-semantic-tag-local-vars tag))
+	     (push var var-list))
+	   ;; take the local variables of the parent
+	   (let ((parent (semantic-find-tag-parent-by-overlay tag)))
+	     (unless (eq parent tag)
+	       (append var-list (pjs-semantic-collect-local-vars-from-tag (semantic-find-tag-parent-by-overlay tag))))))
 	  ((semantic-tag-p tag)
-	   (semantic-collect-local-vars-from-tag (semantic-current-tag-parent) (point)))
+	   (let ((parent (semantic-current-tag-parent)))
+	     (unless (eq parent tag)
+	       (pjs-semantic-collect-local-vars-from-tag parent))))
 	  (t
 	   nil))))
 	  
 
-(defun semantic-pjs-get-local-variables (&optional point)
+(defun pjs-semantic-get-local-variables (&optional point)
   "Get the local variables based on POINT's context.
 Local variables are returned in Semantic tag format.
 This can be overridden with `get-local-variables'."
-  (let ((tag (car (last (semantic-find-tag-by-overlay point)))))
+  (let ((tag (car (last (semantic-find-tag-by-overlay (or point (point)))))))
     ;; only one tag for now
-    (semantic-collect-local-vars-from-tag tag (or point (point)))))
+    (pjs-semantic-collect-local-vars-from-tag tag)))
   
 ;;;###autoload
 (defun semantic-default-pjs-setup ()
   "Setup hook function for pjs files and Semantic."
   (semantic-install-function-overrides
-   '((parse-region . semantic-pjs-parse-region)
-     (get-local-variables . semantic-pjs-get-local-variables)
+   '((parse-region . pjs-semantic-parse-region)
+     (get-local-variables . pjs-semantic-get-local-variables)
      (tag-components . pjs-semantic-tag-components)
+     (parse-changes . pjs-semantic-parse-changes)
      ))
   (setq semantic-parser-name "PJS"
         ;; Setup a dummy parser table to enable parsing!
@@ -125,6 +213,28 @@ This can be overridden with `get-local-variables'."
   )
 
 (add-hook 'pjs-mode-hook 'semantic-default-pjs-setup)
+
+;; don't link to a buffer not from major mode
+(defun semantic--tag-link-to-buffer (tag)
+  "Convert TAG from using an overlay proxy to using an overlay.
+This function is for internal use only."
+  (unless (derived-mode-p 'prog-mode)
+    (message "!!!!!!!! tag is %s buffer is %s" tag (current-buffer))
+    (backtrace))
+  (when (semantic-tag-p tag)
+    (let ((o (semantic-tag-overlay tag)))
+      (when (and (vectorp o) (= (length o) 2))
+        (setq o (semantic-make-overlay (aref o 0) (aref o 1)
+                                       (current-buffer)))
+        (semantic--tag-set-overlay tag o)
+        (semantic-overlay-put o 'semantic tag)
+        ;; Clear the :filename property
+        (semantic--tag-put-property tag :filename nil))
+      ;; Look for a link hook on TAG.
+      (semantic--tag-run-hooks tag 'link-hook)
+      ;; Fix the sub-tags which contain overlays.
+      (semantic--tag-link-list-to-buffer
+       (semantic-tag-components-with-overlays tag)))))
 
 (provide 'pjs-semantic)
 
@@ -168,11 +278,3 @@ This can be overridden with `get-local-variables'."
 	(if error
 	    (error "error reading return value: %s" string)
 	  (fi::handle-lep-input process form))))))
-
-
-;; speedbar
-
-(defun pjs-fetch-dynamic-tags (file)
-  )
-
-;;(semantic-sb-insert-tag-table ("Variables" ("*semantic-pjs-tag-list-attributes*" variable (:constant-flag t :default-value (quote (:members :attributes :arguments :children :local-vars))) nil #<overlay from 108 to 233 in pjs-semantic.el>)) ("Defuns" ("fi::lep-connection-filter" function (:arguments ("process" "string")) nil #<overlay from 3012 to 4170 in pjs-semantic.el>) ("semantic-default-pjs-setup" function nil nil #<overlay from 2535 to 2911 in pjs-semantic.el>) ("semantic-pjs-get-local-variables" function (:arguments ("point")) nil #<overlay from 2145 to 2516 in pjs-semantic.el>) ("semantic-collect-local-vars-from-tag" function (:arguments ("tag" "point")) nil #<overlay from 1506 to 2143 in pjs-semantic.el>) ("semantic-tag-children" function (:arguments ("tag")) nil #<overlay from 1396 to 1476 in pjs-semantic.el>) ("semantic-tag-local-vars" function (:arguments ("tag")) nil #<overlay from 1310 to 1394 in pjs-semantic.el>) ("semantic-pjs-expand-tag" function (:arguments ("tag")) nil #<overlay from 829 to 1308 in pjs-semantic.el>) ("semantic-pjs-parse-region" function (:arguments ("start" "end" "nonterminal" "depth" "returnonerror")) nil #<overlay from 235 to 827 in pjs-semantic.el>)) ("Requires" ("semantic" include nil nil #<overlay from 87 to 106 in pjs-semantic.el>)) ("Provides" ("semantic-pjs" package nil nil #<overlay from 2968 to 2991 in pjs-semantic.el>)) ("Misc"))
