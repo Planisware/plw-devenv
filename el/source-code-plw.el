@@ -429,6 +429,14 @@
 	       (goto-char (point-min))
 ;;	       (message "Searching %s" (concat "\\(function\\|method\\)[ \t]+\\_<" function-name "\\_>"))
 	       (re-search-forward (concat "^[ \t]*\\(function\\|method\\)[ \t]+\\_<" function-name "\\_>") (point-max) t))
+	      ((equal (substring pathname -3 nil) "pjs")
+	       ;; try to find in pjs file : try without the package, then with it
+	       (let* ((split (split-string function-name "\\."))
+		      (short-function-name (when (= (length split) 2) (second split))))
+		 (goto-char (point-min))
+		 (or 
+		  (re-search-forward (concat "^[ \t]*\\(function\\|method\\)[ \t]+\\_<" (or short-function-name function-name) "\\_>") (point-max) t)
+		  (when short-function-name (re-search-forward (concat "^[ \t]*\\(function\\|method\\)[ \t]+\\_<" function-name "\\_>") (point-max) t)))))
 	      ((or (equal (substring pathname -3 nil) "lsp") (equal (substring pathname -4 nil) "lisp"))
 	       ;; try to find in lisp file	       
 	       (goto-char (point-min))
