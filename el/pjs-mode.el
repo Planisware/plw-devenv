@@ -177,7 +177,10 @@
   ;; rebuild  function and vars cache on save and when we open a file
   (add-hook 'after-save-hook 'pjs-reset-cache-on-save nil t)
   (add-hook 'find-file-hook 'pjs-reset-cache-on-save nil t)
-  (add-hook 'find-file-hook 'pjs-reset-cache-on-compile nil t)  
+  (add-hook 'find-file-hook 'pjs-reset-cache-on-compile nil t)
+
+  ;; activete some semantic modes
+  (global-semantic-mru-bookmark-mode 1)  
   )
 
 ;; pjs files are pjs modes

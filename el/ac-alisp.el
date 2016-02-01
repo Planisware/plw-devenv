@@ -103,10 +103,9 @@
        (fi::note-background-reply)))
     ;; Error continuation
     ((string) (error)
-     ;; (progn
-     ;;   (message "Cannot get the arglist of %s: %s" string error)
-     ;;   (fi::note-background-reply))
-     )))
+     (progn
+       (message "Cannot get the arglist of %s: %s" string error)
+       (fi::note-background-reply)))))
 
 
 (defun alisp-function-ac-action()
@@ -126,39 +125,6 @@
 	    (insert package)
 	    (insert "::"))
 	  (lisp-arglist-minibuffer full-candidate))))))
-
-;; from fi-lep.el : we don't want some packages
-
-(defconst *forbidden-packages* '(MODULE))
-
-(defun fi::lisp-complete-2 (completions &optional dont-strip-package)
-  (when (consp completions)
-    (let (res ;; completions
-	  res2) ;; completions we want at the end (for example keywords completions)
-      (dolist (comp completions)
-	(let* ((whole-name (if (symbolp comp) (symbol-name comp) comp))
-	       (name (if dont-strip-package
-			 whole-name
-		       (progn
-			 (string-match "^\\(?:\\([^:]*\\)::?\\)?\\(.*\\)$"
-				       whole-name)
-			 (substring whole-name
-				    (match-beginning 2)
-				    (match-end 2)))))
-	       (package (when (and (match-beginning 1)
-				   (match-end 1))
-			  (substring whole-name
-				     (match-beginning 1)
-				     (match-end 1)))))
-	  (cond  ((string= package "")
-		  ;; no package, if it is a keyword (starts with :), push it at the end of the list
-		  (if (string-prefix-p ":" whole-name)
-		      (push (cons name whole-name) res2)
-		    (push (cons name whole-name) res)))
-		 ((or (null package)
-		      (not (memq (intern package) *forbidden-packages*)))
-		  (push (cons name whole-name) res)))))
-      (nconc (reverse res) res2))))
 
 ;; see eli/fi-lep.el in allegro lisp install directory
 (defun alisp-functions-ac-candidates ()

@@ -339,7 +339,7 @@
 			       (save-excursion
 				 (goto-char (point-min))
 				 (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
-				   (match-string 1)))))
+				   (match-string-no-properties 1)))))
 	 (buffer-name *ojs-compilation-buffer-name*)
 	 (buffer (or (get-buffer buffer-name)
 		     (get-buffer-create buffer-name)))
@@ -347,7 +347,7 @@
 	 (js-mode major-mode)
 	 )
     (setq *compiled-script-window* (selected-window))
-    (if script
+    (if (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
 	(catch 'exit
 	  ;; checks that the file matches
 	  (unless (check-script-path script (buffer-file-name))
@@ -391,14 +391,14 @@
 (defun generate-search-string (strings)
   (cond ((= (length strings) 1) (format "function\\s-+%s\\s-*([[:word:]_, ]*)" (downcase (car strings))))
 	((and (>= (length strings) 4)
-	      (string= (upcase (car strings)) "METHOD")
-	      (string= (upcase (third strings)) "ON"))
-	 (let ((class-name (cond ((= (length strings) 4) (downcase (fourth strings)))
-				 ((string= (downcase (fourth strings)) "(j->2")
-				  (format "%s.%s" (downcase (fifth strings))
-					  (downcase (if (string-match "'(\\(.*\\)))" (sixth strings))
-							(match-string-no-properties 1 (sixth strings))
-						      (sixth strings))))))))
+	      (string= (car strings) "method")
+	      (string= (third strings) "on"))
+	 (let* ((dot (position ?. (fourth strings)))
+		(class-name (cond (dot
+				   (format "\\(?:%s\\)?\\.%s" (substring-no-properties (fourth strings) 0 dot)
+					   (substring-no-properties (fourth strings) (1+ dot))))
+				  (t
+				   (fourth strings)))))
 	   (format "method\\s-+%s\\s-+on\\s-+%s\\s-*(.*" (downcase (second strings)) class-name)))))
 
 (defun ojs-compilation-filter (proc string)
@@ -417,7 +417,7 @@
 	       (set-window-point *compiled-script-window* (point)))))
 	 (fi::subprocess-filter proc string))
 	((and (stringp string)
-	      (string-match "In (\\(\\(.\\|\n\\)*?\\)):" string))
+	      (string-match "In \\(\\(.\\|\n\\)*?\\):" string))
 	 (let* ((error-context (match-string-no-properties 1 string))
 		(strings (split-string error-context))
 		(search-string (generate-search-string strings))

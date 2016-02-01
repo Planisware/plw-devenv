@@ -342,7 +342,7 @@
 	(*pjs-kernel-functions-present*
 	 (progn (setq *pjs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-all-js-functions) t nil)")))
 		(when *pjs-kernel-functions-present*
-		  (setq *pjs-kernel-functions-cache* (format "\\(\\(?:plw\\)?\\.%s\\)" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)"))))))
+		  (setq *pjs-kernel-functions-cache* (format "\\(\\(?:plw\\)?\\.%s\\)\\s-*(" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)"))))))
 		*pjs-kernel-functions-cache*))
 	(t
 	 nil)))
@@ -474,7 +474,7 @@
   (push (cons 'search-pjs-current-namespace-variables pjs-var-definition-face) font-locks)
 
   ;; Namespace classes
-  (push (cons 'search-pjs-current-namespace-classes font-lock-type-face) font-locks)
+;  (push (cons 'search-pjs-current-namespace-classes font-lock-type-face) font-locks)
 
   ;; Variable definitions with type
   (push (list *pjs-vars-with-type-regexp* 1 font-lock-type-face) font-locks)
@@ -511,12 +511,18 @@
 	 (concat *pjs-function-arguments-start*)
 	 ;; simple arguments
 	 (list *pjs-arguments-end*
-	       '(backward-char)
+	       '(progn (backward-char)
+		       (min (or (ignore-errors (scan-sexps (point) 1))
+				(line-end-position))
+			    (line-end-position)))
 	       '(re-search-backward "(" (line-beginning-position) t)
 	       '(1 pjs-var-definition-face))
 	 ;; arguments with types
 	 (list *pjs-arguments-type-end*
-	       '(backward-char)
+	       '(progn (backward-char)
+		       (min (or (ignore-errors (scan-sexps (point) 1))
+				(line-end-position))
+			    (line-end-position)))
 	       '(end-of-line)
 	       '(1 font-lock-type-face)
 	       '(2 pjs-var-definition-face))
@@ -532,12 +538,18 @@
 	  (concat *pjs-method-arguments-start*)
 	  ;; simple arguments
 	  (list *pjs-arguments-end*
-		'(backward-char)
+		'(progn (backward-char)
+			(min (or (ignore-errors (scan-sexps (point) 1))
+				 (line-end-position))
+			     (line-end-position)))
 		'(re-search-backward "(" (line-beginning-position) t)
 		'(1 pjs-var-definition-face))
 	  ;; arguments with types
 	  (list *pjs-arguments-type-end*
-		'(backward-char)
+		'(progn (backward-char)
+			(min (or (ignore-errors (scan-sexps (point) 1))
+				 (line-end-position))
+			     (line-end-position)))
 		'(end-of-line)
 		'(1 font-lock-type-face)
 		'(2 pjs-var-definition-face))

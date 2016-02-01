@@ -25,7 +25,7 @@
 	(push tag res)))
     (reverse res)))		 
 
-(setq semantic-edits-verbose-flag t)
+(setq semantic-edits-verbose-flag nil)
   
 (defvar-local *semantic-parse-cache* nil)
 
@@ -59,13 +59,12 @@ the semantic cache to see what needs to be changed."
 	   ;; 		 (error-message-string err))
            ;;      t))))))
 	   )))
-    (message "changed-tags %s" changed-tags)
     (when (eq changed-tags t)
       ;; Force a full reparse.
       (semantic-edits-incremental-fail)
       (setq changed-tags nil))
     (when (eq changed-tags :error)
-      (message "Error, setting up to date")
+      (message "Error in parsial parsing, setting up to date")
       (semantic-parse-tree-set-up-to-date))
     changed-tags))
 
@@ -75,7 +74,7 @@ the semantic cache to see what needs to be changed."
     (goto-char (point-min))
     (let (res
 	  (cur-point (point)))      
-      (condition-case err
+;;      (condition-case err
 	  (while (< (point) (point-max))
 	    (let ((next-function (re-search-forward *pjs-start-block-regexp* nil t)))
 	      (if next-function
@@ -91,14 +90,28 @@ the semantic cache to see what needs to be changed."
 		(let ((end-tags (pjs-semantic-parse-region-1 (point) (point-max))))
 		  (when (and end-tags (not (eq end-tags 1))) (setq res (append res end-tags)))
 		  (goto-char (point-max))))))
-	(scan-error nil))
+;;	(scan-error nil))
       res)))
 
 (defun pjs-semantic-parse-region (start end &optional nonterminal depth returnonerror)
-  (if (and (eq start (point-min))
-	   (eq end (point-max)))
-      (pjs-semantic-parse-buffer)
-    (pjs-semantic-parse-region-1 start end nonterminal depth returnonerror)))
+  ;; 
+  
+  (prog1
+      (if (and (eq start (point-min))
+	       (eq end (point-max)))
+	  (pjs-semantic-parse-buffer)
+	(pjs-semantic-parse-region-1 start end nonterminal depth returnonerror))
+    ;; refresh syntax highlighting
+    (jit-lock-refontify start end)))
+
+(defface pjs-semantic-error-font
+    '((t 
+       :underline (:color "red" :style wave)))
+    "Underline parser errors in red waves"
+    )
+
+(defvar pjs-semantic-error-font
+  'pjs-semantic-error-font)
 
 ;; we cache the last result for each region
 (defun pjs-semantic-parse-region-1 (start end &optional nonterminal depth returnonerror)
@@ -106,15 +119,37 @@ the semantic cache to see what needs to be changed."
     (let ((context 10)
 	  (tags (fi:eval-in-lisp "(jvs::semantics-generate-tags %S)" (buffer-substring-no-properties start end)))
 	  res)
-      (message "Parsing %s [%s:%s] [%s->%s] with %s : %s tags found"
-	       *pjs-parse-changes*
-	       start
-	       end
-	       (buffer-substring-no-properties start (+ context start))
-	       (buffer-substring-no-properties (- end context) end)
-	       nonterminal
-	       (if (listp tags) (length tags) tags))
-      (cond ((and (eq tags 1) *pjs-parse-changes*)
+      ;; (let ((parsed-block (cond ((<= (- end start) context)
+      ;; 				 (buffer-substring-no-properties start end))
+      ;; 				(t
+      ;; 				 (format "[%s||%s]"
+      ;; 					 (buffer-substring-no-properties start (min (point-max) (+ context start)))
+      ;; 					 (buffer-substring-no-properties (max (point-min) (- end context)) end))))))
+	;; (message "Parsing %s [%s:%s] [%s] with %s : %s tags found"
+	;; 	 *pjs-parse-changes*
+	;; 	 start
+	;; 	 end
+	;; 	 parsed-block
+	;; 	 nonterminal
+      ;; 	 (if (listp tags) (length tags) tags)))
+      
+      ;; remove previous error overlays
+      (dolist (overlay (overlays-in start end))
+	(when (semantic-overlay-get overlay 'pjs-error)
+	  (delete-overlay overlay)))
+      
+      (when (stringp tags)
+	;; we have an error !!
+	;; create an error overlay
+	(let ((error-overlay (make-overlay start end)))
+	  (overlay-put error-overlay
+		       'face pjs-semantic-error-font)
+	  (overlay-put error-overlay
+		       'pjs-error t)
+	  (overlay-put error-overlay
+		       'help-echo tags)))
+      
+      (cond ((and (stringp tags) *pjs-parse-changes*)
 	     (throw 'semantic-parse-changes-failed :error))
 	    ((listp tags)
 	     ;; cook the tags	
@@ -147,6 +182,9 @@ the semantic cache to see what needs to be changed."
     (setf (seventh tag) (+ (seventh tag) start))
     ;; TODO : (semantic--tag-put-property (car l) 'reparse-symbol $nterm)
     ;; use the reparse symbol ??
+    ;; for now, only reparse blocks, functions and classes. Not the variables (too random).
+    (unless (pjs-semantic-tag-block-p tag)
+      (semantic--tag-put-property tag 'reparse-symbol 'parent))
     (car (semantic--tag-expand tag))))
 
 (defun pjs-semantic-tag-local-vars (tag)
