@@ -76,7 +76,7 @@ the semantic cache to see what needs to be changed."
 	  (cur-point (point)))      
 ;;      (condition-case err
 	  (while (< (point) (point-max))
-	    (let ((next-function (re-search-forward *pjs-start-block-regexp* nil t)))
+	    (let ((next-function (re-real-search-forward *pjs-start-block-regexp* nil t)))
 	      (if next-function
 		  (let* ((start-inter cur-point)
 			 (end-inter (1- (line-beginning-position)))
@@ -106,12 +106,25 @@ the semantic cache to see what needs to be changed."
 
 (defface pjs-semantic-error-font
     '((t 
-       :underline (:color "red" :style wave)))
-    "Underline parser errors in red waves"
+       ;;       :underline (:color "red" :style wave)))
+       :background "grey25"))
+    "Highlight block of error "
     )
 
 (defvar pjs-semantic-error-font
   'pjs-semantic-error-font)
+
+(defface pjs-semantic-error-highlight
+    '((t 
+;;       :background "#255199206"))
+       :background "red4"))
+    "Highlight speficic error"
+    )
+
+(defvar pjs-semantic-error-highlight
+  'pjs-semantic-error-highlight)
+
+(defvar *pjs-verbose-parsing* nil)
 
 ;; we cache the last result for each region
 (defun pjs-semantic-parse-region-1 (start end &optional nonterminal depth returnonerror)
@@ -119,19 +132,20 @@ the semantic cache to see what needs to be changed."
     (let ((context 10)
 	  (tags (fi:eval-in-lisp "(jvs::semantics-generate-tags %S)" (buffer-substring-no-properties start end)))
 	  res)
-      ;; (let ((parsed-block (cond ((<= (- end start) context)
-      ;; 				 (buffer-substring-no-properties start end))
-      ;; 				(t
-      ;; 				 (format "[%s||%s]"
-      ;; 					 (buffer-substring-no-properties start (min (point-max) (+ context start)))
-      ;; 					 (buffer-substring-no-properties (max (point-min) (- end context)) end))))))
-	;; (message "Parsing %s [%s:%s] [%s] with %s : %s tags found"
-	;; 	 *pjs-parse-changes*
-	;; 	 start
-	;; 	 end
-	;; 	 parsed-block
-	;; 	 nonterminal
-      ;; 	 (if (listp tags) (length tags) tags)))
+      (when *pjs-verbose-parsing*
+	(let ((parsed-block (cond ((<= (- end start) context)
+				   (buffer-substring-no-properties start end))
+				  (t
+				   (format "[%s||%s]"
+					   (buffer-substring-no-properties start (min (point-max) (+ context start)))
+					   (buffer-substring-no-properties (max (point-min) (- end context)) end))))))
+	  (message "Parsing %s [%s:%s] [%s] with %s : %s tags found"
+		   *pjs-parse-changes*
+		   start
+		   end
+		   parsed-block
+		   nonterminal
+		   (if (listp tags) (length tags) tags))))
       
       ;; remove previous error overlays
       (dolist (overlay (overlays-in start end))
@@ -140,7 +154,20 @@ the semantic cache to see what needs to be changed."
       
       (when (stringp tags)
 	;; we have an error !!
-	;; create an error overlay
+	;; try to highlight the error       
+	(when (string-match "At line\\s-*:\\s-*\\([0-9]+\\)\\s-*,\\s-*character\\s-*:\\s-*\\([0-9]+\\)\\s-*:" tags)
+	  (let ((line (string-to-number (match-string-no-properties 1 tags)))
+		(char (string-to-number (match-string-no-properties 2 tags))))
+	    (save-excursion
+	      (let ((specific-overlay (make-overlay (progn (goto-char start) (next-line (1- line)) (beginning-of-line)(forward-char char) (point))
+						    (line-end-position))))
+		(overlay-put specific-overlay
+			     'face pjs-semantic-error-highlight)
+		(overlay-put specific-overlay
+			     'pjs-error t)
+		(overlay-put specific-overlay
+			     'help-echo tags)))))
+	;; otherwise create an error overlay for the whole block
 	(let ((error-overlay (make-overlay start end)))
 	  (overlay-put error-overlay
 		       'face pjs-semantic-error-font)
@@ -184,7 +211,7 @@ the semantic cache to see what needs to be changed."
     ;; use the reparse symbol ??
     ;; for now, only reparse blocks, functions and classes. Not the variables (too random).
     (unless (pjs-semantic-tag-block-p tag)
-      (semantic--tag-put-property tag 'reparse-symbol 'parent))
+      (semantic--tag-put-property tag 'no-single-reparse t))
     (car (semantic--tag-expand tag))))
 
 (defun pjs-semantic-tag-local-vars (tag)
@@ -316,3 +343,46 @@ This function is for internal use only."
 	(if error
 	    (error "error reading return value: %s" string)
 	  (fi::handle-lep-input process form))))))
+
+
+;; patched from c:/Program Files (x86)/GNU Emacs 24.5/share/emacs/24.5/lisp/cedet/semantic/edit.el
+;; do not return tags we don't want to parse on their own
+(defun semantic-edits-change-leaf-tag (change)
+  "A leaf tag which completely encompasses CHANGE.
+If change overlaps a tag, but is not encompassed in it, return nil.
+Use `semantic-edits-change-overlap-leaf-tag'.
+If CHANGE is completely encompassed in a tag, but overlaps sub-tags,
+return nil."
+  (let* ((start (semantic-edits-os change))
+	 (end (semantic-edits-oe change))
+	 (tags (nreverse
+		  (semantic-find-tag-by-overlay-in-region
+		   start end))))
+    
+    (while (and tags
+		(semantic--tag-get-property (car tags) 'no-single-reparse))
+      (setq tags (cdr tags)))
+    
+    ;; A leaf is always first in this list
+    (if (and tags
+	     (<= (semantic-tag-start (car tags)) start)
+	     (> (semantic-tag-end (car tags)) end))
+	;; Ok, we have a match.  If this tag has children,
+	;; we have to do more tests.
+	(let ((chil (semantic-tag-components (car tags))))
+	  (if (not chil)
+	      ;; Simple leaf.
+	      (car tags)
+	    ;; For this type, we say that we encompass it if the
+	    ;; change occurs outside the range of the children.
+	    (if (or (not (semantic-tag-with-position-p (car chil)))
+		    (> start (semantic-tag-end (nth (1- (length chil)) chil)))
+		    (< end (semantic-tag-start (car chil))))
+		;; We have modifications to the definition of this parent
+		;; so we have to reparse the whole thing.
+		(car tags)
+	      ;; We actually modified an area between some children.
+	      ;; This means we should return nil, as that case is
+	      ;; calculated by someone else.
+	      nil)))
+      nil)))
