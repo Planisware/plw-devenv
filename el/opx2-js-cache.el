@@ -65,19 +65,6 @@
 ;;;;; global cache for function and methods definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar *js-vars-to-reset* nil)
-
-(defmacro defvar-resetable (varname def when)
-  `(progn
-     (unless (hash-table-p *js-vars-to-reset*)
-       (setq *js-vars-to-reset* (make-hash-table :test 'eq)))
-     (dolist (w (if (consp ,when) ,when (list ,when)))
-       (pushnew ',varname (gethash w *js-vars-to-reset*)))
-     (defvar ,varname ,def)))  
-
-;;;;; global cache for function and methods definitions
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (defconst *js-variable-name*
   "[_a-zA-Z][_a-zA-Z0-9]*")
 
@@ -97,13 +84,13 @@
   (format "%s\\.%s" *js-namespace-name* *js-function-name*))
 
 (defconst *ojs-function-method-definition-regexp* 
-  (format "^\\s-*\\(?:function\\|method\\)\\s-+\\(%s\\).*$" *js-function-name*))
+  (format "^\\s-*\\(?:function\\|method\\)\\s-+\\(\\%s\\).*$" *js-function-name*))
 
 ;; contains list of cons (name . documentation)
 ;; used for autocomplete 
-(defvar-resetable *ojs-buffers-functions-cache* nil 'ojs-save)
+(defvar *ojs-buffers-functions-cache* nil)
 ;; contains the master regexp for syntax highlighting
-(defvar-resetable *ojs-buffers-functions-cache-regexp* nil 'ojs-save)
+(defvar *ojs-buffers-functions-cache-regexp* nil)
 
 (defun ojs-functions-in-buffers ()
   (or *ojs-buffers-functions-cache*
@@ -126,64 +113,46 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defconst *pjs-namespace-definition*
-  (format "^\\s-*\\<namespace\\>\\s-+\\(%s\\);" *js-namespace-name*))
+  (format "^\\s-*namespace\\s-+\\(\\%s\\);" *js-namespace-name*))
 
 ;; return the current namespace 
 (defun pjs-current-namespace ()
   (save-excursion
     (let* ((found (re-real-search-backward *pjs-namespace-definition* nil t))
-	   (namespace (when found (downcase (match-string-no-properties 1)))))
-      (if found namespace "plw"))))
+	   (namespace (when found (match-string-no-properties 1))))
+      (if found namespace "plw"))))  
 
 ;; contains list of cons (name . documentation)
 ;; used for autocomplete 
-(defvar-resetable *pjs-buffers-class-members-cache* nil 'pjs-compile)
+(defvar *pjs-buffers-class-members-cache* nil)
 ;; contains the master regexp for syntax highlighting
-(defvar-resetable *pjs-buffers-class-members-cache-regexp* nil 'pjs-compile)
+(defvar *pjs-buffers-class-members-cache-regexp* nil)
 
 ;; used for autocomplete 
-(defvar-resetable *pjs-buffers-class-methods-cache* nil 'pjs-compile)
+(defvar *pjs-buffers-class-methods-cache* nil)
 ;; contains the master regexp for syntax highlighting
-;;(defvar-resetable *pjs-buffers-class-methods-cache-regexp* 'pjs-compile)
+(defvar *pjs-buffers-class-methods-cache-regexp* nil)
 
 (defconst *pjs-class-declaration-regexp*
   (format "^\\s-*class\\s-+\\(\\%s\\)\\s-*{" *js-class-name*))
 
-(defun pjs-class-members (namespace class-name)  
-  (let ((type (downcase (format "%s.%s" namespace class-name))))
-    (or (and *pjs-buffers-class-members-cache* (gethash type *pjs-buffers-class-members-cache*))
-	(init-class-members-cache namespace class-name nil))))
-
-(defun pjs-class-members-regexp  (namespace class-name)
-  (let ((type (downcase (format "%s.%s" namespace class-name))))
-    (or (gethash type *pjs-buffers-class-members-cache-regexp*)
-	(init-class-members-cache namespace class-name t))))
-
-(defun init-class-members-cache (namespace class-name regexp)  
+(defun pjs-class-members (class-name namespace)
   (unless (hash-table-p *pjs-buffers-class-members-cache*)
     (setq *pjs-buffers-class-members-cache* (make-hash-table :test 'equal)))
-  (unless (hash-table-p *pjs-buffers-class-members-cache-regexp*)
-    (setq *pjs-buffers-class-members-cache-regexp* (make-hash-table :test 'equal)))
-  (let (list
-	(ht (make-hash-table :test 'equal))
-	(type (downcase (format "%s.%s" namespace class-name))))
-    (dolist (item (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-pjs-class-members) (jvs::get-pjs-class-members \"%s\" \"%s\"))" namespace class-name)))
-;;    (dolist (item (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-pjs-class-members) (jvs::get-pjs-class-members \"%s\" \"%s\"))" class-name namespace)))
-      (puthash (car item) (second item) ht)
-      (push (car item) list))
-    (puthash type ht *pjs-buffers-class-members-cache*)
-    (puthash type (js--regexp-opt-symbol list) *pjs-buffers-class-members-cache-regexp*)
-    (if regexp
-	list
-      ht)))
+  (let ((type (format "%s.%s" namespace class-name)))
+    (or (gethash type *pjs-buffers-class-members-cache*)
+	(puthash type (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-pjs-class-members) (jvs::get-pjs-class-members \"%s\" \"%s\"))" class-name namespace))
+		 *pjs-buffers-class-members-cache*))))
 
-(defun pjs-class-methods (namespace class-name)
+(defun pjs-class-members-regexp (class-name namespace)
+  (js--regexp-opt-symbol (pjs-class-members class-name namespace)))
+
+(defun pjs-class-methods (class-name namespace)
   (unless (hash-table-p *pjs-buffers-class-methods-cache*)
     (setq *pjs-buffers-class-methods-cache* (make-hash-table :test 'equal)))
-  (let ((type (downcase (format "%s.%s" namespace class-name))))
+  (let ((type (format "%s.%s" namespace class-name)))
     (or (gethash type *pjs-buffers-class-methods-cache*)
-	(puthash type (loop for item in (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-method-for-js-class) (jvs::get-method-for-js-class \"%s\" \"%s\"))" class-name namespace))
-			    collect (downcase item))
+	(puthash type (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-method-for-js-class) (jvs::get-method-for-js-class \"%s\" \"%s\"))" class-name namespace))
 		 *pjs-buffers-class-methods-cache*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -200,13 +169,12 @@
   (format "\\<\\(?:function\\|method\\)\\>\\s-+\\(%s\\)\\(?:\\s-+on\\s-+\\(%s\\)\\)?\\s-*(" *js-function-name* *js-type*))
 
 (defun build-local-vars-cache (start end)
-  (let (res (pos 0))
+  (let (res)
     (save-excursion
       (goto-char start)
       (while (< (point) end)
 	(let ((boundaries (function-boundaries))
-	      (vars-ht (make-hash-table :test 'equal))
-	      vars-list)	      
+	      (vars-ht (make-hash-table :test 'equal)))
 	  (cond (boundaries
 		 ;; we are in a function, search for vars
 		 ;; first, get the arguments of the function
@@ -230,45 +198,23 @@
 					       (if (looking-at "{") (point) nil)))
 			(end-function (or (cdr boundaries)
 					  (point-max)))
-			(function-line (when end-args (buffer-substring-no-properties start-function (1+ end-args) ))))		   
+			(function-line (when end-args (buffer-substring-no-properties start-function (1+ end-args) ))))
 		   ;; function / methods arguments
 		   (when (and function-line begin-args end-args)
 		     (dolist (arg (split-string (buffer-substring-no-properties (1+ begin-args) end-args) "[ \t,]+" t))
 		       ;; if the args are separated by spaces, we have a type arg
 		       (let ((type-and-arg (split-string arg)))
-			 (push (downcase (or (second type-and-arg)
-					     (car type-and-arg))) vars-list)
-			 (puthash (downcase (or (second type-and-arg)
-						(car type-and-arg)))
-				  (list function-line (car type-and-arg))
+			 (puthash (downcase (car type-and-arg))
+				  (list function-line (second type-and-arg))
 				  vars-ht)))
-		     ;; var in the function
 		     (when (and begin-function end-function)
 		       (goto-char begin-function)
 		       (while (re-real-search-forward *js-var-with-type-regexp* end-function t)
-			 (push (downcase (match-string-no-properties 2)) vars-list)
 			 (puthash (downcase (match-string-no-properties 2))
 				  (list (match-string-no-properties 0)
 					(match-string-no-properties 1))
 				  vars-ht)))
-		     ;; JS2 : if in a method, method members
-		     (when (eq major-mode 'pjs-mode)
-		       (let ((class (convert-pjs-type class-name)))
-			 (when class
-			   (maphash #'(lambda (k v)
-					(push (downcase k) vars-list)
-					(puthash (downcase k)
-						 (list v "Class member")
-						 vars-ht))
-				    (pjs-class-members (car class) (cdr class))))))
-		     (push (list :function function-name
-				 :class class-name
-				 :start begin-function
-				 :end end-function
-				 :vars vars-ht
-				 :vars-regexp (js--regexp-opt-symbol vars-list)
-				 :next (setq pos (1+ pos)))
-			   res))
+		     (push (list :function function-name :class class-name :start begin-function :end end-function :vars vars-ht) res))
 		   (goto-char (1+ end-function))))
 		((goto-start-of-next-function end)
 		 t)
@@ -277,19 +223,16 @@
     (setq *js-local-vars-cache* (reverse res))))
 
 ;; returns the local function environment around point
-(defun get-local-function-environment (&optional position)
-  (if position
-      (and (<= position (length *js-local-vars-cache*))
-	   (nth position *js-local-vars-cache*))    
-    (catch 'exit    
-      (dolist (context *js-local-vars-cache*)
-	(cond ((and (>= (point) (getf context :start))
-		    (<= (point) (getf context :end)))
-	       ;; we found the context, yay	       
-	       (throw 'exit context))
-	      ((< (point) (getf context :start))
-	       ;; too late, we exit
-	       (throw 'exit (getf context :start))))))))
+(defun get-local-function-environment ()
+  (catch 'exit
+    (dolist (context *js-local-vars-cache*)
+      (cond ((and (>= (point) (getf context :start))
+		  (<= (point) (getf context :end)))
+	     ;; we found the context, yay	       
+	     (throw 'exit context))
+	    ((< (point) (getf context :start))
+	     ;; too late, we exit
+	     (throw 'exit nil))))))
 
 ;;;;; buffer dependant cache for script-level var definitions and global vars
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -305,9 +248,9 @@
   "^\\s-*global\\s-+var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
 
 ;; used for autocomplete 
-(defvar-resetable *ojs-buffers-vars-cache* nil 'ojs-save)
+(defvar *ojs-buffers-vars-cache* nil)
 ;; contains the master regexp for syntax highlighting
-(defvar-resetable *ojs-buffers-vars-cache-regexp* nil 'ojs-save)
+(defvar *ojs-buffers-vars-cache-regexp* nil)
 
 (defun ojs-vars-in-buffer ()
   (interactive)
@@ -340,13 +283,11 @@
 ;;;;; cache reset on file save
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun js-reset-vars (type)
-  (dolist (item (gethash type *js-vars-to-reset*))
-    (setf (symbol-value item) nil)))
-
-
-(defun ojs-reset-cache-on-save ()
-  (js-reset-vars 'ojs-save))
+(defun ojs-reset-cache ()
+  (setq *ojs-buffers-functions-cache* nil)
+  (setq	*ojs-buffers-functions-cache-regexp* nil)
+  (setq *ojs-buffers-vars-cache* nil)
+  (setq *ojs-buffers-vars-cache-regexp* nil))
 
 ;;;;; generic function to find candidates based on a regexp 
 ;;;;; it returns a candidates list containing cons (name . documentation) 

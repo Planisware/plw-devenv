@@ -97,12 +97,13 @@
      "on"
      "let"
      "case"
-     "class"
      "continue"
      "protected"
      "switch"
+     "false"
      "return"
      "void"
+     "undefined"
      "for"
      "catch"
      "try"
@@ -115,7 +116,10 @@
      "namespace"
      "finally"
      "instanceof"
+     "true"
      "if"
+     "this"
+     "context"
      "group by"
      "applet"
      "else"
@@ -126,6 +130,7 @@
      "import"
      "while"
      "function"
+     "super"
      "new"
      "return values")))
 
@@ -145,52 +150,53 @@
 
 ;; method definition
 (defconst *pjs-method-heading*
-  (format "^\\s-*\\<method\\>\\s-+\\(%s\\)\\s-+\\(\\<on\\>\\)\\s-+\\(%s\\)" *js-function-name* *js-type*)
-  "Regular expression matching the start of a method header.")
+"^\\s-*method\\s-+\\(\\w+\\)\\s-+\\(\\<on\\>\\)\\s-+\\([[:word:].]+\\)"
+"Regular expression matching the start of a method header.")
 
 ;;method arguments
 (defconst *pjs-method-arguments-start*
-  (format "\\<method\\>\\s-+\\(%s\\)?\\s-*\\<on\\>\\s-+\\(%s\\)?(" *js-function-name* *js-type*))
+  "\\<method\\>\\(\\s-+\\w+\\)?\\s-*\\<on\\>\\(\\s-+[[:word:].]+\\)?(\\s-*\\w")
 
 ;; function definition
 (defconst *pjs-function-heading*
-  (format "^\\s-*\\<function\\>\\s-+\\(%s\\)" *js-function-name*)
+"^\\s-*function\\s-+\\(\\w+\\)"
 "Regular expression matching the start of a function header.")
 
 ;; function arguments
 (defconst *pjs-function-arguments-start*
-  (format "\\<function\\>\\s-+\\(%s\\)?\\s-*(" *js-function-name*))
+  "\\<function\\>\\(\\s-+\\w+\\)?\\s-*(\\s-*\\w")
 
-(defconst *pjs-arguments-end*
-  (format "\\s-*\\(\\<%s\\>\\)\\s-*\\(?::.+\\)?[),]" *js-variable-name*))
+;; function or method regexp
+(defconst *pjs-function-or-method-regexp*
+  "^\\s-*\\(\\<function\\>\\|\\<method\\>\\s-+\\w+\\s-+\\<on\\>\\s-+\\w+\\)(\\s-*\\w*)")
 
-(defconst *pjs-arguments-type-end*
-  (format "\\s-*\\(\\<%s\\>\\)\\s-+\\(\\<%s\\>\\)\\s-*\\(?::.+\\)?[),]" *js-type* *js-variable-name*))
+(defconst *arguments-end*
+  "\\(\\w+\\)\\(\\s-*).*\\)?")
 
 ;; vars definition with optional type
 (defconst *pjs-vars-with-type-regexp* 
 ;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
-  (format "^.*\\<var\\>\\s-*\\(%s\\)\\s-+\\(%s\\)\\s-*[=;]" *js-type* *js-variable-name*))
+  "^.*var\\s-*\\([[:word:].]+\\)\\s-+\\(\\w+\\)\\s-*[=;]")
 
 (defconst *pjs-vars-no-type-regexp* 
 ;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
-  (format "^.*\\<var\\>\\s-+\\(%s\\)\\s-*[=;]" *js-variable-name*))
+  "^.*var\\s-+\\(\\w+\\)\\s-*[=;]")
 
 (defconst *pjs-var-in-with-type-regexp* 
 ;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
-  (format "^.*\\<var\\>\\s-*\\(%s\\)\\s-+\\(%s\\)\\s-+\\(in\\)" *js-type* *js-variable-name*))
+  "^.*var\\s-*\\([[:word:].]+\\)\\s-+\\(\\w+\\)\\s-+\\(in\\)")
 
 (defconst *pjs-var-in-no-type-regexp* 
 ;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
-  (format "^.*\\<var\\>\\s-+\\(%s\\)\\s-+\\(in\\)" *js-variable-name*))
+  "^.*var\\s-+\\(\\w+\\)\\s-+\\(in\\)")
 
 ;; class types, plc.somethinf
 (defconst *pjs-class-type*
-  (format "\\<plc\\>\\.%s" *js-class-name*))
+  "plc\\.\\w+")
 
 ;; new type(
 (defconst *pjs-new-type-regexp*
-  (format ".*\\<new\\>\\s-+\\(%s\\)\\s-*(" *js-type*))
+  ".*new\\s-+\\(\\w+\\)\\s-*(")
 
 ;; function starts
 (defconst *pjs-function-start-regexp*
@@ -199,7 +205,7 @@
 
 ;; class definition
 (defconst *pjs-class-definition*
-  (format ".*\\<class\\>\\s-+\\(%s\\)" *js-class-name*))
+  ".*class\\s-+\\(\\w+\\)")
 
 ;; symbols between ##
 (defconst *pjs-symbols*
@@ -209,73 +215,34 @@
 ;; highlight namespace functions (current and other namespaces) 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar-resetable *pjs-namespace-functions-cache* nil 'pjs-compile)
-(defvar-resetable *pjs-namespace-functions-regexp-cache* nil 'pjs-compile)
-(defvar-resetable *pjs-namespace-variables-cache* nil 'pjs-compile)
-(defvar-resetable *pjs-namespace-variables-regexp-cache* nil 'pjs-compile)
-(defvar-resetable *pjs-namespace-classes-cache* nil 'pjs-compile)
-(defvar-resetable *pjs-namespace-classes-regexp-cache* nil 'pjs-compile)
+(defvar *pjs-namespace-functions-cache* nil)
 
-(defun list-pjs-namespace-functions-regexp ()
-  (unless *pjs-namespace-functions-regexp-cache*
-    (init-pjs-namespace-cache))
-  *pjs-namespace-functions-regexp-cache*)
+(defvar *pjs-namespace-functions-present* t)
 
-(defun list-pjs-namespace-variables-regexp ()
-  (unless *pjs-namespace-variables-regexp-cache*
-    (init-pjs-namespace-cache))
-  *pjs-namespace-variables-regexp-cache*)
-
-(defun list-pjs-namespace-classes-regexp ()
-  (unless *pjs-namespace-classes-regexp-cache*
-    (init-pjs-namespace-cache))
-  *pjs-namespace-classes-regexp-cache*)
+(defun list-pjs-namespace-functions ()
+  (cond (*pjs-namespace-functions-cache*
+	 *pjs-namespace-functions-cache*)
+	(*pjs-namespace-functions-present*
+	 (setq *pjs-namespace-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::get-all-namespace-members) t nil)")))
+	 (when *pjs-namespace-functions-present*
+	   (setq *pjs-namespace-functions-cache* (make-hash-table :test 'equal))
+	   (dolist (ns (fi:eval-in-lisp "(jvs::get-all-namespace-members)"))
+	     (puthash (car ns) (js--regexp-opt-symbol (second (cdr ns))) *pjs-namespace-functions-cache*))		  
+	   *pjs-namespace-functions-cache*))
+	(t
+	 nil)))
 
 (defun search-pjs-current-namespace-functions (end)
   (let* ((namespace (pjs-current-namespace))
-	 (functions (list-pjs-namespace-functions-regexp))
+	 (functions (list-pjs-namespace-functions))
 	 (ns-functions (when functions (gethash (upcase namespace) functions))))
     (re-real-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-functions) end t)))
-
-(defun search-pjs-current-namespace-variables (end)
-  (let* ((namespace (pjs-current-namespace))
-	 (variables (list-pjs-namespace-variables-regexp))
-	 (ns-variables (when variables (gethash (upcase namespace) variables))))
-    (re-real-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-variables) end t)))
-
-(defun search-pjs-current-namespace-classes (end)
-  (let* ((namespace (pjs-current-namespace))
-	 (classes (list-pjs-namespace-classes-regexp))
-	 (ns-classes (when classes (gethash (upcase namespace) classes))))
-    (re-real-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-classes) end t)))
-
-(defun init-pjs-namespace-cache ()
-  (unless (hash-table-p *pjs-namespace-functions-cache*)    
-    (setq *pjs-namespace-functions-cache* (make-hash-table :test 'equal)))
-  (unless (hash-table-p *pjs-namespace-variables-cache*)    
-    (setq *pjs-namespace-variables-cache* (make-hash-table :test 'equal)))
-  (unless (hash-table-p *pjs-namespace-classes-cache*)    
-    (setq *pjs-namespace-classes-cache* (make-hash-table :test 'equal)))
-  (unless (hash-table-p *pjs-namespace-functions-regexp-cache*)    
-    (setq *pjs-namespace-functions-regexp-cache* (make-hash-table :test 'equal)))
-  (unless (hash-table-p *pjs-namespace-variables-regexp-cache*)    
-    (setq *pjs-namespace-variables-regexp-cache* (make-hash-table :test 'equal)))
-  (unless (hash-table-p *pjs-namespace-classes-regexp-cache*)    
-    (setq *pjs-namespace-classes-regexp-cache* (make-hash-table :test 'equal)))    
-  
-  (dolist (ns (fi:eval-in-lisp "(jvs::get-all-namespace-members)"))
-    (puthash (car ns) (js--regexp-opt-symbol (car (cdr ns)))    *pjs-namespace-variables-regexp-cache*)
-    (puthash (car ns) (js--regexp-opt-symbol (second (cdr ns))) *pjs-namespace-functions-regexp-cache*)
-    (puthash (car ns) (js--regexp-opt-symbol (third (cdr ns)))  *pjs-namespace-classes-regexp-cache*)
-    (puthash (car ns) (car (cdr ns))    *pjs-namespace-variables-cache*)
-    (puthash (car ns) (second (cdr ns)) *pjs-namespace-functions-cache*)
-    (puthash (car ns) (third (cdr ns))  *pjs-namespace-classes-cache*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight kernel functions 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar-resetable *pjs-kernel-functions-cache* nil 'pjs-compile)
+(defvar *pjs-kernel-functions-cache* nil)
 
 (defvar *pjs-kernel-functions-present* t)
 
@@ -295,63 +262,48 @@
     (let ((search-pattern (list-pjs-kernel-functions)))
       (re-real-search-forward search-pattern end t))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; highlight class members 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun pjs-current-class ()
+  ;; return the current class context :
+  ;; the class if we are on a method
+  ;; todo: typed var
+  (save-excursion
+    (let ((start-function (car (function-boundaries))))
+      (when start-function
+	(goto-char start-function)
+	(when (or (re-real-search-forward *pjs-method-heading*   (line-end-position) t)
+		  (re-real-search-forward *pjs-class-definition* (line-end-position) t))
+	  (let ((class-name (or (match-string-no-properties 3)
+				(match-string-no-properties 1)))
+		(namespace  (pjs-current-namespace)))
+	    (cons namespace class-name)))))))
+  
+(defun class-members-in-function ()
+  (let ((type (pjs-current-class)))
+    (when type
+      (pjs-class-members-regexp (car type) (cdr type)))))
+
+(defun search-class-members (end)
+  (search-vars-in-context end 'class-members-in-function))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight method / members depending on variable type
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun get-member-type (namespace class varname)
-  (let ((ht (pjs-class-members namespace class)))    
-    (when ht
-      (gethash varname ht))))
-
-(defun convert-pjs-type (type)
-  (cond ((null type)
-	 nil)
-	((consp type)
-	 type)
-	((member type *pjs-standard-types*)
-	 (cons "plw" type))
-	(t
-	 (let ((strings (split-string type "\\.")))
-	   (cond ((= (length strings) 1)
-		  (cons (pjs-current-namespace) (car strings)))
-		 (t
-		  (cons (car strings) (second strings))))))))
 
 ;; get the variable type from context :
 ;; if the variable is local to the function, search a var <type> varname =
 ;; TODO: if it is a global var of the namespace, check its type
 ;; TODO: if it is a member of a classe, check the type from the class.
-;; we consider we are at the point between the var and its "father"
-;; we return a cons (namespace . classname)
-(defun get-variable-type-in-context (point )
-  (save-match-data
-    (save-excursion
-      (goto-char point)
-      (when (re-search-backward (format "\\<%s\\>" *js-variable-name*) (line-beginning-position) t)
-	(let ((varname (downcase (match-string-no-properties 0)))
-	      context)
-	  (cond ((looking-back "\\.")
-		 ;; we have a dot, try to get the type of the "father"
-		 (let ((father-type (get-variable-type-in-context (match-beginning 0))))
-		   (when father-type
-		     (get-member-type (car father-type) (cdr father-type) varname))))
-		;; local variable of the function, try to get the type
-		((and (setq context (get-local-function-environment))
-		      (consp context))
-		 (if (string= (downcase varname) "this")
-		     (convert-pjs-type (getf context :class))
-		   (let ((res (second (gethash (downcase varname) (getf context :vars)))))
-		     (when res
-		       (convert-pjs-type res)))))
-		;; member of a typed variable
-		()
-		;; namespace var with type
-		()))))))
+(defun get-variable-type-in-context (varname)
+  (let ((context (get-local-function-environment)))
+    (when context
+      (second (gethash (downcase varname) (getf context :vars))))))
 
 (defconst *pjs-vars-with-members-or-methods*
-    (format "\\.\\<\\(%s\\)\\>" *js-variable-name*))
-;;  (format "\\<\\(%s\\)\\>\\.\\<\\(%s\\)\\>\\(?:(\\)?" *js-variable-name* *js-variable-name*))
+  "\\<\\(\\w+\\)\\>\\.\\<\\w[[:word:]0-9]*\\>\\((\\)")
 
 (defconst *pjs-standard-types*
   '("string"
@@ -361,22 +313,31 @@
     "array"
     "hashtable"))
 
+(defun convert-pjs-type (type)
+  (cond ((member type *pjs-standard-types*)
+	 (cons "plw" type))
+	(t
+	 (let ((strings (split-string type ".")))
+	   (cond ((= (length strings 1))
+		  (cons (pjs-current-namespace) (car strings)))
+		 (t
+		  (cons (car strings) (second strings))))))))
+
 (defun search-vars-with-members-or-methods (end)
   (let ((match-data (match-data))
 	continue)
-    (or (catch 'exit
+    (if (catch 'exit
 	  (while (re-real-search-forward *pjs-vars-with-members-or-methods* end t)
-	    (save-match-data
-	      (let* ((member   (downcase (match-string-no-properties 1)))
-		     (var-type (get-variable-type-in-context (match-beginning 0))))
-		(when var-type
-		  (let* ((members (pjs-class-members (car var-type) (cdr var-type)))
-			 (methods (pjs-class-methods (car var-type) (cdr var-type))))
-;;		    (message "member is %s members are %s methods are %s %s %s" member members methods (member member members) (member member methods))
-		    (when (or (not (eq (gethash member members :unknown) :unknown))
-			      (member member methods))
-		      (throw 'exit (point)))))))))
-	(progn (set-match-data nil)
+	    (let* ((var-name (match-string-no-properties 1))
+		   (member   (match-string-no-properties 2))
+		   (type     (convert-pjs-type (get-variable-type-in-context var-name))))
+	      (when type
+		(let ((members (pjs-class-members (car type) (cdr type)))
+		      (methods (pjs-class-methods (car type) (cdr type))))
+		  (when (or (member member members)
+			    (member member methods))
+		    (throw 'exit (point))))))))
+	(progn (set-match-data match-data)
 	       nil))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -403,15 +364,12 @@
   ;; Variables in the function 
   (push (cons 'search-function-local-vars font-lock-variable-name-face) font-locks)
 
-  ;; members and methods based on type of var
-  (push (list 'search-vars-with-members-or-methods 1 opx2-hg-getset-face) font-locks)
+  ;; class members
+  (push (list 'search-class-members 1 opx2-hg-getset-face) font-locks)
 
-  ;; Namespace vars
-  (push (cons 'search-pjs-current-namespace-variables pjs-var-definition-face) font-locks)
-
-  ;; Namespace classes
-  (push (cons 'search-pjs-current-namespace-classes font-lock-type-face) font-locks)
-
+  ;; Global vars
+  (push (cons 'search-global-vars pjs-var-definition-face) font-locks)
+  
   ;; Variable definitions with type
   (push (list *pjs-vars-with-type-regexp* 1 font-lock-type-face) font-locks)
   (push (list *pjs-vars-with-type-regexp* 2 pjs-var-definition-face) font-locks)
@@ -444,42 +402,22 @@
   (push (list *pjs-function-heading* 1 font-lock-function-name-face) font-locks)
   ;; Function arguments
   (push (list
-	 (concat *pjs-method-arguments-start*)
-	 ;; simple arguments
-	 (list *pjs-arguments-end*
-	       '(backward-char)
-	       '(re-search-backward "(")
-	       '(1 pjs-var-definition-face))
-	 ;; arguments with types
-	 (list *pjs-arguments-type-end*
+	 (concat *pjs-function-arguments-start*)
+	 (list *arguments-end*
 	       '(backward-char)
 	       '(end-of-line)
-	       '(1 font-lock-type-face)
-	       '(2 pjs-var-definition-face))
-	 )
-	font-locks)
-  
+	       '(1 pjs-var-definition-face))) font-locks)
   ;; Method definition
   (push (list *pjs-method-heading* 1 font-lock-function-name-face) font-locks)
   (push (list *pjs-method-heading* 2 font-lock-keyword-face) font-locks)
   (push (list *pjs-method-heading* 3 font-lock-type-face) font-locks)  
   ;; Method arguments
   (push (list
-	  (concat *pjs-function-arguments-start*)
-	  ;; simple arguments
-	  (list *pjs-arguments-end*
-		'(backward-char)
-		'(re-search-backward "(")
-		'(1 pjs-var-definition-face))
-	  ;; arguments with types
-	  (list *pjs-arguments-type-end*
-		'(backward-char)
-		'(end-of-line)
-		'(1 font-lock-type-face)
-		'(2 pjs-var-definition-face))
-	  )
-	 font-locks)
-  
+	 (concat *pjs-method-arguments-start*)
+	 (list *arguments-end*
+	       '(backward-char)
+	       '(end-of-line)
+	       '(1 pjs-var-definition-face))) font-locks)
   ;; keywords
   (push (cons pjs-font-lock-keywords font-lock-keyword-face) font-locks)
   ;; constants
@@ -503,6 +441,9 @@
   ;; build the cache before fontifying 
   (jit-lock-register 'build-local-vars-cache)
 
+  ;; regexp to mark the beginning of a function
+;;  (setq defun-prompt-regexp *pjs-function-or-method-regexp*)
+
   ;; fontify all the things
   (syntax-propertize (point-max))
   )
@@ -511,8 +452,10 @@
   (interactive)
   (font-lock-fontify-buffer))
 
-(defun pjs-reset-cache-on-save ()
-  (js-reset-vars 'pjs-save))
-
-(defun pjs-reset-cache-on-compile ()
-  (js-reset-vars 'pjs-compile))
+(defun pjs-reset-cache ()
+  (ojs-reset-cache)
+  (setq *pjs-buffers-class-members-cache* nil)
+  (setq *pjs-buffers-class-members-cache-regexp* nil)
+  (setq *pjs-namespace-functions-cache* nil)
+  (setq *pjs-kernel-functions-cache*  nil)
+  )
