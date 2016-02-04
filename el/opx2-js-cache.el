@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/12/22 12:31:09 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date: 2016/02/04 16:55:35 $ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -23,15 +23,18 @@
 ;;;;
 ;;;; AUTHOR  : $Author: troche $
 ;;;;
-;;;; VERSION : $Id: opx2-js-cache.el,v 3.9 2015/12/22 12:31:09 troche Exp $
+;;;; VERSION : $Id: opx2-js-cache.el,v 3.10 2016/02/04 16:55:35 troche Exp $
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: opx2-js-cache.el,v $" :id "$Id: opx2-js-cache.el,v 3.9 2015/12/22 12:31:09 troche Exp $" :version "$Revision: 3.9 $" :date "$Date: 2015/12/22 12:31:09 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: opx2-js-cache.el,v $" :id "$Id: opx2-js-cache.el,v 3.10 2016/02/04 16:55:35 troche Exp $" :version "$Revision: 3.10 $" :date "$Date: 2016/02/04 16:55:35 $ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log: opx2-js-cache.el,v $
+;;;; Revision 3.10  2016/02/04 16:55:35  troche
+;;;; * don't use real search when not needed
+;;;;
 ;;;; Revision 3.9  2015/12/22 12:31:09  troche
 ;;;; * build local cache before syntax highlighting
 ;;;;
