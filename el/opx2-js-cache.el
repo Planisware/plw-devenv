@@ -179,7 +179,7 @@
 		 ;; we are in a function, search for vars
 		 ;; first, get the arguments of the function
 		 (let* ((start-function (goto-char (car boundaries)))
-			(function-name (when (re-real-search-forward *js-function-method-header* (line-end-position) t)
+			(function-name (when (re-search-forward *js-function-method-header* (line-end-position) t)
 					 ;; go back one char to be on the (, which the end of our regexp
 					 (forward-char -1)
 					 (match-string-no-properties 1)))

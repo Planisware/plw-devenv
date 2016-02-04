@@ -215,7 +215,7 @@
 
 (defun search-buffer-functions (end)
   (let ((search-pattern (ojs-functions-in-buffers-regexp)))
-    (re-real-search-forward search-pattern end t)))
+    (re-search-forward search-pattern end t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight kernel functions 
@@ -252,7 +252,7 @@
 	(start (point)))
     (dolist (regexp (list-ojs-kernel-functions))
       (goto-char start)
-      (setq found (or (re-real-search-forward regexp (or found end) t)
+      (setq found (or (re-search-forward regexp (or found end) t)
 		      found)))
     (if (eq found end)
 	nil
@@ -290,7 +290,7 @@
 			(throw 'exit nil))		       
 		       ((setq found (let ((list (funcall var-list-function)))
 				      (when list
-					(re-real-search-forward list (min end-of-fun end) t))))
+					(re-search-forward list (min end-of-fun end) t))))
 			;; we have found something, we can return
 			;;(message "we found %s at point %s, return" (match-string 1) (point))
 			(throw 'exit found))
@@ -314,7 +314,7 @@
 		       (t
 			(setq found (let ((list (funcall var-list-function)))
 				      (when list
-					(re-real-search-forward list (min end-of-fun end) t)))))))
+					(re-search-forward list (min end-of-fun end) t)))))))
 	       ;;(message "->found is %s" found)
 	       )
 	      (t
@@ -325,7 +325,7 @@
 
 ;; script-level and global vars.
 (defun search-global-vars (end)
-  (re-real-search-forward (ojs-vars-in-buffer-regexp) end t))
+  (re-search-forward (ojs-vars-in-buffer-regexp) end t))
 
 ;; searches only in non string and non comments 
 
@@ -395,7 +395,7 @@
   ;; or nil if we are not in a function
   (save-excursion
     (let* ((start-point (point))
-	   (function-start (re-real-search-backward *ojs-function-start-regexp* nil t)))
+	   (function-start (re-search-backward *ojs-function-start-regexp* nil t)))
       (when function-start
 	(while (and (not (looking-at "{"))
 		    (< (point) (line-end-position)))
@@ -406,7 +406,7 @@
 				    ;; return nil when we have a scan error
 				    (scan-error nil))
 				  ;; try to find a lonely }, search only until the next start of function
-				  (re-real-search-forward "^}$" (save-excursion (or (when (re-real-search-forward *ojs-function-start-regexp* nil t)
+				  (re-search-forward "^}$" (save-excursion (or (when (re-search-forward *ojs-function-start-regexp* nil t)
 										 (line-beginning-position))
 									       (point-max)))
 						     t)
@@ -418,7 +418,7 @@
 
 ;; go to the start of the next function, but not after end
 (defun goto-start-of-next-function (end)
-  (re-real-search-forward *ojs-function-start-regexp* end t))
+  (re-search-forward *ojs-function-start-regexp* end t))
 
 (defun inside-function ()
   (when (function-boundaries)
