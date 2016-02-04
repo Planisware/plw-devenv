@@ -181,11 +181,11 @@
 
 (defconst *pjs-var-in-with-type-regexp* 
 ;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
-  (format "^.*\\<var\\>\\s-*\\(%s\\)\\s-+\\(%s\\)\\s-+\\(in\\)" *js-type* *pjs-variable-name*))
+  (format "^.*\\<var\\>\\s-*\\(%s\\)\\s-+\\(%s\\)\\s-+\\(\\<in\\>\\)" *js-type* *pjs-variable-name*))
 
 (defconst *pjs-var-in-no-type-regexp* 
 ;;  "^.*var\\s-+\\(\\w+\\)\\s-*\\(=\\|in\\|;\\).*$")
-  (format "^.*\\<var\\>\\s-+\\(%s\\)\\s-+\\(in\\)" *pjs-variable-name*))
+  (format "^.*\\<var\\>\\s-+\\(%s\\)\\s-+\\(\\<in\\>\\)" *pjs-variable-name*))
 
 ;; class types, plc.somethinf
 (defconst *pjs-class-type*
@@ -252,17 +252,17 @@
 (defun search-pjs-current-namespace-functions (end)
   (let* ((namespace (pjs-current-namespace))
 	 (ns-functions (list-pjs-namespace-functions-regexp namespace)))
-    (re-real-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-functions) end t)))
+    (re-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-functions) end t)))
 
 (defun search-pjs-current-namespace-variables (end)
   (let* ((namespace (pjs-current-namespace))
 	 (ns-variables (list-pjs-namespace-variables-regexp namespace)))
-    (re-real-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-variables) end t)))
+    (re-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-variables) end t)))
 
 (defun search-pjs-current-namespace-classes (end)
   (let* ((namespace (pjs-current-namespace))
 	 (ns-classes (list-pjs-namespace-classes-regexp namespace)))
-    (re-real-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-classes) end t)))
+    (re-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-classes) end t)))
 
 (defun init-pjs-namespace-cache ()
   (unless (hash-table-p *pjs-namespace-functions-cache*)    
@@ -321,10 +321,14 @@
 			       (or (pjs-start-of-next-block current-tag)
 				   (semantic-tag-end current-tag)))))
 ;;		 (message "local-vars %s" local-vars)
-		 (when (re-real-search-forward (js--regexp-opt-symbol (mapcar 'car local-vars)) end t)
-		   (throw 'exit (point)))
-		 ;; we didn't find anything, go to the end
-		 (goto-char end)))
+		 (cond ((re-search-forward (js--regexp-opt-symbol (mapcar 'car local-vars)) end t)
+			(if (save-excursion (backward-word)
+					    (not (looking-back "plc.")))
+			    (throw 'exit (point))
+			  (set-match-data nil)))
+		       (t
+			;; we didn't find anything, go to the end
+			(goto-char end)))))
 	      (t
 	       (message "nothing ??")))))))
 
@@ -350,7 +354,44 @@
 (defun search-pjs-kernel-functions (end)
   (when (list-pjs-kernel-functions)
     (let ((search-pattern (list-pjs-kernel-functions)))
-      (re-real-search-forward search-pattern end t))))
+      (re-search-forward search-pattern end t))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; highlight "plc" types 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar *pjs-plc-types-cache* nil)
+
+(defvar *pjs-plc-types-present* t)
+
+;;(defvar *regexp-elements-limit* 1000)
+
+(defun list-pjs-plc-types-regexps ()  
+  (cond (*pjs-plc-types-cache*
+	 *pjs-plc-types-cache*)
+	(*pjs-plc-types-present*
+	 (setq *pjs-plc-types-cache*
+	       (let ((functions-list (progn (setq *pjs-plc-types-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::pjs-list-plc-types) t nil)")))
+					    (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::pjs-list-plc-types)"))))
+		     regexp-list)
+		 
+		 (dolist (sublist (partition-list functions-list *regexp-elements-limit*))
+		   (push (format "plc\\.%s" (js--regexp-opt-symbol sublist)) regexp-list))
+		 regexp-list)))
+	(t
+	 nil)))
+
+(defun search-pjs-plc-types (end)
+  (let ((found end)
+	(start (point)))
+    (dolist (regexp (list-pjs-plc-types-regexps))
+      (goto-char start)
+      (setq found (or (re-search-forward regexp (or found end) t)
+		      found)))
+    (if (eq found end)
+	nil
+      found)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight method / members depending on variable type
@@ -429,7 +470,7 @@
   (let ((match-data (match-data))
 	continue)
     (or (catch 'exit
-	  (while (re-real-search-forward *pjs-vars-with-members-or-methods* end t)
+	  (while (re-search-forward *pjs-vars-with-members-or-methods* end t)
 	    (save-match-data
 	      (let* ((member   (downcase (match-string-no-properties 1)))
 		     (var-type (get-variable-type-in-context (match-beginning 0))))
@@ -456,6 +497,17 @@
 
   ;; list of font-lock-keywords in the right order
 
+  ;; LAST RULE APPLIED HERE
+  ;; highlight "plc" types
+  (push (cons 'search-pjs-plc-types font-lock-type-face) font-locks)
+
+  ;; highlight "standard" types
+  (push (cons pjs-font-lock-types font-lock-type-face) font-locks)
+  
+  ;; hightlight namespace types
+  ;; Namespace classes
+  (push (cons 'search-pjs-current-namespace-classes font-lock-type-face) font-locks)  
+  
   ;; Functions defined in buffers  
   (push (list 'search-pjs-current-namespace-functions 1 font-lock-function-name-face) font-locks)
 
@@ -463,6 +515,11 @@
   (push (cons 'search-pjs-kernel-functions pjs-kernel-functions-face) font-locks)
   (push (list 'search-pjs-kernel-functions 1 pjs-kernel-functions-face) font-locks)
 
+  ;; keywords
+  (push (cons pjs-font-lock-keywords font-lock-keyword-face) font-locks)
+  ;; constants
+  (push (cons pjs-font-lock-constants font-lock-constant-face) font-locks)
+  
   ;; Variables in the function 
   ;;  (push (cons 'search-function-local-vars font-lock-variable-name-face) font-locks)
   (push (cons 'search-pjs-local-vars font-lock-variable-name-face) font-locks)
@@ -472,9 +529,6 @@
 
   ;; Namespace vars
   (push (cons 'search-pjs-current-namespace-variables pjs-var-definition-face) font-locks)
-
-  ;; Namespace classes
-;  (push (cons 'search-pjs-current-namespace-classes font-lock-type-face) font-locks)
 
   ;; Variable definitions with type
   (push (list *pjs-vars-with-type-regexp* 1 font-lock-type-face) font-locks)
@@ -496,14 +550,11 @@
   (push (list *pjs-class-definition* 1 font-lock-type-face) font-locks)
   
   ;; New type
-  (push (list *pjs-new-type-regexp* 1 font-lock-type-face) font-locks)
+  ;; (push (list *pjs-new-type-regexp* 1 font-lock-type-face) font-locks)
 
   ;; symbols
   (push (list *pjs-symbols* 0 font-lock-preprocessor-face) font-locks)  
-  
-  ;; class types, plc.something
-  (push (list *pjs-class-type* 0 font-lock-type-face) font-locks)
-  
+    
   ;; Function definition
   (push (list *pjs-function-heading* 1 font-lock-function-name-face) font-locks)
   ;; Function arguments
@@ -556,12 +607,7 @@
 	  )
 	 font-locks)
   
-  ;; keywords
-  (push (cons pjs-font-lock-keywords font-lock-keyword-face) font-locks)
-  ;; constants
-  (push (cons pjs-font-lock-constants font-lock-constant-face) font-locks)
-  ;; types
-  (push (cons pjs-font-lock-types font-lock-type-face) font-locks)
+  ;; FIRST RULE APPLIED HERE
   
   ;; comments
   (set (make-local-variable 'comment-start) "// ")
