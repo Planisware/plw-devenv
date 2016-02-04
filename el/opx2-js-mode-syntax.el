@@ -273,7 +273,7 @@
   (catch 'exit
     (while (< (point) end)      
       (let ((context (get-local-function-environment)))
-;;	(search
+	;;	(search
 	(cond ((numberp context)
 	       (goto-char context))
 	      ((consp context)
@@ -363,7 +363,7 @@
   ;; or nil if we are not in a function
   (save-excursion
     (let* ((start-point (point))
-	   (function-start (re-real-search-backward *ojs-function-start-regexp* nil t)))
+	   (function-start (re-search-backward *ojs-function-start-regexp* nil t)))
       (when function-start
 	(while (and (not (looking-at "{"))
 		    (< (point) (line-end-position)))
