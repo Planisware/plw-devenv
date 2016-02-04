@@ -215,7 +215,7 @@
 
 (defun search-buffer-functions (end)
   (let ((search-pattern (ojs-functions-in-buffers-regexp)))
-    (re-real-search-forward search-pattern end t)))
+    (re-search-forward search-pattern end t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight kernel functions 
@@ -225,7 +225,7 @@
 
 (defvar *ojs-kernel-functions-present* t)
 
-(defvar *regexp-elements-limit* 1000)
+(defvar *regexp-elements-limit* 500)
 
 (defun partition-list (list length)
   (loop
@@ -253,7 +253,7 @@
 	(start (point)))
     (dolist (regexp (list-ojs-kernel-functions))
       (goto-char start)
-      (setq found (or (re-real-search-forward regexp (or found end) t)
+      (setq found (or (re-search-forward regexp (or found end) t)
 		      found)))
     (if (eq found end)
 	nil
@@ -283,7 +283,7 @@
 		     (next          (getf context :next)))
 		 ;; search for the function vars in the context
 		 ;; we catch something, return
-		 (when (re-real-search-forward vars (min end-of-fun end) t)
+		 (when (re-search-forward vars (min end-of-fun end) t)
 		   (throw 'exit (point)))
 		 ;; we didn't find anything, go to next function
 		 ;; or exit if we don't have a next function
@@ -294,7 +294,7 @@
 
 ;; script-level and global vars.
 (defun search-global-vars (end)
-  (re-real-search-forward (ojs-vars-in-buffer-regexp) end t))
+  (re-search-forward (ojs-vars-in-buffer-regexp) end t))
 
 ;; searches only in non string and non comments 
 
@@ -375,7 +375,7 @@
 				    ;; return nil when we have a scan error
 				    (scan-error nil))
 				  ;; try to find a lonely }, search only until the next start of function
-				  (re-real-search-forward "^}$" (save-excursion (or (when (re-real-search-forward *ojs-function-start-regexp* nil t)
+				  (re-search-forward "^}$" (save-excursion (or (when (re-search-forward *ojs-function-start-regexp* nil t)
 										 (line-beginning-position))
 									       (point-max)))
 						     t)
@@ -387,7 +387,7 @@
 
 ;; go to the start of the next function, but not after end
 (defun goto-start-of-next-function (end)
-  (re-real-search-forward *ojs-function-start-regexp* end t))
+  (re-search-forward *ojs-function-start-regexp* end t))
 
 (defun inside-function ()
   (when (function-boundaries)
