@@ -233,7 +233,7 @@
      collect (subseq list 0 (min (length list) length))
      do (setf list (nthcdr (min (length list) length) list))))
 
-(defun list-ojs-kernel-functions ()  
+(defun list-ojs-kernel-functions ()
   (cond (*ojs-kernel-functions-cache*
 	 *ojs-kernel-functions-cache*)
 	(*ojs-kernel-functions-present*
@@ -241,7 +241,6 @@
 	       (let ((functions-list (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-js-functions) t nil)")))
 					    (sort (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-js-functions)")) 'string<)))
 		     regexp-list)
-		 
 		 (dolist (sublist (partition-list functions-list *regexp-elements-limit*))
 		   (push (format "\\(%s\\)" (js--regexp-opt-symbol sublist)) regexp-list))
 		 regexp-list)))
@@ -264,7 +263,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun search-function-local-vars (end)
-  (search-vars-in-context end))
+  (search-vars-in-context end 'list-local-vars-in-function))
 
 (defun list-local-vars-in-function ()
   (js--regexp-opt-symbol (get-local-vars-for-function nil)))
@@ -485,4 +484,5 @@
 
 (defun force-syntax-highlighting ()
   (interactive)
-  (font-lock-fontify-buffer))	     
+  (font-lock-fontify-buffer))
+	       
