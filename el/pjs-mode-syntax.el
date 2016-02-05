@@ -218,6 +218,8 @@
 (defvar-resetable *pjs-namespace-variables-regexp-cache* nil 'pjs-compile)
 (defvar-resetable *pjs-namespace-classes-cache* nil 'pjs-compile)
 (defvar-resetable *pjs-namespace-classes-regexp-cache* nil 'pjs-compile)
+(defvar-resetable *pjs-namespace-list-cache* nil 'pjs-compile)
+(defvar-resetable *pjs-namespace-list-regexp-cache* nil 'pjs-compile)
 
 (defun list-pjs-namespace-functions-regexp (namespace)
   (unless *pjs-namespace-functions-regexp-cache*
@@ -264,6 +266,16 @@
 	 (ns-classes (list-pjs-namespace-classes-regexp namespace)))
     (re-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-classes) end t)))
 
+(defun list-pjs-namespaces ()
+  (or *pjs-namespace-list-cache*
+      (progn (init-pjs-namespace-cache)
+	     *pjs-namespace-list-cache*)))
+
+(defun list-pjs-namespaces-regexp ()
+  (or *pjs-namespace-list-regexp-cache*
+      (progn (init-pjs-namespace-cache)
+	     *pjs-namespace-list-regexp-cache*)))
+
 (defun init-pjs-namespace-cache ()
   (unless (hash-table-p *pjs-namespace-functions-cache*)    
     (setq *pjs-namespace-functions-cache* (make-hash-table :test 'equal)))
@@ -280,12 +292,14 @@
 
   (when (fi::lep-open-connection-p)
     (dolist (ns (fi:eval-in-lisp "(jvs::get-all-namespace-members)"))
+      (push (car ns) *pjs-namespace-list-cache*)      
       (puthash (car ns) (js--regexp-opt-symbol (car (cdr ns)))    *pjs-namespace-variables-regexp-cache*)
       (puthash (car ns) (js--regexp-opt-symbol (second (cdr ns))) *pjs-namespace-functions-regexp-cache*)
       (puthash (car ns) (js--regexp-opt-symbol (third (cdr ns)))  *pjs-namespace-classes-regexp-cache*)
       (puthash (car ns) (car (cdr ns))    *pjs-namespace-variables-cache*)
       (puthash (car ns) (second (cdr ns)) *pjs-namespace-functions-cache*)
-      (puthash (car ns) (third (cdr ns))  *pjs-namespace-classes-cache*))))
+      (puthash (car ns) (third (cdr ns))  *pjs-namespace-classes-cache*))
+    (setq *pjs-namespace-list-regexp-cache* (js--regexp-opt-symbol *pjs-namespace-list-cache*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; local vars based on grammar

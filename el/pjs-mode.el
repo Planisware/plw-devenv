@@ -83,26 +83,72 @@
 	  (setq start (point))
 	(setq start (1+ (point))))))
   (buffer-substring-no-properties start end))
-    
+
+;; adapted from fi::get-default-symbol
+(defun pjs-get-default-symbol (prompt up-p no-method)
+  (let* ((symbol-at-point (fi::get-symbol-at-point up-p no-method))
+	 (function-at-point (if (string-match ":" symbol-at-point)
+				symbol-at-point
+			     (find-function-at-point))))
+    (if fi::use-symbol-at-point
+	(list function-at-point)
+      (let ((read-symbol
+	     (let ((fi::original-package (fi::package)))
+	       (fi::ensure-minibuffer-visible)
+	       (fi::completing-read
+		(if function-at-point
+		    (format "%s: (default %s) " prompt function-at-point)
+		  (format "%s: " prompt))
+		'fi::minibuffer-complete))))
+	(list (if (string= read-symbol "")
+		  function-at-point
+		read-symbol))))))
+
+;; returns a cons (namespace function) 
+(defun find-function-at-point ()
+  (save-excursion
+    (let ((word (thing-at-point 'word t)))
+      (cond ((or (string-prefix-p "plw" word t)
+		 (string-match (list-pjs-namespaces-regexp) word)) ;; we are looking at the namespace
+	     (format "%s.%s" word (progn (forward-word (if (looking-at "\\.") 1 2))
+					 (thing-at-point 'word t))))
+	    (t
+	     (unless (looking-back "\\.") (backward-word))
+	     (format "%s.%s"
+		     (or (and (looking-back "plw\\.")
+			      "plw")
+			 (and (looking-back (format "%s\\." (list-pjs-namespaces-regexp)))
+			      (backward-word)
+			      (thing-at-point 'word t))
+			 (and (looking-back "\\.") ;; method call, plw namespace
+			      "plw")
+			 (pjs-current-namespace))
+		     word))))))
+
 ;; <ctrl-c .> in ojs file
 ;; works with ojs and lisp file and properly do the search
 (defun %pjs-find-definition (tag)
   (interactive
    (if current-prefix-arg
-       '(t)
-     (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
+       '(nil)
+     (list (car (pjs-get-default-symbol "Lisp locate source" t t)))))
+  (interactive)
   (if (string-match ":" tag)
       (fi::lisp-find-definition-common tag nil)
-    (fi::lisp-find-definition-common (concat "js::" tag) nil)))
+    (fi::lisp-find-definition-common (if (string-prefix-p "plw." tag t)
+					 (concat "js::" (substring tag (1+ (position ?. tag))))
+				       (concat "js::" tag)) nil)))
   
 (defun %pjs-list-who-calls (tag)
   (interactive
    (if current-prefix-arg
        '(nil)
-     (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
+     (list (car (pjs-get-default-symbol "List who calls" t t)))))
   (if (string-match ":" tag)
       (fi:list-who-calls tag)
-    (fi:list-who-calls (concat "js::" tag))))
+    (fi:list-who-calls (if (string-prefix-p "plw." tag t)
+			   (concat "js::" (substring tag (1+ (position ?. tag))))
+			 (concat "js::" tag)))))
 
 (defvar *pjs-compilation-buffer-name* "*PJS compilation traces*")
 
@@ -110,10 +156,12 @@
   (interactive
    (if current-prefix-arg
        '(nil)
-     (list (car (fi::get-default-symbol "Lisp (un)trace function" t t)))))
-  (let ((js-symbol (concat "js::" tag)))
-    (fi:toggle-trace-definition js-symbol)))
-
+     (list (car (pjs-get-default-symbol "Lisp (un)trace function" t t)))))
+  (if (string-match ":" tag)
+      (fi:toggle-trace-definition tag)
+    (fi:toggle-trace-definition (if (string-prefix-p "plw." tag t)
+			   (concat "js::" (substring tag (1+ (position ?. tag))))
+			 (concat "js::" tag)))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mode definition
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -131,15 +179,15 @@
   (setup-pjs-syntax-highlighting)
 
   ;; custom keybindings from menu
-  (define-key *pjs-mode-map* "\C-c." '%ojs-find-definition)
+  (define-key *pjs-mode-map* "\C-c." '%pjs-find-definition)
   (define-key *pjs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
-  (define-key *pjs-mode-map* "\C-cc" '%ojs-list-who-calls)
+  (define-key *pjs-mode-map* "\C-cc" '%pjs-list-who-calls)
   (define-key *pjs-mode-map* "\C-ce" 'compile-ojs-file)
   (define-key *pjs-mode-map* "\C-ck" 'check-ojs-region)
   (define-key *pjs-mode-map* "\C-cr" 'compile-ojs-region)
   (define-key *pjs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
   (define-key *pjs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
-  (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
+  (define-key *pjs-mode-map* "\C-ct" 'trace-pjs-function)
 
   (define-key *pjs-mode-map* "\C-cl" 'lock-file)
   (define-key *pjs-mode-map* "\C-cu" 'unlock-file)
