@@ -231,5 +231,8 @@
   (global-semantic-mru-bookmark-mode 1)  
   )
 
+;; autocomplete
+(require 'ac-pjs)
+
 ;; pjs files are pjs modes
 (setq auto-mode-alist (cons '("\\.pjs" . pjs-mode) auto-mode-alist))

@@ -17,23 +17,60 @@
 
 (defun pjs-namespaces-functions-ac-prefix ()
   ;; detects the current namespace
-  (save-match-data
-    (let ((match (re-search-backward (format "\\(\\<%s\\>\\)\\(\\.\\)\\(\\<%s\\>\\)?\\=" *js-variable-name* *js-variable-name*) (line-beginning-position) t)))
-      (when match
-	(setq *current-pjs-namespace-prefix* (match-string-no-properties 1))
-	(1+ (match-beginning 2))))))
+  (save-excursion
+    (save-match-data
+      (let ((match (re-search-backward (format "\\(\\<%s\\>\\)\\(\\.\\)\\(%s\\)?\\=" *js-variable-name* *js-variable-name*) (line-beginning-position) t)))
+	(when match
+	  (setq *current-pjs-namespace-prefix* (downcase (match-string-no-properties 1)))
+	  (1+ (match-beginning 2)))))))
 
 (defun pjs-namespaces-functions-ac-action ()  
   )
 
 (defun pjs-namespaces-functions-ac-candidates ()
-  (let (res
-	(functions (list-pjs-namespace-functions *current-pjs-namespace-prefix*))
-	(vars      (list-pjs-namespace-variables *current-pjs-namespace-prefix*)))
-    (append functions vars res)))
+  (cond ((string= *current-pjs-namespace-prefix* "plc")
+	 ;; we complete with the list of classes
+	 (list-pjs-plc-types))
+	(t
+	 (let (res
+	       (functions (list-pjs-namespace-functions *current-pjs-namespace-prefix*))
+	       (vars      (list-pjs-namespace-variables *current-pjs-namespace-prefix*)))
+	   (append functions vars res)))))
 
 (defun pjs-namespaces-functions-ac-document (docstr)
   docstr)
+
+;;; completion for typed variables 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(ac-define-source "pjs-variable-members"
+  '((prefix . pjs-variable-members-ac-prefix)
+    (candidates . pjs-variable-members-ac-candidates)
+;;    (document . pjs-namespaces-functions-ac-document)
+;;    (action . pjs-namespaces-functions-ac-action)
+    (symbol . "m ")
+    (requires . -1)))
+
+(defvar *current-pjs-variable* nil)
+
+(defun pjs-variable-members-ac-prefix ()
+  ;; detects the current namespace
+  (save-excursion
+    (save-match-data
+      (let ((match (re-search-backward (format "\\(\\<%s\\>\\)\\([.]\\)\\(%s\\)?\\=" *js-variable-name* *js-variable-name*) (line-beginning-position) t)))	
+	(when match
+	  (1+ (setq *current-pjs-variable* (match-beginning 2))))))))
+
+(defun pjs-variable-members-ac-candidates ()
+  ;; get the type of the variable
+  (let ((var-type (get-variable-type-in-context *current-pjs-variable*))
+	res)
+    (when var-type
+      (let* ((members (pjs-class-members (car var-type) (cdr var-type)))
+	     (res (pjs-class-methods (car var-type) (cdr var-type))))
+	(maphash #'(lambda (k v)
+		     (push k res)) members)
+	res))))
 
 ;;; find locally defined variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -84,6 +121,7 @@
   
   (add-to-list 'ac-sources 'ac-source-pjs-namespaces-functions)
   (add-to-list 'ac-sources 'ac-source-pjs-local-vars)
+  (add-to-list 'ac-sources 'ac-source-pjs-variable-members)  
  
   ;; (add-to-list 'ac-sources 'ac-source-ojs-vars)
   ;; (add-to-list 'ac-sources 'ac-source-ojs-kernel)
@@ -107,3 +145,5 @@
 )
 
 (add-hook 'pjs-mode-hook 'pjs-setup-auto-complete-mode)
+
+(provide 'ac-pjs)
