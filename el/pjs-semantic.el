@@ -303,48 +303,6 @@ This function is for internal use only."
 
 (provide 'pjs-semantic)
 
-;;; display debug 
-(defun fi::lep-connection-filter (process string)
-  ;; When a complete sexpression comes back from the lisp, read it and then
-  ;; handle it
-  (when fi::debug-subprocess-filter
-    (push string fi::debug-subprocess-filter-output))
-  (let ((inhibit-quit t)
-	(buffer (or (process-buffer process)
-		    (get-buffer-create " LEP temp "))))
-    (when fi::trace-lep-filter
-      (fi::trace-debug (format "lep-connection-filter: %s" string)))
-    (save-excursion
-      (set-buffer buffer)
-      (goto-char (point-max))
-      (insert string))
-    (let (form error)
-      (while	  
-	  (condition-case nil
-	      (with-current-buffer buffer
-;;		(set-buffer buffer)
-		(and
-		 (null error)
-		 (not (eq (point-max) (point-min)))
-		 (progn
-		   (goto-char (point-min))
-		   (forward-sexp)
-		   (let ((p (point)))
-		     (goto-char (point-min))
-		     (condition-case e
-			 (progn (setq form (read (current-buffer)))				
-				t)
-		       (error
-			(message "Error in read : %s" e)
-			(setq error t)))
-		     (delete-region (point-min) p))
-		   t)))
-	    (error nil))
-	(if error
-	    (error "error reading return value: %s" string)
-	  (fi::handle-lep-input process form))))))
-
-
 ;; patched from c:/Program Files (x86)/GNU Emacs 24.5/share/emacs/24.5/lisp/cedet/semantic/edit.el
 ;; do not return tags we don't want to parse on their own
 (defun semantic-edits-change-leaf-tag (change)
