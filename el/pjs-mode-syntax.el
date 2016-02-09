@@ -305,8 +305,6 @@
 ;; local vars based on grammar
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(require 'pjs-semantic)
-
 (defun pjs-start-of-next-block (tag) ;; (&optional (tag (semantic-current-tag)))
   (catch 'exit
     (let ((next-tag (semantic-find-tag-by-overlay-next)))
@@ -375,23 +373,36 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar *pjs-plc-types-cache* nil)
+(defvar *pjs-plc-types-cache-regexp* nil)
 
 (defvar *pjs-plc-types-present* t)
 
 ;;(defvar *regexp-elements-limit* 1000)
 
+(defun init-pjs-plc-types-cache ()
+  (let ((functions-list (progn (setq *pjs-plc-types-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::pjs-list-plc-types) t nil)")))
+			       (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::pjs-list-plc-types)"))))
+	regexp-list)
+    (dolist (sublist (partition-list functions-list *regexp-elements-limit*))
+      (push (format "plc\\.%s" (js--regexp-opt-symbol sublist)) regexp-list))
+    (setq *pjs-plc-types-cache-regexp* regexp-list)
+    (setq *pjs-plc-types-cache* functions-list)))
+
 (defun list-pjs-plc-types-regexps ()  
+  (cond (*pjs-plc-types-cache-regexp*
+	 *pjs-plc-types-cache-regexp*)
+	(*pjs-plc-types-present*
+	 (init-pjs-plc-types-cache)
+	 *pjs-plc-types-cache-regexp*)
+	(t
+	 nil)))
+
+(defun list-pjs-plc-types ()  
   (cond (*pjs-plc-types-cache*
 	 *pjs-plc-types-cache*)
 	(*pjs-plc-types-present*
-	 (setq *pjs-plc-types-cache*
-	       (let ((functions-list (progn (setq *pjs-plc-types-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::pjs-list-plc-types) t nil)")))
-					    (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::pjs-list-plc-types)"))))
-		     regexp-list)
-		 
-		 (dolist (sublist (partition-list functions-list *regexp-elements-limit*))
-		   (push (format "plc\\.%s" (js--regexp-opt-symbol sublist)) regexp-list))
-		 regexp-list)))
+	 (init-pjs-plc-types-cache)
+	 *pjs-plc-types-cache*)
 	(t
 	 nil)))
 
