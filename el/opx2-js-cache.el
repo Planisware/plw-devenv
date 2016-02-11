@@ -212,7 +212,7 @@
 				  vars-ht)))
 		     (when (and begin-function end-function)
 		       (goto-char begin-function)
-		       (while (re-real-search-forward *js-var-with-type-regexp* end-function t)
+		       (while (re-search-forward *js-var-with-type-regexp* end-function t)
 			 (puthash (downcase (match-string-no-properties 2))
 				  (list (match-string-no-properties 0)
 					(match-string-no-properties 1))
