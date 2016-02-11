@@ -104,26 +104,31 @@
 		  function-at-point
 		read-symbol))))))
 
-;; returns a cons (namespace function) 
 (defun find-function-at-point ()
   (save-excursion
-    (let ((word (thing-at-point 'word t)))
+    (let ((word (thing-at-point 'word t)) type)
       (cond ((or (string-prefix-p "plw" word t)
 		 (string-match (list-pjs-namespaces-regexp) word)) ;; we are looking at the namespace
 	     (format "%s.%s" word (progn (forward-word (if (looking-at "\\.") 1 2))
 					 (thing-at-point 'word t))))
 	    (t
 	     (unless (looking-back "\\.") (backward-word))
-	     (format "%s.%s"
-		     (or (and (looking-back "plw\\.")
-			      "plw")
-			 (and (looking-back (format "%s\\." (list-pjs-namespaces-regexp)))
-			      (backward-word)
-			      (thing-at-point 'word t))
-			 (and (looking-back "\\.") ;; method call, plw namespace
-			      "plw")
-			 (pjs-current-namespace))
-		     word))))))
+	     (cond ((looking-back "plw\\.")
+		    (format "plw.%s" word))
+		   ((looking-back (format "%s\\." (list-pjs-namespaces-regexp)))
+		    (backward-word)
+		    (format "%s.%s" (thing-at-point 'word t) word))
+		   ((and (looking-back "\\.")
+			 (setq type (get-variable-type-in-context (point))))		    
+		    (format "method.%s.%s" word
+			    (if (or (string= (car type) "plc")
+				    (string= (car type) "plw"))
+				(cdr type)
+			      (format "%s.%s" (car type) (cdr type)))))
+		   ((looking-back "\\.")
+		    (format "plw.%s" word))
+		   (t
+		    (format "%s.%s" (pjs-current-namespace) word))))))))
 
 ;; <ctrl-c .> in ojs file
 ;; works with ojs and lisp file and properly do the search
