@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/12/22 15:47:49 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date: 2016/02/04 16:55:35 $ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -23,15 +23,18 @@
 ;;;;
 ;;;; AUTHOR  : $Author: troche $
 ;;;;
-;;;; VERSION : $Id: opx2-js-mode-syntax.el,v 3.13 2015/12/22 15:47:49 troche Exp $
+;;;; VERSION : $Id: opx2-js-mode-syntax.el,v 3.14 2016/02/04 16:55:35 troche Exp $
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: opx2-js-mode-syntax.el,v $" :id "$Id: opx2-js-mode-syntax.el,v 3.13 2015/12/22 15:47:49 troche Exp $" :version "$Revision: 3.13 $" :date "$Date: 2015/12/22 15:47:49 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: opx2-js-mode-syntax.el,v $" :id "$Id: opx2-js-mode-syntax.el,v 3.14 2016/02/04 16:55:35 troche Exp $" :version "$Revision: 3.14 $" :date "$Date: 2016/02/04 16:55:35 $ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log: opx2-js-mode-syntax.el,v $
+;;;; Revision 3.14  2016/02/04 16:55:35  troche
+;;;; * don't use real search when not needed
+;;;;
 ;;;; Revision 3.13  2015/12/22 15:47:49  troche
 ;;;; * oops
 ;;;;
@@ -233,7 +236,7 @@
      collect (subseq list 0 (min (length list) length))
      do (setf list (nthcdr (min (length list) length) list))))
 
-(defun list-ojs-kernel-functions ()  
+(defun list-ojs-kernel-functions ()
   (cond (*ojs-kernel-functions-cache*
 	 *ojs-kernel-functions-cache*)
 	(*ojs-kernel-functions-present*
@@ -241,7 +244,6 @@
 	       (let ((functions-list (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-js-functions) t nil)")))
 					    (sort (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-js-functions)")) 'string<)))
 		     regexp-list)
-		 
 		 (dolist (sublist (partition-list functions-list *regexp-elements-limit*))
 		   (push (format "\\(%s\\)" (js--regexp-opt-symbol sublist)) regexp-list))
 		 regexp-list)))
@@ -264,7 +266,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun search-function-local-vars (end)
-  (search-vars-in-context end))
+  (search-vars-in-context end 'list-local-vars-in-function))
 
 (defun list-local-vars-in-function ()
   (js--regexp-opt-symbol (get-local-vars-for-function nil)))
@@ -274,7 +276,7 @@
   (catch 'exit
     (while (< (point) end)      
       (let ((context (get-local-function-environment)))
-;;	(search
+	;;	(search
 	(cond ((numberp context)
 	       (goto-char context))
 	      ((consp context)
@@ -485,4 +487,5 @@
 
 (defun force-syntax-highlighting ()
   (interactive)
-  (font-lock-fontify-buffer))	     
+  (font-lock-fontify-buffer))
+	       

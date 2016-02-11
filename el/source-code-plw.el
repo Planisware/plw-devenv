@@ -497,7 +497,7 @@
 ;; new : list all methods of a defgeneric in a buffer
 (defun opx2-list-methods (&optional fspec)
   ;;  (interactive (fi::get-default-symbol "List methods of" nil nil t))
-  (interactive (fi::get-default-symbol "List methods of" nil nil t))
+  (interactive (fi::get-default-symbol "List methods of" nil nil))
   (message "Finding methods of %s..." fspec)
   (if (fi:eval-in-lisp "(if (fboundp 'opx2-lisp::list-methods) t nil)")
       (lep::list-fspecs-common fspec
