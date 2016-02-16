@@ -126,6 +126,7 @@
      "import"
      "while"
      "function"
+     "wrappable function"
      "new"
      "return values")))
 
