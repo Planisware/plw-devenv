@@ -104,6 +104,7 @@
 		  function-at-point
 		read-symbol))))))
 
+;; return the lisp symbol
 (defun find-function-at-point ()
   (save-excursion
     (let ((word (thing-at-point 'word t)) type)
@@ -114,7 +115,8 @@
 	    (t
 	     (unless (looking-back "\\.") (backward-word))
 	     (cond ((looking-back "plw\\.")
-		    (format "plw.%s" word))
+		    word)
+;;		    (format "plw.%s" word))
 		   ((looking-back (format "%s\\." (list-pjs-namespaces-regexp)))
 		    (backward-word)
 		    (format "%s.%s" (thing-at-point 'word t) word))
@@ -123,10 +125,13 @@
 		    (format "method.%s.%s" word
 			    (if (or (string= (car type) "plc")
 				    (string= (car type) "plw"))
-				(cdr type)
+				(or (and (list-pjs-plc-types-to-kernel)
+					 (gethash (cdr type) (list-pjs-plc-types-to-kernel)))
+				    (cdr type))
 			      (format "%s.%s" (car type) (cdr type)))))
 		   ((looking-back "\\.")
-		    (format "plw.%s" word))
+		    word)
+;;		    (format "plw.%s" word))
 		   (t
 		    (format "%s.%s" (pjs-current-namespace) word))))))))
 
