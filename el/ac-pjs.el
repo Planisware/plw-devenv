@@ -2,6 +2,29 @@
 
 ;;;;; configuration of the hook
 
+;;; complete plc. classes names
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(ac-define-source "pjs-classes"
+  '((prefix . pjs-classes-ac-prefix)
+    (candidates . pjs-classes-ac-candidates)
+;;    (document . pjs-namespaces-functions-ac-document)
+;;    (action . pjs-namespaces-functions-ac-action)
+    (symbol . "c ")
+    (requires . -1)))
+
+(defun pjs-classes-ac-prefix ()
+  ;; detects the current namespace
+  (save-excursion
+    (save-match-data
+      (let ((match (re-search-backward (format "\\(\\<plc\\>\\)\\(\\.\\)\\(%s\\)?\\=" *js-variable-name*) (line-beginning-position) t)))
+	(when match
+;;	  (setq *current-pjs-namespace-prefix* "plc")
+	  (1+ (match-beginning 2)))))))
+
+(defun pjs-classes-ac-candidates ()
+  (list-pjs-plc-types))
+
 ;;; find functions and variables from current namespaces.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -20,7 +43,8 @@
   (save-excursion
     (save-match-data
       (let ((match (re-search-backward (format "\\(\\<%s\\>\\)\\(\\.\\)\\(%s\\)?\\=" *js-variable-name* *js-variable-name*) (line-beginning-position) t)))
-	(when match
+	(when (and match
+		   (not (string= (downcase (match-string-no-properties 1)) "plc")))
 	  (setq *current-pjs-namespace-prefix* (downcase (match-string-no-properties 1)))
 	  (1+ (match-beginning 2)))))))
 
@@ -28,14 +52,9 @@
   )
 
 (defun pjs-namespaces-functions-ac-candidates ()
-  (cond ((string= *current-pjs-namespace-prefix* "plc")
-	 ;; we complete with the list of classes
-	 (list-pjs-plc-types))
-	(t
-	 (let (res
-	       (functions (list-pjs-namespace-functions *current-pjs-namespace-prefix*))
-	       (vars      (list-pjs-namespace-variables *current-pjs-namespace-prefix*)))
-	   (append functions vars res)))))
+  (let ((functions (list-pjs-namespace-functions *current-pjs-namespace-prefix*))
+	(vars      (list-pjs-namespace-variables *current-pjs-namespace-prefix*)))
+    (append functions vars)))
 
 (defun pjs-namespaces-functions-ac-document (docstr)
   docstr)
@@ -121,7 +140,8 @@
   
   (add-to-list 'ac-sources 'ac-source-pjs-namespaces-functions)
   (add-to-list 'ac-sources 'ac-source-pjs-local-vars)
-  (add-to-list 'ac-sources 'ac-source-pjs-variable-members)  
+  (add-to-list 'ac-sources 'ac-source-pjs-variable-members)
+  (add-to-list 'ac-sources 'ac-source-pjs-classes)
  
   ;; (add-to-list 'ac-sources 'ac-source-ojs-vars)
   ;; (add-to-list 'ac-sources 'ac-source-ojs-kernel)
