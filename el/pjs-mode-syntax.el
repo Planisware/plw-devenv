@@ -126,7 +126,7 @@
      "import"
      "while"
      "function"
-     "wrappable function"
+;;     "wrappable function"
      "new"
      "return values")))
 
@@ -144,6 +144,13 @@
      "hashtable"
      )))
 
+(defconst *pjs-function-qualifiers*
+  (js--regexp-opt-symbol
+   '("wrappable")))
+
+(defconst *pjs-function-keyword*
+  (format "\\(?:%s\\s-+\\)?\\<function\\>" *pjs-function-qualifiers*))
+
 (defconst *pjs-variable-name*
   "\\(?:\\.\\.\\.\\)?[_a-zA-Z][_a-zA-Z0-9]*")
 
@@ -158,12 +165,12 @@
 
 ;; function definition
 (defconst *pjs-function-heading*
-  (format "^\\s-*\\<function\\>\\s-+\\(%s\\)" *js-function-name*)
+  (format "^\\s-*\\(%s\\)\\s-+\\(%s\\)" *pjs-function-keyword* *js-function-name*)
 "Regular expression matching the start of a function header.")
 
 ;; function arguments
 (defconst *pjs-function-arguments-start*
-  (format "\\<function\\>\\s-+\\(%s\\)?\\s-*(" *js-function-name*))
+  (format "%s\\s-+\\(%s\\)?\\s-*(" *pjs-function-keyword* *js-function-name*))
 
 (defconst *pjs-arguments-end*
   (format "\\s-*\\(\\<%s\\>\\)\\s-*\\(?::.+\\)?[),]" *pjs-variable-name*))
@@ -374,6 +381,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar *pjs-plc-types-cache* nil)
+(defvar *pjs-plc-types-to-kernel-cache* nil)
 (defvar *pjs-plc-types-cache-regexp* nil)
 
 (defvar *pjs-plc-types-present* t)
@@ -381,13 +389,28 @@
 ;;(defvar *regexp-elements-limit* 1000)
 
 (defun init-pjs-plc-types-cache ()
-  (let ((functions-list (progn (setq *pjs-plc-types-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::pjs-list-plc-types) t nil)")))
-			       (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::pjs-list-plc-types)"))))
-	regexp-list)
-    (dolist (sublist (partition-list functions-list *regexp-elements-limit*))
+  (let* ((functions-list-of-cons (progn (setq *pjs-plc-types-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::pjs-list-plc-types) t nil)")))
+				(when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::pjs-list-plc-types)"))))
+	 (functions-list (mapcar 'car functions-list-of-cons))
+	 regexp-list)
+    (dolist (sublist (partition-list functions-list *regexp-elements-limit*)) 
       (push (format "plc\\.%s" (js--regexp-opt-symbol sublist)) regexp-list))
     (setq *pjs-plc-types-cache-regexp* regexp-list)
-    (setq *pjs-plc-types-cache* functions-list)))
+    (setq *pjs-plc-types-cache* functions-list)
+    (if (hash-table-p *pjs-plc-types-to-kernel-cache*)
+	(clrhash *pjs-plc-types-to-kernel-cache*)
+      (setq *pjs-plc-types-to-kernel-cache* (make-hash-table :test 'equal)))
+    (dolist (l functions-list-of-cons)
+      (puthash (car l) (cdr l) *pjs-plc-types-to-kernel-cache*))))
+
+(defun list-pjs-plc-types-to-kernel ()  
+  (cond (*pjs-plc-types-to-kernel-cache*
+	 *pjs-plc-types-to-kernel-cache*)
+	(*pjs-plc-types-present*
+	 (init-pjs-plc-types-cache)
+	 *pjs-plc-types-to-kernel-cache*)
+	(t
+	 nil)))
 
 (defun list-pjs-plc-types-regexps ()  
   (cond (*pjs-plc-types-cache-regexp*
@@ -582,7 +605,8 @@
   (push (list *pjs-symbols* 0 font-lock-preprocessor-face) font-locks)  
     
   ;; Function definition
-  (push (list *pjs-function-heading* 1 font-lock-function-name-face) font-locks)
+  (push (list *pjs-function-heading* 1 font-lock-keyword-face) font-locks)
+  (push (list *pjs-function-heading* 2 font-lock-function-name-face) font-locks)
   ;; Function arguments
   (push (list
 	 (concat *pjs-function-arguments-start*)
