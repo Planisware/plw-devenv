@@ -76,7 +76,7 @@
 
 (defun js--regexp-opt-symbol (list)
   "Like `regexp-opt', but surround the result with `\\\\_<' and `\\\\_>'."
-  (concat "\\_<" (regexp-opt list t) "\\_>"))
+  (concat "\\_<" (regexp-opt list) "\\_>"))
 
 ;; constants
 (defconst opx2-js-font-lock-constants
