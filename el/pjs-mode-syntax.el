@@ -262,17 +262,17 @@
 (defun search-pjs-current-namespace-functions (end)
   (let* ((namespace (pjs-current-namespace))
 	 (ns-functions (list-pjs-namespace-functions-regexp namespace)))
-    (re-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-functions) end t)))
+    (re-search-forward (format "\\(?:%s\\.\\)?\\(%s\\)" namespace ns-functions) end t)))
 
 (defun search-pjs-current-namespace-variables (end)
   (let* ((namespace (pjs-current-namespace))
 	 (ns-variables (list-pjs-namespace-variables-regexp namespace)))
-    (re-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-variables) end t)))
+    (re-search-forward (format "\\(?:%s\\.\\)?\\(%s\\)" namespace ns-variables) end t)))
 
 (defun search-pjs-current-namespace-classes (end)
   (let* ((namespace (pjs-current-namespace))
 	 (ns-classes (list-pjs-namespace-classes-regexp namespace)))
-    (re-search-forward (format "\\(?:%s\\.\\)?%s" namespace ns-classes) end t)))
+    (re-search-forward (format "\\(?:%s\\.\\)?\\(%s\\)" namespace ns-classes) end t)))
 
 (defun list-pjs-namespaces ()
   (or *pjs-namespace-list-cache*
