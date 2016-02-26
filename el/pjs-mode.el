@@ -113,7 +113,7 @@
 	     (format "%s.%s" word (progn (forward-word (if (looking-at "\\.") 1 2))
 					 (thing-at-point 'word t))))
 	    (t
-	     (unless (looking-back "\\.") (backward-word))
+	     (beginning-of-thing 'word)
 	     (cond ((looking-back "plw\\.")
 		    word)
 ;;		    (format "plw.%s" word))
