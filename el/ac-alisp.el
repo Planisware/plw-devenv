@@ -81,7 +81,7 @@
     (match . alisp-ac-match)
     (requires . -1)))
 
-(defvar *packages-to-ignore* '("MODULE"))
+(defvar *packages-to-ignore* '("MODULE" "CL-USER"))
 
 ;; we return everything, because the list we got from the lisp is already filtered
 (defun alisp-ac-match (string list)
