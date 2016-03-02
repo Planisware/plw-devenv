@@ -25,7 +25,7 @@
 (defun pjs-classes-ac-candidates ()
   (list-pjs-plc-types))
 
-;;; find functions and variables from current namespaces.
+;;; find functions and variables from  namespaces.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (ac-define-source "pjs-namespaces-functions"
@@ -58,6 +58,25 @@
 
 (defun pjs-namespaces-functions-ac-document (docstr)
   docstr)
+
+;;; find functions from current namespaces.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(ac-define-source "pjs-current-namespace-functions"
+  '((candidates . pjs-current-namespace-functions-ac-candidates)
+;;    (document . pjs-namespaces-functions-ac-document)
+    ;;    (action . pjs-namespaces-functions-ac-action)
+    (symbol . "f ")
+    (requires . -1)))
+
+(defun pjs-current-namespace-functions-ac-candidates ()
+  (let ((functions (list-pjs-namespace-functions (pjs-current-namespace)))
+	(vars      (list-pjs-namespace-variables (pjs-current-namespace))))
+    (append functions vars)))
+
+(defun pjs-current-namespace-functions-ac-document (docstr)
+  docstr)
+
 
 ;;; completion for typed variables 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -139,6 +158,7 @@
   ;;(setq ac-sources '(ac-source-ojs-functions ac-source-ojs-methods ac-source-ojs-vars ac-source-ojs-kernel))
   
   (add-to-list 'ac-sources 'ac-source-pjs-namespaces-functions)
+  (add-to-list 'ac-sources 'ac-source-pjs-current-namespace-functions)
   (add-to-list 'ac-sources 'ac-source-pjs-local-vars)
   (add-to-list 'ac-sources 'ac-source-pjs-variable-members)
   (add-to-list 'ac-sources 'ac-source-pjs-classes)
