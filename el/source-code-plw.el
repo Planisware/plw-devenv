@@ -466,8 +466,8 @@
 		      (short-function-name (when (= (length split) 2) (second split))))
 		 (goto-char (point-min))
 		 (or 
-		  (re-search-forward (concat "^\\s-*\\(function\\|method\\)\\s-+\\_<" (or short-function-name function-name) "\\_>") (point-max) t)
-		  (when short-function-name (re-search-forward (concat "^\\s-*\\(function\\|method\\)[ \t]+\\_<" function-name "\\_>") (point-max) t))))))
+		  (re-search-forward (format "^\\s-*\\(%s\\)?\\s-*\\(function\\|method\\)\\s-+\\_<%s\\_>" *pjs-function-qualifiers* (or short-function-name function-name)) (point-max) t)
+		  (when short-function-name (re-search-forward (format "^\\s-*\\(%s\\)?\\s-*\\(function\\|method\\)\\s-+\\_<%s\\_>" *pjs-function-qualifiers* function-name) (point-max) t))))))
 	      ((or (equal (substring pathname -3 nil) "lsp") (equal (substring pathname -4 nil) "lisp"))
 	       ;; try to find in lisp file	       
 	       (goto-char (point-min))
