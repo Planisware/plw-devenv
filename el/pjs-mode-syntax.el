@@ -146,7 +146,7 @@
 
 (defconst *pjs-function-qualifiers*
   (js--regexp-opt-symbol
-   '("wrappable")))
+   '("wrappable" "cached")))
 
 (defconst *pjs-function-keyword*
   (format "\\(?:%s\\s-+\\)?\\<function\\>" *pjs-function-qualifiers*))
@@ -214,7 +214,7 @@
 
 ;; symbols between ##
 (defconst *pjs-symbols*
-  "#[[:alnum:]-_]+#")
+  "#[[:alnum:]-_:.]+#")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight namespace functions (current and other namespaces) 
