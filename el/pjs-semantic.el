@@ -4,6 +4,8 @@
 (require 'semantic)
 ;;(require 'semantic/edit)
 
+(semantic-mode 1)
+
 (defconst *semantic-pjs-tag-list-attributes*
   '( :members
      :attributes
