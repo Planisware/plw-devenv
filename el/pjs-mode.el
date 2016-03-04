@@ -45,6 +45,8 @@
 
 (require 'cc-mode)
 
+(load (fullpath-relative-to-current-file "pjs-mode-copyright.el"))
+
 (defvar pjs-mode-syntax-table
   (let ((table (make-syntax-table)))
     (c-populate-syntax-table table)
@@ -171,7 +173,44 @@
       (fi:toggle-trace-definition tag)
     (fi:toggle-trace-definition (if (string-prefix-p "plw." tag t)
 			   (concat "js::" (substring tag (1+ (position ?. tag))))
-			 (concat "js::" tag)))))
+			   (concat "js::" tag)))))
+
+(defvar *num-of-header-lines-to-check* 5)
+
+;;; checks that the file has the proper header
+(defun pjs-check-header ()
+  (unless (string= (buffer-substring-no-properties 1 (1+ (length *pjs-copyright-head*))) *pjs-copyright-head*)
+    (when (y-or-n-p "Your copyright header seems absent or corrupted. Do you want to add or repair it ?")
+      (save-excursion
+	(goto-char (point-min))	
+	;; try to remove existing headers first
+	(when (or (looking-at "//\\*")
+		  (looking-at "^$"))
+	  (while (and (or (looking-at "//")
+			  (looking-at "^$"))
+		      (not (looking-at "//\\*\\{10,\\}")))
+	    (forward-line))
+	  (delete-region (point-min) (line-end-position)))
+	(insert (replace-regexp-in-string "__FILENAME__" (file-name-nondirectory (buffer-file-name)) *pjs-copyright*))))))
+
+;;; checks that the file has the proper footer
+
+(defvar *pjs-file-footer-regexp* "plw.writeln([\"']\\$Id:\\$[\"']);")
+(defvar *pjs-file-footer* "plw.writeln('$Id:$');")
+
+(defun pjs-check-footer ()
+  (save-excursion
+    (goto-char (point-max))
+    (beginning-of-line)
+    (while (looking-at "^$")
+      (forward-line -1))
+    (unless (re-search-forward *pjs-file-footer-regexp* nil t)
+      (when (y-or-n-p "Your writeln $Id$ line seems absent or corrupted. Do you want to add or repair it ?")
+	(if (looking-at "plw.writeln(")
+	    (delete-region (point) (line-end-position))
+	  (progn (end-of-line) (newline)))
+	(insert *pjs-file-footer*)))))
+  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mode definition
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -233,7 +272,9 @@
   (use-local-map *pjs-mode-map*)  
   
   ;; rebuild  function and vars cache on save and when we open a file
-  (add-hook 'after-save-hook 'pjs-reset-cache-on-save nil t)
+  (add-hook 'after-save-hook 'pjs-check-header nil t)
+  (add-hook 'after-save-hook 'pjs-check-footer nil t)
+  (add-hook 'after-save-hook 'pjs-reset-cache-on-save nil t)    
   (add-hook 'find-file-hook 'pjs-reset-cache-on-save nil t)
   (add-hook 'find-file-hook 'pjs-reset-cache-on-compile nil t)
 
