@@ -131,6 +131,7 @@
   (define-key *js-evaluator-map* "\C-c," 'fi:lisp-find-next-definition)
   (define-key *js-evaluator-map* "\C-cc" '%ojs-list-who-calls)
   (define-key *js-evaluator-map* "\C-ct" 'trace-ojs-function)
+  (define-key *js-evaluator-map* "\C-c\C-c" 'fi:interrupt-listener)
   
   (define-key *js-evaluator-map* (kbd "RET") 'javascript-evaluator-newline)
 ;;  (define-key *js-evaluator-map* (kbd "RET") 'javascript-evaluator-return)

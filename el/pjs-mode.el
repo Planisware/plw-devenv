@@ -210,6 +210,28 @@
 	    (delete-region (point) (line-end-position))
 	  (progn (end-of-line) (newline)))
 	(insert *pjs-file-footer*)))))
+
+
+(defun pjs-save-buffer ()
+  (interactive)
+  (save-buffer)
+  (semantic-force-refresh))
+
+(defun pjs-save-and-compile-ojs-file ()
+  (interactive)
+  (save-and-compile-ojs-file)
+  (semantic-force-refresh))
+
+(defun pjs-compile-ojs-file ()
+  (interactive)
+  (compile-ojs-file)
+  (semantic-force-refresh))
+
+(defun pjs-check-ojs-region ()
+  (interactive)
+  (compile-ojs-region)
+  (semantic-force-refresh))
+
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mode definition
@@ -231,10 +253,10 @@
   (define-key *pjs-mode-map* "\C-c." '%pjs-find-definition)
   (define-key *pjs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
   (define-key *pjs-mode-map* "\C-cc" '%pjs-list-who-calls)
-  (define-key *pjs-mode-map* "\C-ce" 'compile-ojs-file)
+  (define-key *pjs-mode-map* "\C-ce" 'pjs-compile-ojs-file)
   (define-key *pjs-mode-map* "\C-ck" 'check-ojs-region)
-  (define-key *pjs-mode-map* "\C-cr" 'compile-ojs-region)
-  (define-key *pjs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
+  (define-key *pjs-mode-map* "\C-cr" 'pjs-compile-ojs-region)
+  (define-key *pjs-mode-map* "\C-c\C-b" 'pjs-save-and-compile-ojs-file)
   (define-key *pjs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
   (define-key *pjs-mode-map* "\C-ct" 'trace-pjs-function)
 
@@ -244,6 +266,8 @@
   ;; comment / un-comment
   (define-key *pjs-mode-map* "\C-c;" 'comment-region)
   (define-key *pjs-mode-map* "\C-c:" 'uncomment-region)
+
+  (define-key *pjs-mode-map* "\X-s"  'pjs-save-buffer)
 
   ;; autoindentation on new line and add a closing } if needed
   (define-key *pjs-mode-map* (kbd "RET") 'newline-and-indent)
