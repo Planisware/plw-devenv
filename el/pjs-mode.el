@@ -179,7 +179,7 @@
 
 ;;; checks that the file has the proper header
 (defun pjs-check-header ()
-  (unless (string= (buffer-substring-no-properties 1 (1+ (length *pjs-copyright-head*))) *pjs-copyright-head*)
+  (unless (string= (buffer-substring-no-properties 1 (min (point-max) (1+ (length *pjs-copyright-head*)))) *pjs-copyright-head*)
     (when (y-or-n-p "Your copyright header seems absent or corrupted. Do you want to add or repair it ?")
       (save-excursion
 	(goto-char (point-min))	
