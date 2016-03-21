@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/11/06 10:23:33 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: ac-alisp.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: troche $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: ac-alisp.el,v 3.9 2015/11/06 10:23:33 troche Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: ac-alisp.el,v $" :id "$Id: ac-alisp.el,v 3.9 2015/11/06 10:23:33 troche Exp $" :version "$Revision: 3.9 $" :date "$Date: 2015/11/06 10:23:33 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log: ac-alisp.el,v $
+;;;; $Log:$
 ;;;; Revision 3.9  2015/11/06 10:23:33  troche
 ;;;; * proper lisp completion when you start with a package
 ;;;;
@@ -63,7 +63,7 @@
 ;;;;
 
 ;;(when (fboundp :require-patch) (:require-patch ""))
-(when (fboundp :set-source-info) (:set-source-info "$RCSfile: ac-alisp.el,v $" :id "$Id: ac-alisp.el,v 3.9 2015/11/06 10:23:33 troche Exp $" :version "$Revision: 3.9 $" :date "$Date: 2015/11/06 10:23:33 $"))
+(when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$"))
 (when (fboundp :doc-patch) (:doc-patch "add auto-complete for alisp"))
 
 (require 'auto-complete nil 'noerror)

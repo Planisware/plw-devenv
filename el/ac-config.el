@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/06/18 08:32:28 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: ac-config.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: troche $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: ac-config.el,v 3.2 2015/06/18 08:32:28 troche Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: ac-config.el,v $" :id "$Id: ac-config.el,v 3.2 2015/06/18 08:32:28 troche Exp $" :version "$Revision: 3.2 $" :date "$Date: 2015/06/18 08:32:28 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log: ac-config.el,v $
+;;;; $Log:$
 ;;;; Revision 3.2  2015/06/18 08:32:28  troche
 ;;;; * configuration
 ;;;;  (header added automatically)

@@ -1,5 +1,5 @@
 ;;;;
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/11/05 10:02:21 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: source-colorization.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: mgautier $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: source-colorization.el,v 3.10 2015/11/05 10:02:21 mgautier Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: source-colorization.el,v $" :id "$Id: source-colorization.el,v 3.10 2015/11/05 10:02:21 mgautier Exp $" :version "$Revision: 3.10 $" :date "$Date: 2015/11/05 10:02:21 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
-;;;; $Log: source-colorization.el,v $
+;;;; $Log:$
 ;;;; Revision 3.10  2015/11/05 10:02:21  mgautier
 ;;;; - rewrite thibault change
 ;;;;

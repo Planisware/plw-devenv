@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/12/22 12:32:06 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: pjs-mode-syntax.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: troche $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: pjs-mode-syntax.el,v 3.5 2015/12/22 12:32:06 troche Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: pjs-mode-syntax.el,v $" :id "$Id: pjs-mode-syntax.el,v 3.5 2015/12/22 12:32:06 troche Exp $" :version "$Revision: 3.5 $" :date "$Date: 2015/12/22 12:32:06 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log: pjs-mode-syntax.el,v $
+;;;; $Log:$
 ;;;; Revision 3.5  2015/12/22 12:32:06  troche
 ;;;; * use local environment
 ;;;; * type detection (first version)

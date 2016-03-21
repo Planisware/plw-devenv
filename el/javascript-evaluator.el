@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/12/28 12:32:20 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: javascript-evaluator.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: mgautier $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: javascript-evaluator.el,v 3.12 2015/12/28 12:32:20 mgautier Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: javascript-evaluator.el,v $" :id "$Id: javascript-evaluator.el,v 3.12 2015/12/28 12:32:20 mgautier Exp $" :version "$Revision: 3.12 $" :date "$Date: 2015/12/28 12:32:20 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log: javascript-evaluator.el,v $
+;;;; $Log:$
 ;;;; Revision 3.12  2015/12/28 12:32:20  mgautier
 ;;;; error message when the ojs repl is not found
 ;;;;

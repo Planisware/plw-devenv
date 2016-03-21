@@ -1,5 +1,5 @@
 ;;;;
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2011/11/02 13:40:57 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: grep+.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: pierre $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: grep+.el,v 3.1 2011/11/02 13:40:57 pierre Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: grep+.el,v $" :id "$Id: grep+.el,v 3.1 2011/11/02 13:40:57 pierre Exp $" :version "$Revision: 3.1 $" :date "$Date: 2011/11/02 13:40:57 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
-;;;; $Log: grep+.el,v $
+;;;; $Log:$
 ;;;; Revision 3.1  2011/11/02 13:40:57  pierre
 ;;;; grep+.el
 ;;;;  (header added automatically)

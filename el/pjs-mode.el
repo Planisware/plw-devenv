@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/12/14 10:42:12 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: pjs-mode.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: troche $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: pjs-mode.el,v 3.2 2015/12/14 10:42:12 troche Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: pjs-mode.el,v $" :id "$Id: pjs-mode.el,v 3.2 2015/12/14 10:42:12 troche Exp $" :version "$Revision: 3.2 $" :date "$Date: 2015/12/14 10:42:12 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log: pjs-mode.el,v $
+;;;; $Log:$
 ;;;; Revision 3.2  2015/12/14 10:42:12  troche
 ;;;; * colorization
 ;;;;

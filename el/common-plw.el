@@ -1,5 +1,5 @@
 ;;;;
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2014/10/28 12:57:56 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: common-plw.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: troche $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: common-plw.el,v 3.2 2014/10/28 12:57:56 troche Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: common-plw.el,v $" :id "$Id: common-plw.el,v 3.2 2014/10/28 12:57:56 troche Exp $" :version "$Revision: 3.2 $" :date "$Date: 2014/10/28 12:57:56 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
-;;;; $Log: common-plw.el,v $
+;;;; $Log:$
 ;;;; Revision 3.2  2014/10/28 12:57:56  troche
 ;;;; * New opx2 javascript emacs mode.
 ;;;; ** Add (defvar *use-opx2-js-mode* t) to your .emacs to use

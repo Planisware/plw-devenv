@@ -1,5 +1,5 @@
 ;;;;
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/12/03 15:33:24 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: source-code-plw.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: troche $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: source-code-plw.el,v 3.12 2015/12/03 15:33:24 troche Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: source-code-plw.el,v $" :id "$Id: source-code-plw.el,v 3.12 2015/12/03 15:33:24 troche Exp $" :version "$Revision: 3.12 $" :date "$Date: 2015/12/03 15:33:24 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
-;;;; $Log: source-code-plw.el,v $
+;;;; $Log:$
 ;;;; Revision 3.12  2015/12/03 15:33:24  troche
 ;;;; * debug of control C + . in callers / list methods buffer
 ;;;;

@@ -1,5 +1,5 @@
 ;;;;
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/12/07 12:29:45 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: eli-plw.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: troche $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: eli-plw.el,v 3.12 2015/12/07 12:29:45 troche Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: eli-plw.el,v $" :id "$Id: eli-plw.el,v 3.12 2015/12/07 12:29:45 troche Exp $" :version "$Revision: 3.12 $" :date "$Date: 2015/12/07 12:29:45 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
-;;;; $Log: eli-plw.el,v $
+;;;; $Log:$
 ;;;; Revision 3.12  2015/12/07 12:29:45  troche
 ;;;; * debug
 ;;;;

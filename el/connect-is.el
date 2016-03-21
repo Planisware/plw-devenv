@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2014/04/01 14:40:59 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: connect-is.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: folli $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: connect-is.el,v 3.1 2014/04/01 14:40:59 folli Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: connect-is.el,v $" :id "$Id: connect-is.el,v 3.1 2014/04/01 14:40:59 folli Exp $" :version "$Revision: 3.1 $" :date "$Date: 2014/04/01 14:40:59 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log: connect-is.el,v $
+;;;; $Log:$
 ;;;; Revision 3.1  2014/04/01 14:40:59  folli
 ;;;; Connect to a running IS
 ;;;;  (header added automatically)

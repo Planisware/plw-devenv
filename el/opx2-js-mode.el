@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/12/18 15:09:12 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: opx2-js-mode.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: troche $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: opx2-js-mode.el,v 3.29 2015/12/18 15:09:12 troche Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: opx2-js-mode.el,v $" :id "$Id: opx2-js-mode.el,v 3.29 2015/12/18 15:09:12 troche Exp $" :version "$Revision: 3.29 $" :date "$Date: 2015/12/18 15:09:12 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log: opx2-js-mode.el,v $
+;;;; $Log:$
 ;;;; Revision 3.29  2015/12/18 15:09:12  troche
 ;;;; * go to error when we have a script compilation error
 ;;;;

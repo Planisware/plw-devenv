@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/12/22 15:47:49 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile: opx2-js-mode-syntax.el,v $
+;;;; FILE    : $RCSfile:$
 ;;;;
-;;;; AUTHOR  : $Author: troche $
+;;;; AUTHOR  : $Author:$
 ;;;;
-;;;; VERSION : $Id: opx2-js-mode-syntax.el,v 3.13 2015/12/22 15:47:49 troche Exp $
+;;;; VERSION : $Id:$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: opx2-js-mode-syntax.el,v $" :id "$Id: opx2-js-mode-syntax.el,v 3.13 2015/12/22 15:47:49 troche Exp $" :version "$Revision: 3.13 $" :date "$Date: 2015/12/22 15:47:49 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log: opx2-js-mode-syntax.el,v $
+;;;; $Log:$
 ;;;; Revision 3.13  2015/12/22 15:47:49  troche
 ;;;; * oops
 ;;;;
