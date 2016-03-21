@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.3  2016/03/21 13:21:50  troche
+;;;; * merge from git
+;;;;
 ;;;; Revision 3.2  2015/06/18 08:32:28  troche
 ;;;; * configuration
 ;;;;  (header added automatically)

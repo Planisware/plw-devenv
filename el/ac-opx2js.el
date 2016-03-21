@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.12  2016/03/21 13:21:50  troche
+;;;; * merge from git
+;;;;
 ;;;; Revision 3.11  2015/05/12 14:11:46  troche
 ;;;; * use list-all-js-functions
 ;;;;

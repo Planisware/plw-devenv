@@ -32,6 +32,9 @@
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.6  2016/03/21 13:21:50  troche
+;;;; * merge from git
+;;;;
 ;;;; Revision 3.5  2015/12/22 12:32:06  troche
 ;;;; * use local environment
 ;;;; * type detection (first version)

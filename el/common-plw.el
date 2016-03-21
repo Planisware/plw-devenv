@@ -32,6 +32,9 @@
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
 ;;;; $Log$
+;;;; Revision 3.3  2016/03/21 13:21:50  troche
+;;;; * merge from git
+;;;;
 ;;;; Revision 3.2  2014/10/28 12:57:56  troche
 ;;;; * New opx2 javascript emacs mode.
 ;;;; ** Add (defvar *use-opx2-js-mode* t) to your .emacs to use
