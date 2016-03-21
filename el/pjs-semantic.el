@@ -79,8 +79,8 @@ the semantic cache to see what needs to be changed."
 	  (cur-point (point)))      
 ;;      (condition-case err
 	  (while (< (point) (point-max))
-	    ;;	    (let ((next-function (re-real-search-forward *pjs-start-block-regexp* nil t)))
-	    (let ((next-function (re-search-forward *pjs-start-block-regexp* nil t)))
+	    (let ((next-function (re-real-search-forward *pjs-start-block-regexp* nil t)))
+	    ;;(let ((next-function (re-search-forward *pjs-start-block-regexp* nil t)))
 	      (if next-function
 		  (let* ((start-inter cur-point)
 			 (end-inter (1- (line-beginning-position)))
@@ -203,7 +203,6 @@ the semantic cache to see what needs to be changed."
 	  (k (car list) (car list))
 	  (v (second list) (second list))
 	  )
-
 	((null list))
       (push k new-list)
       (if (memq k *semantic-pjs-tag-list-attributes*)
