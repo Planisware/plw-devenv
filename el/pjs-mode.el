@@ -169,11 +169,12 @@
    (if current-prefix-arg
        '(nil)
      (list (car (pjs-get-default-symbol "Lisp (un)trace function" t t)))))
-  (if (string-match ":" tag)
-      (fi:toggle-trace-definition tag)
-    (fi:toggle-trace-definition (if (string-prefix-p "plw." tag t)
-			   (concat "js::" (substring tag (1+ (position ?. tag))))
-			   (concat "js::" tag)))))
+  (when tag
+    (if (string-match ":" tag)
+	(fi:toggle-trace-definition tag)
+      (fi:toggle-trace-definition (if (string-prefix-p "plw." tag t)
+				      (concat "js::" (substring tag (1+ (position ?. tag))))
+				    (concat "js::" tag))))))
 
 (defvar *num-of-header-lines-to-check* 5)
 
