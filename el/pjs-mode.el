@@ -196,8 +196,8 @@
 
 ;;; checks that the file has the proper footer
 
-(defvar *pjs-file-footer-regexp* "plw.writeln([\"']\\$Id$[\"']);")
-(defvar *pjs-file-footer* "plw.writeln('$Id$');")
+(defvar *pjs-file-footer-regexp* (format "plw.writeln([\"']\\$%s.*\\$[\"']);" "Id"))
+(defvar *pjs-file-footer* (format "plw.writeln('$%s$');" "Id"))
 
 (defun pjs-check-footer ()
   (save-excursion
