@@ -414,6 +414,22 @@
      "defgeneric"
      "deflocal")))
 
+;;(defconstant FORBIDEN_CHARS "-=./\?@*")
+(defconst FORBIDEN_CHARS_REGEXP "[-=./?@*]")
+
+(defun class-name-regexp (str)
+  (let ((res "")
+	(i 0))
+    (while (< i (length str))
+      (let ((next (string-match FORBIDEN_CHARS_REGEXP str i)))
+	(cond (next
+	       (setq res (concat res (substring str i next) "_?"))
+	       (setq i (1+ next)))
+	      (t
+	       (setq res (concat res (substring str i)))
+	       (setq i (length str))))))
+    res))
+
 (defun try-to-find-in-file (thing pathname)
   ;; try to find the definition "manually" in the file
 ;;  (message "thing is %s and is a %s" thing (cond ((stringp thing) "string") ((symbolp thing) "symbol")))
@@ -428,7 +444,30 @@
 	       ;; try to find in ojs file
 	       (goto-char (point-min))
 ;;	       (message "Searching %s" (concat "\\(function\\|method\\)[ \t]+\\_<" function-name "\\_>"))
-	       (re-search-forward (concat "^[ \t]*\\(function\\|method\\)[ \t]+\\_<" function-name "\\_>") (point-max) t))
+	       (re-search-forward (concat "^\\s-*\\(function\\|method\\)\\s-+\\_<" function-name "\\_>") (point-max) t))
+	      ((and (equal (substring pathname -3 nil) "pjs")
+		    (string-prefix-p "METHOD" function-name t))
+	       (let* ((split (split-string function-name "\\."))
+		      (method-name (when (>= (length split) 3) (second split)))
+		      (class       (cond ((= (length split) 3) (class-name-regexp (third split))) ((= (length split) 4) (class-name-regexp (fourth split)))))
+		      (namespace   (when (= (length split) 4) (third split))))
+		 (goto-char (point-min))
+		 (cond ((and method-name class namespace)
+			(or 
+			 (re-search-forward (format "^\\s-*method\\s-+\\<%s\\>\\s-+on\\s-+\\<%s\\>" method-name class) (point-max) t) ;; method name on class
+			 (re-search-forward (format "^\\s-*method\\s-+\\<%s\\>\\s-+on\\s-+\\<%s\\.%s\\>" method-name namespace class) (point-max) t))) ;; method name on namespace.class
+		       ((and method-name class)
+			(or 
+			 (re-search-forward (format "^\\s-*method\\s-+\\<%s\\>\\s-+on\\s-+\\<%s\\>" method-name class) (point-max) t) ;; method name on class
+			 (re-search-forward (format "^\\s-*method\\s-+\\<%s\\>\\s-+on\\s-+\\<pl[wc]\\.%s\\>" method-name class) (point-max) t))))));; method name on plc\plw.class
+	      ((and (equal (substring pathname -3 nil) "pjs")
+	       ;; try to find in pjs file : try without the package, then with it
+	       (let* ((split (split-string function-name "\\."))
+		      (short-function-name (when (= (length split) 2) (second split))))
+		 (goto-char (point-min))
+		 (or 
+		  (re-search-forward (format "^\\s-*\\(%s\\)?\\s-*\\(function\\|method\\)\\s-+\\_<%s\\_>" *pjs-function-qualifiers* (or short-function-name function-name)) (point-max) t)
+		  (when short-function-name (re-search-forward (format "^\\s-*\\(%s\\)?\\s-*\\(function\\|method\\)\\s-+\\_<%s\\_>" *pjs-function-qualifiers* function-name) (point-max) t))))))
 	      ((or (equal (substring pathname -3 nil) "lsp") (equal (substring pathname -4 nil) "lisp"))
 	       ;; try to find in lisp file	       
 	       (goto-char (point-min))
@@ -458,7 +497,7 @@
 ;; new : list all methods of a defgeneric in a buffer
 (defun opx2-list-methods (&optional fspec)
   ;;  (interactive (fi::get-default-symbol "List methods of" nil nil t))
-  (interactive (fi::get-default-symbol "List methods of" nil nil))
+  (interactive (fi::get-default-symbol "List methods of" nil nil t))
   (message "Finding methods of %s..." fspec)
   (if (fi:eval-in-lisp "(if (fboundp 'opx2-lisp::list-methods) t nil)")
       (lep::list-fspecs-common fspec

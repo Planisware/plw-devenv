@@ -339,14 +339,15 @@
 			       (save-excursion
 				 (goto-char (point-min))
 				 (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
-				   (match-string 1)))))
+				   (match-string-no-properties 1)))))
 	 (buffer-name *ojs-compilation-buffer-name*)
 	 (buffer (or (get-buffer buffer-name)
 		     (get-buffer-create buffer-name)))
 	 (proc (get-buffer-process buffer))
+	 (js-mode major-mode)
 	 )
     (setq *compiled-script-window* (selected-window))
-    (if script
+    (if (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
 	(catch 'exit
 	  ;; checks that the file matches
 	  (unless (check-script-path script (buffer-file-name))
@@ -366,24 +367,39 @@
 	  (save-buffer)
 	  (switch-to-buffer-other-window buffer-name t)
 	  ;; we erase previous content
-	    (erase-buffer)
-	    ;; run a new listener if needed
-	    (unless proc
-	      (setq proc
+	  (erase-buffer)
+	  ;; run a new listener if needed
+	  (unless proc
+	    (setq proc
 		    (fi:open-lisp-listener
 		     -1
 		     *ojs-compilation-buffer-name*))
-	      (set-process-query-on-exit-flag (get-process buffer-name) nil))
-	    (set-process-filter proc 'ojs-compilation-filter)
-	    (cond ((eq type :compile)
-		   (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")\n" script))
-		   )
-		  ((eq type :compile-and-sync)
-		   ;; check that the file is correct 		   
-		   (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")\n" script))
-		   ))
-	    )
+	    (set-process-query-on-exit-flag (get-process buffer-name) nil))
+	  (set-process-filter proc 'ojs-compilation-filter)
+	  ;; reset vars as needed
+	  (js-reset-vars (if (eq js-mode 'pjs-mode) 'pjs-compile 'ojs-compile))
+	  (cond ((eq type :compile)
+		 (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")\n" script))
+		 )
+		((eq type :compile-and-sync)
+		 ;; check that the file is correct 		   
+		 (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")\n" script))
+		 ))
+	  )
       (message "Script %s not found" script-name))))
+
+(defun generate-search-string (strings)
+  (cond ((= (length strings) 1) (format "function\\s-+%s\\s-*([[:word:]_, ]*)" (downcase (car strings))))
+	((and (>= (length strings) 4)
+	      (string= (car strings) "method")
+	      (string= (third strings) "on"))
+	 (let* ((dot (position ?. (fourth strings)))
+		(class-name (cond (dot
+				   (format "\\(?:%s\\)?\\.%s" (substring-no-properties (fourth strings) 0 dot)
+					   (substring-no-properties (fourth strings) (1+ dot))))
+				  (t
+				   (fourth strings)))))
+	   (format "method\\s-+%s\\s-+on\\s-+%s\\s-*(.*" (downcase (second strings)) class-name)))))
 
 (defun ojs-compilation-filter (proc string)
   (cond ((and (stringp string)
@@ -401,12 +417,15 @@
 	       (set-window-point *compiled-script-window* (point)))))
 	 (fi::subprocess-filter proc string))
 	((and (stringp string)
-	      (string-match "In (\\([[:word:]_-]+\\)):" string))
-	 (let ((function-name (match-string-no-properties 1 string)))
+	      (string-match "In \\(\\(.\\|\n\\)*?\\):" string))
+	 (let* ((error-context (match-string-no-properties 1 string))
+		(strings (split-string error-context))
+		(search-string (generate-search-string strings))
+		)	   
 	   (with-current-buffer (window-buffer *compiled-script-window*)
-	     (when function-name
+	     (when search-string
 	       (goto-char (point-min))		 
-	       (when (re-real-search-forward (format "function\\s-+%s\\s-*([[:word:]_,]*)" (downcase function-name)) nil t)
+	       (when (re-real-search-forward search-string nil t)
 		 (set-window-point *compiled-script-window* (point))))))
 	 (fi::subprocess-filter proc string))
 	((and (stringp string)
@@ -415,7 +434,8 @@
 	 )
 	((and (stringp string)
 	      (string-match ":EXIT-JS" string)) ;; exit when we read this, returned by the compilation functions
-	 (insert "----------------------------------------------------------------------------------------------")
+	 (with-current-buffer (get-buffer *ojs-compilation-buffer-name*)
+	   (insert "----------------------------------------------------------------------------------------------"))
 	 (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))	   
 	 ;;(delete-process proc)
 	 )	  
@@ -580,8 +600,8 @@
   (use-local-map *ojs-mode-map*)  
   
   ;; rebuild  function and vars cache on save and when we open a file
-  (add-hook 'after-save-hook 'ojs-reset-cache nil t)
-  (add-hook 'find-file-hook 'ojs-reset-cache nil t)
+  (add-hook 'after-save-hook 'ojs-reset-cache-on-save nil t)
+  (add-hook 'find-file-hook 'ojs-reset-cache-on-save nil t)
 )
 
 ;; kludge : in opx2 script, the first line sets the mode to C++, and we want to avoid that

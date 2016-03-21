@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date: 2016/02/04 16:55:35 $ 
+;;;; COPYRIGHT (C) PLANISWARE $Date: 2015/12/22 15:47:49 $ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -23,18 +23,15 @@
 ;;;;
 ;;;; AUTHOR  : $Author: troche $
 ;;;;
-;;;; VERSION : $Id: opx2-js-mode-syntax.el,v 3.14 2016/02/04 16:55:35 troche Exp $
+;;;; VERSION : $Id: opx2-js-mode-syntax.el,v 3.13 2015/12/22 15:47:49 troche Exp $
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: opx2-js-mode-syntax.el,v $" :id "$Id: opx2-js-mode-syntax.el,v 3.14 2016/02/04 16:55:35 troche Exp $" :version "$Revision: 3.14 $" :date "$Date: 2016/02/04 16:55:35 $ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: opx2-js-mode-syntax.el,v $" :id "$Id: opx2-js-mode-syntax.el,v 3.13 2015/12/22 15:47:49 troche Exp $" :version "$Revision: 3.13 $" :date "$Date: 2015/12/22 15:47:49 $ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log: opx2-js-mode-syntax.el,v $
-;;;; Revision 3.14  2016/02/04 16:55:35  troche
-;;;; * don't use real search when not needed
-;;;;
 ;;;; Revision 3.13  2015/12/22 15:47:49  troche
 ;;;; * oops
 ;;;;
@@ -79,7 +76,7 @@
 
 (defun js--regexp-opt-symbol (list)
   "Like `regexp-opt', but surround the result with `\\\\_<' and `\\\\_>'."
-  (concat "\\_<" (regexp-opt list t) "\\_>"))
+  (concat "\\_<" (regexp-opt list) "\\_>"))
 
 ;; constants
 (defconst opx2-js-font-lock-constants
@@ -228,7 +225,7 @@
 
 (defvar *ojs-kernel-functions-present* t)
 
-(defvar *regexp-elements-limit* 1000)
+(defvar *regexp-elements-limit* 500)
 
 (defun partition-list (list length)
   (loop
@@ -236,7 +233,7 @@
      collect (subseq list 0 (min (length list) length))
      do (setf list (nthcdr (min (length list) length) list))))
 
-(defun list-ojs-kernel-functions ()
+(defun list-ojs-kernel-functions ()  
   (cond (*ojs-kernel-functions-cache*
 	 *ojs-kernel-functions-cache*)
 	(*ojs-kernel-functions-present*
@@ -244,6 +241,7 @@
 	       (let ((functions-list (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-js-functions) t nil)")))
 					    (sort (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-js-functions)")) 'string<)))
 		     regexp-list)
+		 
 		 (dolist (sublist (partition-list functions-list *regexp-elements-limit*))
 		   (push (format "\\(%s\\)" (js--regexp-opt-symbol sublist)) regexp-list))
 		 regexp-list)))
@@ -266,65 +264,33 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun search-function-local-vars (end)
-  (search-vars-in-context end 'list-local-vars-in-function))
+  (search-vars-in-context end))
 
 (defun list-local-vars-in-function ()
   (js--regexp-opt-symbol (get-local-vars-for-function nil)))
 
-;; highligh vars in the context of the current function
-(defun search-vars-in-context (end var-list-function)
-;;  ;;(message "Searching %s to %s" (point) end)
-  (let (found last-point)
-    (catch 'exit
-      (while (and (not found)
-		  (< (point) end)
-		  (if (not (equal (point) last-point)) ;; make sure we move to avoid infinite loops
-		      t
-		    (progn (message "We did not move, exit %s" (point))
-			   nil))
-		  
-		  )
-	(setq last-point (point))
-	(cond ((inside-function)
-	       ;;(message "inside function %s" (point))
-	       (let ((end-of-fun (cdr (function-boundaries))))
-		 (cond ((null end-of-fun)
-			;;(message "no end of function, exit")
-			(throw 'exit nil))		       
-		       ((setq found (let ((list (funcall var-list-function)))
-				      (when list
-					(re-search-forward list (min end-of-fun end) t))))
-			;; we have found something, we can return
-			;;(message "we found %s at point %s, return" (match-string 1) (point))
-			(throw 'exit found))
-		       ((> end end-of-fun)
-			;; our search goes after the end of the function, move to the end of the function and let the loop do its job		    
-			(goto-char end-of-fun)
-			(forward-char)
-			;;(message "Got to the end of the function %s" (point))
-			)
-		       (t
-			;;(message "Nothing found, exit %s" (point))
-			;; we found nothing, exit nil and the search must stop, exit
-			(throw 'exit nil)))))
-	      ;; we are outside a function, go to the next function
-	      ((goto-start-of-next-function end)
-	       (let ((end-of-fun (cdr (function-boundaries))))
-		 ;;(message "went to start of next function %s" (point))
-		 (cond ((null end-of-fun)
-			;;(message "no enf of function found")
-			(throw 'exit nil))
-		       (t
-			(setq found (let ((list (funcall var-list-function)))
-				      (when list
-					(re-search-forward list (min end-of-fun end) t)))))))
-	       ;;(message "->found is %s" found)
-	       )
+(defun search-vars-in-context (end)  
+  ;;  ;;(message "Searching %s to %s" (point) end)
+  (catch 'exit
+    (while (< (point) end)      
+      (let ((context (get-local-function-environment)))
+;;	(search
+	(cond ((numberp context)
+	       (goto-char context))
+	      ((consp context)
+	       (let ((vars          (getf context :vars-regexp))
+		     (end-of-fun    (getf context :end))
+		     (next          (getf context :next)))
+		 ;; search for the function vars in the context
+		 ;; we catch something, return
+		 (when (re-search-forward vars (min end-of-fun end) t)
+		   (throw 'exit (point)))
+		 ;; we didn't find anything, go to next function
+		 ;; or exit if we don't have a next function
+		 (goto-char (or (getf (get-local-function-environment next) :start) 
+				(throw 'exit nil)))))
 	      (t
-	       ;; no next function in our scope, exit
-	       ;;(message "exit nil")
-	       (throw 'exit nil))))
-      found)))
+	       (throw 'exit nil)))))))
 
 ;; script-level and global vars.
 (defun search-global-vars (end)
@@ -519,5 +485,4 @@
 
 (defun force-syntax-highlighting ()
   (interactive)
-  (font-lock-fontify-buffer))
-	       
+  (font-lock-fontify-buffer))	     

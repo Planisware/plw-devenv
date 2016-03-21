@@ -45,6 +45,8 @@
 
 (require 'cc-mode)
 
+(load (fullpath-relative-to-current-file "pjs-mode-copyright.el"))
+
 (defvar pjs-mode-syntax-table
   (let ((table (make-syntax-table)))
     (c-populate-syntax-table table)
@@ -83,26 +85,82 @@
 	  (setq start (point))
 	(setq start (1+ (point))))))
   (buffer-substring-no-properties start end))
-    
+
+;; adapted from fi::get-default-symbol
+(defun pjs-get-default-symbol (prompt up-p no-method)
+  (let* ((symbol-at-point (fi::get-symbol-at-point up-p no-method))
+	 (function-at-point (if (string-match ":" symbol-at-point)
+				symbol-at-point
+			     (find-function-at-point))))
+    (if fi::use-symbol-at-point
+	(list function-at-point)
+      (let ((read-symbol
+	     (let ((fi::original-package (fi::package)))
+	       (fi::ensure-minibuffer-visible)
+	       (fi::completing-read
+		(if function-at-point
+		    (format "%s: (default %s) " prompt function-at-point)
+		  (format "%s: " prompt))
+		'fi::minibuffer-complete))))
+	(list (if (string= read-symbol "")
+		  function-at-point
+		read-symbol))))))
+
+;; return the lisp symbol
+(defun find-function-at-point ()
+  (save-excursion
+    (let ((word (thing-at-point 'word t)) type)
+      (cond ((or (string-prefix-p "plw" word t)
+		 (string-match (list-pjs-namespaces-regexp) word)) ;; we are looking at the namespace
+	     (format "%s.%s" word (progn (forward-word (if (looking-at "\\.") 1 2))
+					 (thing-at-point 'word t))))
+	    (t
+	     (beginning-of-thing 'word)
+	     (cond ((looking-back "plw\\.")
+		    word)
+;;		    (format "plw.%s" word))
+		   ((looking-back (format "%s\\." (list-pjs-namespaces-regexp)))
+		    (backward-word)
+		    (format "%s.%s" (thing-at-point 'word t) word))
+		   ((and (looking-back "\\.")
+			 (setq type (get-variable-type-in-context (point))))		    
+		    (format "method.%s.%s" word
+			    (if (or (string= (car type) "plc")
+				    (string= (car type) "plw"))
+				(or (and (list-pjs-plc-types-to-kernel)
+					 (gethash (cdr type) (list-pjs-plc-types-to-kernel)))
+				    (cdr type))
+			      (format "%s.%s" (car type) (cdr type)))))
+		   ((looking-back "\\.")
+		    word)
+;;		    (format "plw.%s" word))
+		   (t
+		    (format "%s.%s" (pjs-current-namespace) word))))))))
+
 ;; <ctrl-c .> in ojs file
 ;; works with ojs and lisp file and properly do the search
 (defun %pjs-find-definition (tag)
   (interactive
    (if current-prefix-arg
-       '(t)
-     (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
+       '(nil)
+     (list (car (pjs-get-default-symbol "Lisp locate source" t t)))))
+  (interactive)
   (if (string-match ":" tag)
       (fi::lisp-find-definition-common tag nil)
-    (fi::lisp-find-definition-common (concat "js::" tag) nil)))
+    (fi::lisp-find-definition-common (if (string-prefix-p "plw." tag t)
+					 (concat "js::" (substring tag (1+ (position ?. tag))))
+				       (concat "js::" tag)) nil)))
   
 (defun %pjs-list-who-calls (tag)
   (interactive
    (if current-prefix-arg
        '(nil)
-     (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
+     (list (car (pjs-get-default-symbol "List who calls" t t)))))
   (if (string-match ":" tag)
       (fi:list-who-calls tag)
-    (fi:list-who-calls (concat "js::" tag))))
+    (fi:list-who-calls (if (string-prefix-p "plw." tag t)
+			   (concat "js::" (substring tag (1+ (position ?. tag))))
+			 (concat "js::" tag)))))
 
 (defvar *pjs-compilation-buffer-name* "*PJS compilation traces*")
 
@@ -110,10 +168,72 @@
   (interactive
    (if current-prefix-arg
        '(nil)
-     (list (car (fi::get-default-symbol "Lisp (un)trace function" t t)))))
-  (let ((js-symbol (concat "js::" tag)))
-    (fi:toggle-trace-definition js-symbol)))
+     (list (car (pjs-get-default-symbol "Lisp (un)trace function" t t)))))
+  (when tag
+    (if (string-match ":" tag)
+	(fi:toggle-trace-definition tag)
+      (fi:toggle-trace-definition (if (string-prefix-p "plw." tag t)
+				      (concat "js::" (substring tag (1+ (position ?. tag))))
+				    (concat "js::" tag))))))
 
+(defvar *num-of-header-lines-to-check* 5)
+
+;;; checks that the file has the proper header
+(defun pjs-check-header ()
+  (unless (string= (buffer-substring-no-properties 1 (min (point-max) (1+ (length *pjs-copyright-head*)))) *pjs-copyright-head*)
+    (when (y-or-n-p "Your copyright header seems absent or corrupted. Do you want to add or repair it ?")
+      (save-excursion
+	(goto-char (point-min))	
+	;; try to remove existing headers first
+	(when (or (looking-at "//\\*")
+		  (looking-at "^$"))
+	  (while (and (or (looking-at "//")
+			  (looking-at "^$"))
+		      (not (looking-at "//\\*\\{10,\\}")))
+	    (forward-line))
+	  (delete-region (point-min) (line-end-position)))
+	(insert (replace-regexp-in-string "__FILENAME__" (file-name-nondirectory (buffer-file-name)) *pjs-copyright*))))))
+
+;;; checks that the file has the proper footer
+
+(defvar *pjs-file-footer-regexp* "plw.writeln([\"']\\$Id:.*\\$[\"']);")
+(defvar *pjs-file-footer* "plw.writeln('$Id:$');")
+
+(defun pjs-check-footer ()
+  (save-excursion
+    (goto-char (point-max))
+    (beginning-of-line)
+    (while (looking-at "^$")
+      (forward-line -1))
+    (unless (re-search-forward *pjs-file-footer-regexp* nil t)
+      (when (y-or-n-p "Your writeln $Id$ line seems absent or corrupted. Do you want to add or repair it ?")
+	(if (looking-at "plw.writeln(")
+	    (delete-region (point) (line-end-position))
+	  (progn (end-of-line) (newline)))
+	(insert *pjs-file-footer*)))))
+
+
+(defun pjs-save-buffer ()
+  (interactive)
+  (save-buffer)
+  (semantic-force-refresh))
+
+(defun pjs-save-and-compile-ojs-file ()
+  (interactive)
+  (save-and-compile-ojs-file)
+  (semantic-force-refresh))
+
+(defun pjs-compile-ojs-file ()
+  (interactive)
+  (compile-ojs-file)
+  (semantic-force-refresh))
+
+(defun pjs-check-ojs-region ()
+  (interactive)
+  (compile-ojs-region)
+  (semantic-force-refresh))
+
+  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mode definition
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -131,15 +251,15 @@
   (setup-pjs-syntax-highlighting)
 
   ;; custom keybindings from menu
-  (define-key *pjs-mode-map* "\C-c." '%ojs-find-definition)
+  (define-key *pjs-mode-map* "\C-c." '%pjs-find-definition)
   (define-key *pjs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
-  (define-key *pjs-mode-map* "\C-cc" '%ojs-list-who-calls)
-  (define-key *pjs-mode-map* "\C-ce" 'compile-ojs-file)
+  (define-key *pjs-mode-map* "\C-cc" '%pjs-list-who-calls)
+  (define-key *pjs-mode-map* "\C-ce" 'pjs-compile-ojs-file)
   (define-key *pjs-mode-map* "\C-ck" 'check-ojs-region)
-  (define-key *pjs-mode-map* "\C-cr" 'compile-ojs-region)
-  (define-key *pjs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
+  (define-key *pjs-mode-map* "\C-cr" 'pjs-compile-ojs-region)
+  (define-key *pjs-mode-map* "\C-c\C-b" 'pjs-save-and-compile-ojs-file)
   (define-key *pjs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
-  (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
+  (define-key *pjs-mode-map* "\C-ct" 'trace-pjs-function)
 
   (define-key *pjs-mode-map* "\C-cl" 'lock-file)
   (define-key *pjs-mode-map* "\C-cu" 'unlock-file)
@@ -147,6 +267,8 @@
   ;; comment / un-comment
   (define-key *pjs-mode-map* "\C-c;" 'comment-region)
   (define-key *pjs-mode-map* "\C-c:" 'uncomment-region)
+
+  (define-key *pjs-mode-map* "\X-s"  'pjs-save-buffer)
 
   ;; autoindentation on new line and add a closing } if needed
   (define-key *pjs-mode-map* (kbd "RET") 'newline-and-indent)
@@ -175,9 +297,18 @@
   (use-local-map *pjs-mode-map*)  
   
   ;; rebuild  function and vars cache on save and when we open a file
-  (add-hook 'after-save-hook 'pjs-reset-cache nil t)
-  (add-hook 'find-file-hook 'pjs-reset-cache nil t)
+  (add-hook 'after-save-hook 'pjs-check-header nil t)
+  (add-hook 'after-save-hook 'pjs-check-footer nil t)
+  (add-hook 'after-save-hook 'pjs-reset-cache-on-save nil t)    
+  (add-hook 'find-file-hook 'pjs-reset-cache-on-save nil t)
+  (add-hook 'find-file-hook 'pjs-reset-cache-on-compile nil t)
+
+  ;; activete some semantic modes
+  (global-semantic-mru-bookmark-mode 1)  
   )
+
+;; autocomplete
+(require 'ac-pjs)
 
 ;; pjs files are pjs modes
 (setq auto-mode-alist (cons '("\\.pjs" . pjs-mode) auto-mode-alist))
