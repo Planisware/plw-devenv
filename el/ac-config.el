@@ -31,7 +31,7 @@
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log$
+
 ;;;; Revision 3.3  2016/03/21 13:21:50  troche
 ;;;; * merge from git
 ;;;;

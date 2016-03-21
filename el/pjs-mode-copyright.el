@@ -31,7 +31,7 @@
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log$
+
 ;;;; Revision 3.1  2016/03/21 13:22:46  troche
 ;;;; * new files
 ;;;;  (header added automatically)
