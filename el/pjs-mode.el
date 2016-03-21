@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
+;;;; COPYRIGHT (C) PLANISWARE $Date$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile:$
+;;;; FILE    : $RCSfile$
 ;;;;
-;;;; AUTHOR  : $Author:$
+;;;; AUTHOR  : $Author$
 ;;;;
-;;;; VERSION : $Id:$
+;;;; VERSION : $Id$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log:$
+;;;; $Log$
 ;;;; Revision 3.2  2015/12/14 10:42:12  troche
 ;;;; * colorization
 ;;;;
@@ -196,8 +196,8 @@
 
 ;;; checks that the file has the proper footer
 
-(defvar *pjs-file-footer-regexp* "plw.writeln([\"']\\$Id:.*\\$[\"']);")
-(defvar *pjs-file-footer* "plw.writeln('$Id:$');")
+(defvar *pjs-file-footer-regexp* "plw.writeln([\"']\\$Id$[\"']);")
+(defvar *pjs-file-footer* "plw.writeln('$Id$');")
 
 (defun pjs-check-footer ()
   (save-excursion

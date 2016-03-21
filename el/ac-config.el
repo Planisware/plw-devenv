@@ -1,5 +1,5 @@
 ;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
+;;;; COPYRIGHT (C) PLANISWARE $Date$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile:$
+;;;; FILE    : $RCSfile$
 ;;;;
-;;;; AUTHOR  : $Author:$
+;;;; AUTHOR  : $Author$
 ;;;;
-;;;; VERSION : $Id:$
+;;;; VERSION : $Id$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log:$
+;;;; $Log$
 ;;;; Revision 3.2  2015/06/18 08:32:28  troche
 ;;;; * configuration
 ;;;;  (header added automatically)

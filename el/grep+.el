@@ -1,5 +1,5 @@
 ;;;;
-;;;; COPYRIGHT (C) PLANISWARE $Date:$ 
+;;;; COPYRIGHT (C) PLANISWARE $Date$ 
 ;;;;
 ;;;; All Rights Reserved
 ;;;;
@@ -19,19 +19,19 @@
 ;;;; Manager.
 
 ;;;;
-;;;; FILE    : $RCSfile:$
+;;;; FILE    : $RCSfile$
 ;;;;
-;;;; AUTHOR  : $Author:$
+;;;; AUTHOR  : $Author$
 ;;;;
-;;;; VERSION : $Id:$
+;;;; VERSION : $Id$
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile:$" :id "$Id:$" :version "$Revision:$" :date "$Date:$ "))
+;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
-;;;; $Log:$
+;;;; $Log$
 ;;;; Revision 3.1  2011/11/02 13:40:57  pierre
 ;;;; grep+.el
 ;;;;  (header added automatically)
