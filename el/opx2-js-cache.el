@@ -23,32 +23,21 @@
 ;;;;
 ;;;; AUTHOR  : $Author: troche $
 ;;;;
-<<<<<<< variant A
 ;;;; VERSION : $Id: opx2-js-cache.el,v 3.11 2016/02/11 17:14:59 troche Exp $
->>>>>>> variant B
-;;;; VERSION : $Id: opx2-js-cache.el,v 3.9 2015/12/22 12:31:09 troche Exp $
-======= end
 ;;;;
 ;;;; PURPOSE :
 ;;;;
-<<<<<<< variant A
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: opx2-js-cache.el,v $" :id "$Id: opx2-js-cache.el,v 3.11 2016/02/11 17:14:59 troche Exp $" :version "$Revision: 3.11 $" :date "$Date: 2016/02/11 17:14:59 $ "))
->>>>>>> variant B
 ;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile: opx2-js-cache.el,v $" :id "$Id: opx2-js-cache.el,v 3.9 2015/12/22 12:31:09 troche Exp $" :version "$Revision: 3.9 $" :date "$Date: 2015/12/22 12:31:09 $ "))
-======= end
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
 ;;;; $Log: opx2-js-cache.el,v $
-<<<<<<< variant A
 ;;;; Revision 3.11  2016/02/11 17:14:59  troche
 ;;;; * no real search
 ;;;;
 ;;;; Revision 3.10  2016/02/04 16:55:35  troche
 ;;;; * don't use real search when not needed
 ;;;;
->>>>>>> variant B
-======= end
 ;;;; Revision 3.9  2015/12/22 12:31:09  troche
 ;;;; * build local cache before syntax highlighting
 ;;;;
@@ -272,10 +261,7 @@
 		     (when (and begin-function end-function)
 		       (goto-char begin-function)
 		       (while (re-search-forward *js-var-with-type-regexp* end-function t)
-<<<<<<< variant A
->>>>>>> variant B
 			 (push (downcase (match-string-no-properties 2)) vars-list)
-======= end
 			 (puthash (downcase (match-string-no-properties 2))
 				  (list (match-string-no-properties 0)
 					(match-string-no-properties 1))
@@ -413,3 +399,4 @@
 	  (let ((found (ojs-find-candidates-from-regexp regexp candidates)))
 	    (setq candidates (append candidates found))))))
     candidates))
+
