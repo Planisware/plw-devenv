@@ -81,7 +81,7 @@
     (match . alisp-ac-match)
     (requires . -1)))
 
-(defvar *packages-to-ignore* '("MODULE" "CL-USER"))
+(defvar *packages-to-ignore* '("MODULE" "CL-USER" "COMMON-LISP-USER"))
 
 ;; we return everything, because the list we got from the lisp is already filtered
 (defun alisp-ac-match (string list)
@@ -131,9 +131,9 @@
 (defun ac-candidate-< (c1 c2)
   (catch 'return
     (dolist (ignore *packages-to-ignore*)      
-      (cond ((string-prefix-p ignore (cdr c1))
+      (cond ((string-prefix-p ignore (cdr c1) t)
 	     (throw 'return nil))
-	    ((string-prefix-p ignore (cdr c2))
+	    ((string-prefix-p ignore (cdr c2) t)
 	     (throw 'return t))))
     (string< (cdr c1) (cdr c2))))
   
