@@ -369,10 +369,10 @@
     (let* ((start-point (point))
 	   (function-start (re-search-backward *ojs-function-start-regexp* nil t)))
       (when function-start
-	(while (and (not (looking-at "{"))
+	(while (and (not (fast-looking-at "{"))
 		    (< (point) (line-end-position)))
 	  (forward-char))
-	(when (looking-at "{")
+	(when (fast-looking-at "{")
 	  (let ((function-end (or (condition-case nil
 				      (progn (forward-list) (point))
 				    ;; return nil when we have a scan error

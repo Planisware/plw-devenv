@@ -346,7 +346,7 @@
 ;;		 (message "local-vars %s" local-vars)
 		 (cond ((re-search-forward (js--regexp-opt-symbol (mapcar 'car local-vars)) end t)
 			(if (save-excursion (backward-word)
-					    (not (looking-back "plc.")))
+					    (not (fast-looking-back "plc.")))
 			    (throw 'exit (point))
 			  (set-match-data nil)))
 		       (t
@@ -532,7 +532,7 @@
       (when (re-search-backward (format "\\<%s\\>" *pjs-variable-name*) (line-beginning-position) t)
   	(let ((varname (downcase (match-string-no-properties 0)))  	      
 	      var-tag)
-  	  (cond ((looking-back "\\.")
+  	  (cond ((fast-looking-back ".")
   		 ;; we have a dot, try to get the type of the "father"
   		 (let ((father-type (get-variable-type-in-context (match-beginning 0))))
   		   (when father-type

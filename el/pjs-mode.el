@@ -79,7 +79,7 @@
   (save-excursion
     (goto-char start)
     (backward-char)
-    (when (looking-at ":")
+    (when (fast-looking-at ":")
       (while (and (not (or (looking-at "[ (]")
 			   (looking-at "^")))
 		  (> (point) (point-min)))
@@ -115,17 +115,17 @@
     (let ((word (thing-at-point 'word t)) type)
       (cond ((or (string-prefix-p "plw" word t)
 		 (string-match (list-pjs-namespaces-regexp) word)) ;; we are looking at the namespace
-	     (format "%s.%s" word (progn (forward-word (if (looking-at "\\.") 1 2))
+	     (format "%s.%s" word (progn (forward-word (if (fast-looking-at ".") 1 2))
 					 (thing-at-point 'word t))))
 	    (t
 	     (beginning-of-thing 'word)
-	     (cond ((looking-back "plw\\.")
+	     (cond ((fast-looking-back "plw.")
 		    word)
 ;;		    (format "plw.%s" word))
-		   ((looking-back (format "%s\\." (list-pjs-namespaces-regexp)))
+		   ((looking-back (format "%s\\." (list-pjs-namespaces-regexp)) (line-beginning-position))
 		    (backward-word)
 		    (format "%s.%s" (thing-at-point 'word t) word))
-		   ((and (looking-back "\\.")
+		   ((and (fast-looking-back ".")
 			 (setq type (get-variable-type-in-context (point))))		    
 		    (format "method.%s.%s" word
 			    (if (or (string= (car type) "plc")
@@ -134,7 +134,7 @@
 					 (gethash (cdr type) (list-pjs-plc-types-to-kernel)))
 				    (cdr type))
 			      (format "%s.%s" (car type) (cdr type)))))
-		   ((looking-back "\\.")
+		   ((fast-looking-back ".")
 		    word)
 ;;		    (format "plw.%s" word))
 		   (t
@@ -210,7 +210,7 @@
       (forward-line -1))
     (unless (re-search-forward *pjs-file-footer-regexp* nil t)
       (when (y-or-n-p "Your writeln $Id$ line seems absent or corrupted. Do you want to add or repair it ?")
-	(if (looking-at "plw.writeln(")
+	(if (fast-looking-at "plw.writeln(")
 	    (delete-region (point) (line-end-position))
 	  (progn (end-of-line) (newline)))
 	(insert *pjs-file-footer*)))))

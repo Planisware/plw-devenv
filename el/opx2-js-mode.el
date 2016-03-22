@@ -162,7 +162,7 @@
 (defun ojs-mode-insert-lcurly-on-ret ()
   (interactive)
   ;; do we have a { at the point ?
-  (if (looking-back "{")
+  (if (fast-looking-back "{")
       (let ((pps (syntax-ppss)))
 	(when (and (not (or (nth 3 pps) (nth 4 pps)))) ;; EOL and not in string or comment
 	  (c-indent-line-or-region)
