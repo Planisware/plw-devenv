@@ -445,6 +445,56 @@
       found)))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; highlight "plw" types 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar *pjs-plw-types-cache* nil)
+(defvar *pjs-plw-types-cache-regexp* nil)
+
+(defvar *pjs-plw-types-present* t)
+
+;;(defvar *regexp-elements-limit* 1000)
+
+(defun init-pjs-plw-types-cache ()
+  (let* ((functions-list-of-cons (progn (setq *pjs-plc-types-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::pjs-list-plw-types) t nil)")))
+					(when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::pjs-list-plw-types)"))))
+	 (functions-list functions-list-of-cons)
+	 regexp-list)
+    (dolist (sublist (partition-list functions-list *regexp-elements-limit*)) 
+      (push (format "\\(plw\\.\\)?%s" (replace-regexp-in-string "-" "_?" (js--regexp-opt-symbol sublist))) regexp-list))
+    (setq *pjs-plw-types-cache-regexp* regexp-list)
+    (setq *pjs-plw-types-cache* functions-list)))
+
+(defun list-pjs-plw-types-regexps ()  
+  (cond (*pjs-plw-types-cache-regexp*
+	 *pjs-plw-types-cache-regexp*)
+	(*pjs-plw-types-present*
+	 (init-pjs-plw-types-cache)
+	 *pjs-plw-types-cache-regexp*)
+	(t
+	 nil)))
+
+(defun list-pjs-plw-types ()  
+  (cond (*pjs-plw-types-cache*
+	 *pjs-plw-types-cache*)
+	(*pjs-plw-types-present*
+	 (init-pjs-plw-types-cache)
+	 *pjs-plw-types-cache*)
+	(t
+	 nil)))
+
+(defun search-pjs-plw-types (end)
+  (let ((found end)
+	(start (point)))
+    (dolist (regexp (list-pjs-plw-types-regexps))
+      (goto-char start)
+      (setq found (or (re-search-forward regexp (or found end) t)
+		      found)))
+    (if (eq found end)
+	nil
+      found)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight method / members depending on variable type
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -554,7 +604,7 @@
   (push (cons 'search-pjs-plc-types font-lock-type-face) font-locks)
 
   ;; highlight "standard" types
-  (push (cons pjs-font-lock-types font-lock-type-face) font-locks)
+  (push (cons 'search-pjs-plw-types font-lock-type-face) font-locks)
   
   ;; hightlight namespace types
   ;; Namespace classes
@@ -583,14 +633,14 @@
   (push (cons 'search-pjs-current-namespace-variables pjs-var-definition-face) font-locks)
 
   ;; Variable definitions with type
-  (push (list *pjs-vars-with-type-regexp* 1 font-lock-type-face) font-locks)
+;;  (push (list *pjs-vars-with-type-regexp* 1 font-lock-type-face) font-locks)
   (push (list *pjs-vars-with-type-regexp* 2 pjs-var-definition-face) font-locks)
 
   ;; variable definition without type
   (push (list *pjs-vars-no-type-regexp* 1 pjs-var-definition-face) font-locks)
 
   ;; var in with type
-  (push (list *pjs-var-in-with-type-regexp* 1 font-lock-type-face) font-locks)
+;;  (push (list *pjs-var-in-with-type-regexp* 1 font-lock-type-face) font-locks)
   (push (list *pjs-var-in-with-type-regexp* 2 pjs-var-definition-face) font-locks)
   (push (list *pjs-var-in-with-type-regexp* 3 font-lock-keyword-face) font-locks)
 
@@ -601,9 +651,6 @@
   ;; class definitions
   (push (list *pjs-class-definition* 1 font-lock-type-face) font-locks)
   
-  ;; New type
-  ;; (push (list *pjs-new-type-regexp* 1 font-lock-type-face) font-locks)
-
   ;; symbols
   (push (list *pjs-symbols* 0 font-lock-preprocessor-face) font-locks)  
     
