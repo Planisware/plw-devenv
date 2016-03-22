@@ -326,9 +326,9 @@ This can be overridden with `get-local-variables'."
 (defun semantic--tag-link-to-buffer (tag)
   "Convert TAG from using an overlay proxy to using an overlay.
 This function is for internal use only."
-  (unless (derived-mode-p 'prog-mode)
-    (message "!!!!!!!! tag is %s buffer is %s" tag (current-buffer))
-    (backtrace))
+;;  (unless (derived-mode-p 'prog-mode)
+;;    (message "!!!!!!!! tag is %s buffer is %s" tag (current-buffer))
+;;    (backtrace))
   (when (semantic-tag-p tag)
     (let ((o (semantic-tag-overlay tag)))
       (when (and (vectorp o) (= (length o) 2))
