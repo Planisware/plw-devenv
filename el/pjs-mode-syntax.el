@@ -53,6 +53,8 @@
 ;;;;  (header added automatically)
 ;;;;
 
+(defvar *pjs-font-lock-debug* nil)
+
 ;;; FACES ;;;
 
 ;; kernel functions : yellow in italic
@@ -204,7 +206,7 @@
 
 ;; new type(
 (defconst *pjs-new-type-regexp*
-  (format ".*\\<new\\>\\s-+\\(%s\\)\\s-*(" *js-type*))
+  (format "^.*\\<new\\>\\s-+\\(%s\\)\\s-*(" *js-type*))
 
 ;; function starts
 (defconst *pjs-function-start-regexp*
@@ -213,7 +215,7 @@
 
 ;; class definition
 (defconst *pjs-class-definition*
-  (format ".*\\<class\\>\\s-+\\(%s\\)" *js-class-name*))
+  (format "^.*\\<class\\>\\s-+\\(%s\\)" *js-class-name*))
 
 ;; symbols between ##
 (defconst *pjs-symbols*
@@ -713,21 +715,28 @@
   (set (make-local-variable 'comment-start) "// ")
   (set (make-local-variable 'comment-end) "")
 
+  (when *pjs-font-lock-debug*
+    (load (format "%s/devenv/el/pjs-mode-debug.el" *opx2-network-folder-work-path*)))
+  
   (set (make-local-variable 'font-lock-defaults)
        (list font-locks
 	     nil  ;; fontify strings and comments
 	     t    ;; case insensitive fontifying
 	     nil
 	     nil
+	     (when *pjs-font-lock-debug* (cons 'font-lock-fontify-region-function 'pjs-font-lock-default-fontify-region))
 	     ))
+    
 
   (font-lock-mode)
   ;; build the cache before fontifying 
 ;;  (jit-lock-register 'build-local-vars-cache)
 
   ;; fontify all the things
-  (syntax-propertize (point-max))
+;;  (syntax-propertize (point-max))
   )
+
+(setq font-lock-verbose t)
 
 (defun force-syntax-highlighting ()
   (interactive)
