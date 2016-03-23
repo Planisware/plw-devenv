@@ -271,8 +271,6 @@
   (define-key *pjs-mode-map* "\C-c;" 'comment-region)
   (define-key *pjs-mode-map* "\C-c:" 'uncomment-region)
 
-  (define-key *pjs-mode-map* "\X-s"  'pjs-save-buffer)
-
   ;; autoindentation on new line and add a closing } if needed
   (define-key *pjs-mode-map* (kbd "RET") 'newline-and-indent)
 ;;  (define-key *ojs-mode-map* (kbd "RET") 'ojs-mode-insert-lcurly-on-ret)
@@ -302,7 +300,9 @@
   ;; rebuild  function and vars cache on save and when we open a file
   (add-hook 'after-save-hook 'pjs-check-header nil t)
   (add-hook 'after-save-hook 'pjs-check-footer nil t)
-  (add-hook 'after-save-hook 'pjs-reset-cache-on-save nil t)    
+  (add-hook 'after-save-hook 'pjs-reset-cache-on-save nil t)
+  (add-hook 'after-save-hook 'semantic-force-refresh nil t)
+  
   (add-hook 'find-file-hook 'pjs-reset-cache-on-save nil t)
   (add-hook 'find-file-hook 'pjs-reset-cache-on-compile nil t)
 
