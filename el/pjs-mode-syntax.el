@@ -616,7 +616,7 @@
   (push (list 'search-pjs-current-namespace-functions 1 font-lock-function-name-face) font-locks)
 
   ;; Kernel functions
-  (push (cons 'search-pjs-kernel-functions pjs-kernel-functions-face) font-locks)
+;;  (push (cons 'search-pjs-kernel-functions pjs-kernel-functions-face) font-locks)
   (push (list 'search-pjs-kernel-functions 1 pjs-kernel-functions-face) font-locks)
 
   ;; keywords
