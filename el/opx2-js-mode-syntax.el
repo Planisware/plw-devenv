@@ -448,9 +448,12 @@
   	       '(end-of-line)
   	       '(1 ojs-var-definition-face))) font-locks)
   ;; Method definition
-  (push (list *ojs-method-heading* 1 font-lock-function-name-face) font-locks)
-  (push (list *ojs-method-heading* 2 font-lock-keyword-face) font-locks)
-  (push (list *ojs-method-heading* 3 font-lock-type-face) font-locks)  
+  (push (list *ojs-method-heading*
+	      '(1 font-lock-function-name-face)
+	      '(2 font-lock-keyword-face)
+	      '(3 font-lock-type-face))
+	font-locks)
+  
   ;; Method arguments
   (push (list
   	 (concat *ojs-method-arguments-start*)
