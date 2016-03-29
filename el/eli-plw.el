@@ -259,7 +259,7 @@
 	      (while (not (looking-at "\\sw\\|\\s_"))
 		(forward-char 1))
 	      (fi::defontify-string
-	       (buffer-substring
+	       (buffer-substring-no-properties
 		(point)
 		(progn (forward-sexp 1)
 		       ;; advance if we have a |
@@ -297,7 +297,7 @@
 		  (if (re-search-backward "\\sw\\|\\s_" nil t)
 		      (progn (forward-char 1)
 			     (fi::defontify-string
-			      (buffer-substring
+			      (buffer-substring-no-properties
 			       (point)
 			       (progn (forward-sexp -1)
 				      (while (looking-at "\\s'")
