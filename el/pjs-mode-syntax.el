@@ -643,12 +643,18 @@
 
   ;; var in with type
 ;;  (push (list *pjs-var-in-with-type-regexp* 1 font-lock-type-face) font-locks)
-  (push (list *pjs-var-in-with-type-regexp* 2 pjs-var-definition-face) font-locks)
-  (push (list *pjs-var-in-with-type-regexp* 3 font-lock-keyword-face) font-locks)
+  (push (list *pjs-var-in-with-type-regexp*
+	      '(2 pjs-var-definition-face)
+	      '(3 font-lock-keyword-face))
+	font-locks)
+;;  (push (list *pjs-var-in-with-type-regexp* 3 font-lock-keyword-face) font-locks)
 
   ;; var in without type
-  (push (list *pjs-var-in-no-type-regexp* 1 pjs-var-definition-face) font-locks)
-  (push (list *pjs-var-in-no-type-regexp* 2 font-lock-keyword-face) font-locks)  
+  (push (list *pjs-var-in-no-type-regexp*
+	      '(1 pjs-var-definition-face)
+	      '(2 font-lock-keyword-face))
+	font-locks)
+;;  (push (list *pjs-var-in-no-type-regexp* 2 font-lock-keyword-face) font-locks)  
 
   ;; class definitions
   (push (list *pjs-class-definition* 1 font-lock-type-face) font-locks)
@@ -657,8 +663,12 @@
   (push (list *pjs-symbols* 0 font-lock-preprocessor-face) font-locks)  
     
   ;; Function definition
-  (push (list *pjs-function-heading* 1 font-lock-keyword-face) font-locks)
-  (push (list *pjs-function-heading* 2 font-lock-function-name-face) font-locks)
+  (push  (list *pjs-function-heading*
+	       '(1 font-lock-keyword-face)
+	       '(2 font-lock-function-name-face))
+	font-locks)
+  ;;  (push (list *pjs-function-heading* 2 font-lock-function-name-face) font-locks)
+  
   ;; Function arguments
   (push (list
 	 (concat *pjs-function-arguments-start*)
@@ -683,9 +693,13 @@
 	font-locks)
   
   ;; Method definition
-  (push (list *pjs-method-heading* 1 font-lock-function-name-face) font-locks)
-  (push (list *pjs-method-heading* 2 font-lock-keyword-face) font-locks)
-  (push (list *pjs-method-heading* 3 font-lock-type-face) font-locks)  
+  (push (list *pjs-method-heading*
+	      '(1 font-lock-function-name-face)
+	      '(2 font-lock-keyword-face)
+	      '(3 font-lock-type-face))
+	font-locks)
+;;  (push (list *pjs-method-heading* 2 font-lock-keyword-face) font-locks)
+;;  (push (list *pjs-method-heading* 3 font-lock-type-face) font-locks)  
   ;; Method arguments
   (push (list
 	  (concat *pjs-method-arguments-start*)
