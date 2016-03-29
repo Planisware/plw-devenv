@@ -717,15 +717,23 @@
 
   (when *pjs-font-lock-debug*
     (load (format "%s/devenv/el/pjs-mode-debug.el" *opx2-network-folder-work-path*)))
-  
-  (set (make-local-variable 'font-lock-defaults)
-       (list font-locks
-	     nil  ;; fontify strings and comments
-	     t    ;; case insensitive fontifying
-	     nil
-	     nil
-	     (when *pjs-font-lock-debug* (cons 'font-lock-fontify-region-function 'pjs-font-lock-default-fontify-region))
-	     ))
+
+  (if *pjs-font-lock-debug*      
+      (set (make-local-variable 'font-lock-defaults)
+	   (list font-locks
+		 nil ;; fontify strings and comments
+		 t   ;; case insensitive fontifying
+		 nil
+		 nil
+		 (cons 'font-lock-fontify-region-function 'pjs-font-lock-default-fontify-region)
+		 ))
+    (set (make-local-variable 'font-lock-defaults)
+	   (list font-locks
+		 nil ;; fontify strings and comments
+		 t   ;; case insensitive fontifying
+		 nil
+		 nil
+		 )))
     
 
   (font-lock-mode)
