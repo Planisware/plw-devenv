@@ -542,6 +542,16 @@
    (string-match-p "writeln(\"$Id.*\");" str)
    ))
 
+;; Javascript documentation
+
+;;;
+(defun open-ojs-documentation ()
+  (interactive)
+  (when (fi::lep-open-connection-p)
+    (let ((filename (fi:eval-in-lisp "(main::call-script-doc)")))
+      (when filename
+	(browse-url-of-file filename)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mode definition
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -568,6 +578,7 @@
   (define-key *ojs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
   (define-key *ojs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
+  (define-key *ojs-mode-map* "\C-ch" 'open-ojs-documentation)
 
   (define-key *ojs-mode-map* "\C-cl" 'lock-file)
   (define-key *ojs-mode-map* "\C-cu" 'unlock-file)
@@ -596,6 +607,8 @@
       ["Find function definition..." %ojs-find-definition
        t]
       ["Trace/Untrace function..." trace-ojs-function
+       t]
+      ["OPX2 javascript documentation"  'open-ojs-documentation
        t]
       ))
 
