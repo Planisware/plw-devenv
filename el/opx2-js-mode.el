@@ -251,12 +251,13 @@
   ;; checks that the path of the current file matches the one in the database
   (when (fi::lep-open-connection-p) (fi:eval-in-lisp (format "(when (fboundp 'jvs::compare-javascript-source-file)(jvs::compare-javascript-source-file \"%s\" \"%s\"))" script-name file-name))))
 
-(defun lock-status(script)
+(defun lock-status(script-name)
   (fi:eval-in-lisp (format "(jvs::lock-status \"%s\")" script-name)))
 
 (defun do-lock-file (kind)
   ;; find the script name
-  (let* ((script-name      (file-name-base (buffer-file-name)))
+  (let* ((script-name      (or (get-script-name)
+			       (file-name-base (buffer-file-name))))
 	 (status           (lock-status script-name))
 	 (user             (user-login-name)))
     (case kind
@@ -271,7 +272,8 @@
 	     (t
 	      (message "Err: Unable to lock file"))))
       (:unlock
-       (cond ((string-equal status "LOCKED-BY-YOURSELF")
+       (cond ((or (string-equal status "LOCKED-BY-YOURSELF")
+		  (string-equal status user))
 	      (fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::unlock-file-by-name \"%s\"))" user script-name))
 	      (message "File unlocked"))
 	     ((string-equal status "NOT-LOCKED")
@@ -333,6 +335,12 @@
 
 
 (defvar *compiled-script-window* nil)
+
+(defun get-script-name ()
+  (save-excursion
+    (goto-char (point-min))
+    (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
+      (match-string-no-properties 1))))
 
 (defun do-compile-and-sync-ojs-file (type)
   ;; find the script name
