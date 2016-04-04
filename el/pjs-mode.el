@@ -94,7 +94,7 @@
   (let* ((symbol-at-point (fi::get-symbol-at-point up-p no-method))
 	 (function-at-point (if (string-match ":" symbol-at-point)
 				symbol-at-point
-			     (find-function-at-point))))
+			     (_find-function-at-point))))
     (if fi::use-symbol-at-point
 	(list function-at-point)
       (let ((read-symbol
@@ -110,7 +110,7 @@
 		read-symbol))))))
 
 ;; return the lisp symbol
-(defun find-function-at-point ()
+(defun _find-function-at-point ()
   (save-excursion
     (let ((word (thing-at-point 'word t)) type)
       (cond ((or (string-prefix-p "plw" word t)
@@ -147,7 +147,7 @@
    (if current-prefix-arg
        '(nil)
      (list (car (pjs-get-default-symbol "Lisp locate source" t t)))))
-  (interactive)
+;;  (interactive)
   (if (string-match ":" tag)
       (fi::lisp-find-definition-common tag nil)
     (fi::lisp-find-definition-common (if (string-prefix-p "plw." tag t)
