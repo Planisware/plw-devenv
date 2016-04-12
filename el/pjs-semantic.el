@@ -164,74 +164,75 @@ the semantic cache to see what needs to be changed."
 
 (defun pjs-semantic-parse-list (list &optional nonterminal depth returnonerror)
   ;; list is a list of start / end coordinates in the buffer
-  (when (fi::lep-open-connection-p)   
+  (when (fi::lep-open-connection-p)
     (let ((context 10)
-	  (ltags (fi:eval-in-lisp "(jvs::semantics-generate-tags-for-list '%S)" (mapcar #'(lambda (l)
-											    (buffer-substring-no-properties (car l) (second l)))
-											list)))
+	  (ltags (fi:eval-in-lisp "(when (fboundp 'jvs::semantics-generate-tags-for-list) (jvs::semantics-generate-tags-for-list '%S))"
+				  (mapcar #'(lambda (l)
+					      (buffer-substring-no-properties (car l) (second l)))
+					  list)))
 	  res
 	  (i 0))
-
-      (do* ((i 0 (+ 1 i))
-	    (tags (nth i ltags) (nth i ltags))
-	    (coords (nth i list) (nth i list))
-	    (start (car coords) (car coords))
-	    (end (second coords) (second coords)))
-	  ((= i (length list)))	 	  
+      (when ltags
+	(do* ((i 0 (+ 1 i))
+	      (tags (nth i ltags) (nth i ltags))
+	      (coords (nth i list) (nth i list))
+	      (start (car coords) (car coords))
+	      (end (second coords) (second coords)))
+	    ((= i (length list)))	 	  
 	
-	(when *pjs-verbose-parsing*
-	  (let ((parsed-block (cond ((<= (- end start) context)
-				     (buffer-substring-no-properties start end))
-				    (t
-				     (format "[%s||%s]"
-					     (buffer-substring-no-properties start (min (point-max) (+ context start)))
-					     (buffer-substring-no-properties (max (point-min) (- end context)) end))))))
-	    (message "Parsing %s [%s:%s] [%s] with %s : %s tags found"
-		     *pjs-parse-changes*
-		     start
-		     end
-		     parsed-block
-		     nonterminal
-		     (if (listp tags) (length tags) tags))))
+	  (when *pjs-verbose-parsing*
+	    (let ((parsed-block (cond ((<= (- end start) context)
+				       (buffer-substring-no-properties start end))
+				      (t
+				       (format "[%s||%s]"
+					       (buffer-substring-no-properties start (min (point-max) (+ context start)))
+					       (buffer-substring-no-properties (max (point-min) (- end context)) end))))))
+	      (message "Parsing %s [%s:%s] [%s] with %s : %s tags found"
+		       *pjs-parse-changes*
+		       start
+		       end
+		       parsed-block
+		       nonterminal
+		       (if (listp tags) (length tags) tags))))
       
-	;; remove previous error overlays
-	(dolist (overlay (overlays-in start end))
-	  (when (semantic-overlay-get overlay 'pjs-error)
-	    (delete-overlay overlay)))
+	  ;; remove previous error overlays
+	  (dolist (overlay (overlays-in start end))
+	    (when (semantic-overlay-get overlay 'pjs-error)
+	      (delete-overlay overlay)))
 	
-	(when (stringp tags)
-	  ;; we have an error !!
-	  ;; try to highlight the error       
-	  (when (string-match "At line\\s-*:\\s-*\\([0-9]+\\)\\s-*,\\s-*character\\s-*:\\s-*\\([0-9]+\\)\\s-*:" tags)
-	    (let ((line (string-to-number (match-string-no-properties 1 tags)))
-		  (char (string-to-number (match-string-no-properties 2 tags))))
-	      (save-excursion
-		(let ((specific-overlay (make-overlay (progn (goto-char start) (next-line (1- line)) (beginning-of-line)(forward-char char) (point))
-						      (line-end-position))))
-		  (overlay-put specific-overlay
-			       'face pjs-semantic-error-highlight)
-		  (overlay-put specific-overlay
-			       'pjs-error t)
-		  (overlay-put specific-overlay
-			       'help-echo tags)))))
-	  ;; otherwise create an error overlay for the whole block
-	  (let ((error-overlay (make-overlay start end)))
-	    (overlay-put error-overlay
-			 'face pjs-semantic-error-font)
-	    (overlay-put error-overlay
-			 'pjs-error t)
-	    (overlay-put error-overlay
-			 'help-echo tags)))
+	  (when (stringp tags)
+	    ;; we have an error !!
+	    ;; try to highlight the error       
+	    (when (string-match "At line\\s-*:\\s-*\\([0-9]+\\)\\s-*,\\s-*character\\s-*:\\s-*\\([0-9]+\\)\\s-*:" tags)
+	      (let ((line (string-to-number (match-string-no-properties 1 tags)))
+		    (char (string-to-number (match-string-no-properties 2 tags))))
+		(save-excursion
+		  (let ((specific-overlay (make-overlay (progn (goto-char start) (next-line (1- line)) (beginning-of-line)(forward-char char) (point))
+							(line-end-position))))
+		    (overlay-put specific-overlay
+				 'face pjs-semantic-error-highlight)
+		    (overlay-put specific-overlay
+				 'pjs-error t)
+		    (overlay-put specific-overlay
+				 'help-echo tags)))))
+	    ;; otherwise create an error overlay for the whole block
+	    (let ((error-overlay (make-overlay start end)))
+	      (overlay-put error-overlay
+			   'face pjs-semantic-error-font)
+	      (overlay-put error-overlay
+			   'pjs-error t)
+	      (overlay-put error-overlay
+			   'help-echo tags)))
 	
-	(cond ((and (stringp tags) *pjs-parse-changes*)
-	       (throw 'semantic-parse-changes-failed :error))
-	      ((listp tags)
-	       ;; cook the tags	
-	       (dolist (tag tags)
-		 (when (and tag
-			    (= (length tag) 7))
-		   (push (pjs-semantic-expand-tag tag start) res))))))
-      (reverse res))))
+	  (cond ((and (stringp tags) *pjs-parse-changes*)
+		 (throw 'semantic-parse-changes-failed :error))
+		((listp tags)
+		 ;; cook the tags	
+		 (dolist (tag tags)
+		   (when (and tag
+			      (= (length tag) 7))
+		     (push (pjs-semantic-expand-tag tag start) res))))))
+	(reverse res)))))
 
 (defun pjs-semantic-expand-tag (tag start)
   ;; iterate through the members
