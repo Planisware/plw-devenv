@@ -174,6 +174,10 @@
 
 (put 'doplist 'fi:common-lisp-indent-hook '(like dolist))
 (put 'doplist 'fi:lisp-indent-hook '(like dolist))
+
+(put 'jvs::defun-js2 'fi:common-lisp-indent-hook 3)
+(put 'defun-js2 'fi:common-lisp-indent-hook 3)
+(put 'javascript::defun-js2 'fi:common-lisp-indent-hook 3)
   
 ;;  controversial
 ;;  (put 'if 'fi:common-lisp-indent-hook nil)
