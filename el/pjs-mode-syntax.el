@@ -78,6 +78,13 @@
   'pjs-var-definition-face)
 
 
+(defface pjs-member-face
+  '((t :foreground "#5f9ea0"))
+  "PJS member fonts"
+  )
+
+(defvar pjs-member-face 'pjs-member-face)
+
 ;; functions of the current namespace
 
 ;; symbols : light blue
@@ -358,7 +365,7 @@
 	       (message "nothing ??")))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; highlight kernel functions 
+;; highlight plw kernel functions 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar-resetable *pjs-kernel-functions-cache* nil 'pjs-compile)
@@ -382,12 +389,18 @@
       (re-search-forward search-pattern end t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; highlight other namespace functions 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight "plc" types 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar *pjs-plc-types-cache* nil)
-(defvar *pjs-plc-types-to-kernel-cache* nil)
-(defvar *pjs-plc-types-cache-regexp* nil)
+(defvar-resetable *pjs-plc-types-cache* nil 'pjs-compile)
+(defvar-resetable *pjs-plc-types-to-kernel-cache* nil 'pjs-compile)
+(defvar-resetable *pjs-plc-types-cache-regexp* nil 'pjs-compile)
 
 (defvar *pjs-plc-types-present* t)
 
@@ -445,7 +458,6 @@
     (if (eq found end)
 	nil
       found)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight "plw" types 
@@ -526,7 +538,9 @@
 ;; TODO: if it is a member of a classe, check the type from the class.
 ;; we consider we are at the point between the var and its "father"
 ;; we return a cons (namespace . classname)
-(defun get-variable-type-in-context (point )
+(defun get-variable-type-in-context (&optional point )
+  (unless point
+    (setq point (point)))
   ;; use the parser
   (save-match-data
     (save-excursion
@@ -534,19 +548,23 @@
       (when (re-search-backward (format "\\<%s\\>" *pjs-variable-name*) (line-beginning-position) t)
   	(let ((varname (downcase (match-string-no-properties 0)))  	      
 	      var-tag)
+	  (message "0 %s" varname)
   	  (cond ((fast-looking-back ".")
+		 (message "1")
   		 ;; we have a dot, try to get the type of the "father"
   		 (let ((father-type (get-variable-type-in-context (match-beginning 0))))
   		   (when father-type
   		     (get-member-type (car father-type) (cdr father-type) varname))))
 		;; this of a method
 		((string= (downcase varname) "this")
+		 (message "2")
 		 (let ((current-tag (car (semantic-find-tag-by-overlay))))
 		   (when (and current-tag
 			      (eq (semantic-tag-class current-tag) 'function))
 		     (convert-pjs-type (semantic-tag-get-attribute current-tag :on-class)))))
   		;; local variable of the function, try to get the type
   		((setq var-tag (car (semantic-find-tags-by-name varname (semantic-something-to-tag-table (semantic-get-local-variables)))))
+		 (message "3")
 		 (convert-pjs-type (semantic-tag-get-attribute var-tag :type)))
   		;; member of a typed variable
   		()
@@ -629,7 +647,7 @@
   (push (cons 'search-pjs-local-vars font-lock-variable-name-face) font-locks)
 
   ;; members and methods based on type of var
-  (push (list 'search-vars-with-members-or-methods 1 opx2-hg-getset-face) font-locks)
+  (push (list 'search-vars-with-members-or-methods 1 pjs-member-face) font-locks)
 
   ;; Namespace vars
   (push (cons 'search-pjs-current-namespace-variables pjs-var-definition-face) font-locks)
