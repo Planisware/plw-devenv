@@ -548,23 +548,19 @@
       (when (re-search-backward (format "\\<%s\\>" *pjs-variable-name*) (line-beginning-position) t)
   	(let ((varname (downcase (match-string-no-properties 0)))  	      
 	      var-tag)
-	  (message "0 %s" varname)
   	  (cond ((fast-looking-back ".")
-		 (message "1")
   		 ;; we have a dot, try to get the type of the "father"
   		 (let ((father-type (get-variable-type-in-context (match-beginning 0))))
   		   (when father-type
   		     (get-member-type (car father-type) (cdr father-type) varname))))
 		;; this of a method
 		((string= (downcase varname) "this")
-		 (message "2")
 		 (let ((current-tag (car (semantic-find-tag-by-overlay))))
 		   (when (and current-tag
 			      (eq (semantic-tag-class current-tag) 'function))
 		     (convert-pjs-type (semantic-tag-get-attribute current-tag :on-class)))))
   		;; local variable of the function, try to get the type
   		((setq var-tag (car (semantic-find-tags-by-name varname (semantic-something-to-tag-table (semantic-get-local-variables)))))
-		 (message "3")
 		 (convert-pjs-type (semantic-tag-get-attribute var-tag :type)))
   		;; member of a typed variable
   		()
