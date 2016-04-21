@@ -82,7 +82,8 @@
 (defun pjs-configuration-ok ()
   (unless *pjs-configuration-status*
     (setq *pjs-configuration-status*
-	  (check-fixes-configuration *pjs-required-fixes*)))
+	  (if (check-fixes-configuration *pjs-required-fixes*)
+	      :ok :ko)))
   (cond ((and (eq *pjs-configuration-status* :ok)
 	      (fi::lep-open-connection-p))
 	 t)
@@ -279,8 +280,8 @@
   (define-key *pjs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
   (define-key *pjs-mode-map* "\C-cc" '%pjs-list-who-calls)
   (define-key *pjs-mode-map* "\C-ce" 'compile-pjs-file)
-  (define-key *pjs-mode-map* "\C-ck" 'check-ojs-region)
-  (define-key *pjs-mode-map* "\C-cr" 'compile-pjs-region)
+;;  (define-key *pjs-mode-map* "\C-ck" 'check-ojs-region)
+;;  (define-key *pjs-mode-map* "\C-cr" 'compile-pjs-region)
   (define-key *pjs-mode-map* "\C-c\C-b" 'save-and-compile-pjs-file)
   (define-key *pjs-mode-map* "\C-cs" 'save-and-compile-pjs-file)
   (define-key *pjs-mode-map* "\C-ct" 'trace-pjs-function)
@@ -308,8 +309,8 @@
        t]	    
       ["Compile, load and synchronize file..." save-and-compile-pjs-file
        t]
-      ["Compile and run selected region" compile-pjs-region
-       t]	    
+      ;; ["Compile and run selected region" compile-pjs-region
+      ;;  t]	    
       ["Find function definition..." %pjs-find-definition
        t]
       ["Trace/Untrace function..." trace-pjs-function

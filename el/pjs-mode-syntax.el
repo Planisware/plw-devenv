@@ -355,17 +355,20 @@
 (defun search-pjs-current-namespace-functions (end)
   (let* ((namespace (pjs-current-namespace))
 	 (ns-functions (list-pjs-namespace-functions-regexp namespace)))
-    (re-search-forward (format "\\(?:%s\\.\\)?\\(%s\\)" namespace ns-functions) end t)))
+    (when ns-functions
+      (re-search-forward (format "\\(?:%s\\.\\)?\\(%s\\)" namespace ns-functions) end t))))
 
 (defun search-pjs-current-namespace-variables (end)
   (let* ((namespace (pjs-current-namespace))
 	 (ns-variables (list-pjs-namespace-variables-regexp namespace)))
-    (re-search-forward (format "\\(?:%s\\.\\)?\\(%s\\)" namespace ns-variables) end t)))
+    (when ns-variables
+      (re-search-forward (format "\\(?:%s\\.\\)?\\(%s\\)" namespace ns-variables) end t))))
 
 (defun search-pjs-current-namespace-classes (end)
   (let* ((namespace (pjs-current-namespace))
 	 (ns-classes (list-pjs-namespace-classes-regexp namespace)))
-    (re-search-forward (format "\\(?:%s\\.\\)?\\(%s\\)" namespace ns-classes) end t)))
+    (when ns-classes 
+      (re-search-forward (format "\\(?:%s\\.\\)?\\(%s\\)" namespace ns-classes) end t))))
 
 (defun list-pjs-namespaces ()
   (or *pjs-namespace-list-cache*
@@ -379,11 +382,14 @@
 
 (defun search-pjs-namespace-name (end)
   (let ((ns-list-regexp (list-pjs-namespaces-regexp)))
-    (re-search-forward ns-list-regexp end t)))
+    (when ns-list-regexp
+      (re-search-forward ns-list-regexp end t))))
 
 (defun search-pjs-namespace-functions (end)
-  (when (re-search-forward (list-pjs-namespaces-regexp) end t)
-    (when (fast-looking-at ".")
+  (let ((ns-list-regexp (list-pjs-namespaces-regexp)))
+    (when (and ns-list-regexp
+	       (re-search-forward (list-pjs-namespaces-regexp) end t)       
+	       (fast-looking-at "."))
       (right-char)
       (or (re-search-forward (format "\\=%s" (list-pjs-namespace-functions-regexp (match-string 0))))
 	  (set-match-data nil)))))
@@ -400,7 +406,7 @@
   (unless (hash-table-p *pjs-namespace-variables-regexp-cache*)    
     (setq *pjs-namespace-variables-regexp-cache* (make-hash-table :test 'equal)))
   (unless (hash-table-p *pjs-namespace-classes-regexp-cache*)    
-    (setq *pjs-namespace-classes-regexp-cache* (make-hash-table :test 'equal)))    
+    (setq *pjs-namespace-classes-regexp-cache* (make-hash-table :test 'equal)))  
 
   (when (pjs-configuration-ok)
     (dolist (ns (fi:eval-in-lisp "(jvs::get-all-namespace-members)"))
@@ -508,7 +514,7 @@
 (defun list-pjs-plc-types-to-kernel ()  
   (cond (*pjs-plc-types-to-kernel-cache*
 	 *pjs-plc-types-to-kernel-cache*)
-	(*pjs-plc-types-present*
+	((pjs-configuration-ok)
 	 (init-pjs-plc-types-cache)
 	 *pjs-plc-types-to-kernel-cache*)
 	(t
@@ -517,7 +523,7 @@
 (defun list-pjs-plc-types-regexps ()  
   (cond (*pjs-plc-types-cache-regexp*
 	 *pjs-plc-types-cache-regexp*)
-	(*pjs-plc-types-present*
+	((pjs-configuration-ok)
 	 (init-pjs-plc-types-cache)
 	 *pjs-plc-types-cache-regexp*)
 	(t
@@ -526,7 +532,7 @@
 (defun list-pjs-plc-types ()  
   (cond (*pjs-plc-types-cache*
 	 *pjs-plc-types-cache*)
-	(*pjs-plc-types-present*
+	((pjs-configuration-ok)
 	 (init-pjs-plc-types-cache)
 	 *pjs-plc-types-cache*)
 	(t
@@ -564,7 +570,7 @@
 (defun list-pjs-plw-types-regexps ()  
   (cond (*pjs-plw-types-cache-regexp*
 	 *pjs-plw-types-cache-regexp*)
-	(*pjs-plw-types-present*
+	((pjs-configuration-ok)
 	 (init-pjs-plw-types-cache)
 	 *pjs-plw-types-cache-regexp*)
 	(t
@@ -573,7 +579,7 @@
 (defun list-pjs-plw-types ()  
   (cond (*pjs-plw-types-cache*
 	 *pjs-plw-types-cache*)
-	(*pjs-plw-types-present*
+	((pjs-configuration-ok)
 	 (init-pjs-plw-types-cache)
 	 *pjs-plw-types-cache*)
 	(t
@@ -677,7 +683,7 @@
 		  (let* ((members (pjs-class-members (car var-type) (cdr var-type)))
 			 (methods (pjs-class-methods (car var-type) (cdr var-type))))
 ;;		    (message "member is %s members are %s methods are %s %s %s" member members methods (member member members) (member member methods))
-		    (when (or (not (eq (gethash member members :unknown) :unknown))
+		    (when (or (and members (not (eq (gethash member members :unknown) :unknown)))
 			      (member member methods))
 		      (throw 'exit (point)))))))))
 	(progn (set-match-data nil)
