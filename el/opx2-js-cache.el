@@ -83,7 +83,8 @@
 (defun ojs-configuration-ok ()
   (unless *ojs-configuration-status*
     (setq *ojs-configuration-status*
-	  (check-fixes-configuration *ojs-required-fixes*)))
+	  (if (check-fixes-configuration *ojs-required-fixes*)
+	      :ok :ko)))
   (cond ((and (eq *ojs-configuration-status* :ok)
 	      (fi::lep-open-connection-p))
 	 t)
