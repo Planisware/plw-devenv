@@ -67,6 +67,17 @@
 (defvar pjs-kernel-functions-face
   'pjs-kernel-functions-face)
 
+;; functions of the current namespace
+;; global variable definution : Red in bold
+(defface pjs-namespace-face
+    '((t 
+       :inherit font-lock-function-name-face :slant italic :weight normal))
+    "variable defintion are in bold"
+    )
+
+(defvar pjs-namespace-face
+  'pjs-namespace-face)
+
 ;; global variable definution : Red in bold
 (defface pjs-var-definition-face
     '((t 
@@ -85,9 +96,8 @@
 
 (defvar pjs-member-face 'pjs-member-face)
 
-;; functions of the current namespace
-
 ;; symbols : light blue
+
 
 
 ;; constants
@@ -228,6 +238,75 @@
 (defconst *pjs-symbols*
   "#[[:alnum:]-_:.]+#")
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; class members/methods
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defconst *pjs-namespace-definition*
+  (format "^\\s-*\\<namespace\\>\\s-+\\(%s\\);" *js-namespace-name*))
+
+;; TODO : multiple namespaces in one file !
+
+(defvar-resetable *pjs-buffer-namespace* nil 'pjs-compile t)
+
+;; return the current namespace
+(defun pjs-current-namespace ()
+  (or *pjs-buffer-namespace*      
+      (save-excursion
+	(goto-char (point-min))
+	(setq *pjs-buffer-namespace*
+	      (let* ((found (re-real-search-forward *pjs-namespace-definition* nil t))
+		     (namespace (when found (downcase (match-string-no-properties 1)))))
+		(if found namespace "plw"))))))
+
+;; contains list of cons (name . documentation)
+;; used for autocomplete 
+(defvar-resetable *pjs-buffers-class-members-cache* nil 'pjs-compile)
+;; contains the master regexp for syntax highlighting
+(defvar-resetable *pjs-buffers-class-members-cache-regexp* nil 'pjs-compile)
+
+;; used for autocomplete 
+(defvar-resetable *pjs-buffers-class-methods-cache* nil 'pjs-compile)
+;; contains the master regexp for syntax highlighting
+;;(defvar-resetable *pjs-buffers-class-methods-cache-regexp* 'pjs-compile)
+
+(defun pjs-class-members (namespace class-name)  
+  (let ((type (downcase (format "%s.%s" namespace class-name))))
+    (or (and *pjs-buffers-class-members-cache* (gethash type *pjs-buffers-class-members-cache*))
+	(init-class-members-cache namespace class-name nil))))
+
+;; (defun pjs-class-members-regexp  (namespace class-name)
+;;   (let ((type (downcase (format "%s.%s" namespace class-name))))
+;;     (or (gethash type *pjs-buffers-class-members-cache-regexp*)
+;; 	(init-class-members-cache namespace class-name t))))
+
+(defun init-class-members-cache (namespace class-name regexp)  
+  (unless (hash-table-p *pjs-buffers-class-members-cache*)
+    (setq *pjs-buffers-class-members-cache* (make-hash-table :test 'equal)))
+  (unless (hash-table-p *pjs-buffers-class-members-cache-regexp*)
+    (setq *pjs-buffers-class-members-cache-regexp* (make-hash-table :test 'equal)))
+  (let (list
+	(ht (make-hash-table :test 'equal))
+	(type (downcase (format "%s.%s" namespace class-name))))
+    (dolist (item (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-pjs-class-members) (jvs::get-pjs-class-members \"%s\" \"%s\"))" namespace class-name)))
+;;    (dolist (item (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-pjs-class-members) (jvs::get-pjs-class-members \"%s\" \"%s\"))" class-name namespace)))
+      (puthash (car item) (second item) ht)
+      (push (car item) list))
+    (puthash type ht *pjs-buffers-class-members-cache*)
+    (puthash type (js--regexp-opt-symbol list) *pjs-buffers-class-members-cache-regexp*)
+    (if regexp
+	list
+      ht)))
+
+(defun pjs-class-methods (namespace class-name)
+  (unless (hash-table-p *pjs-buffers-class-methods-cache*)
+    (setq *pjs-buffers-class-methods-cache* (make-hash-table :test 'equal)))
+  (let ((type (downcase (format "%s.%s" namespace class-name))))
+    (or (gethash type *pjs-buffers-class-methods-cache*)
+	(puthash type (loop for item in (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-method-for-js-class) (jvs::get-method-for-js-class \"%s\" \"%s\"))" class-name namespace))
+			    collect (downcase item))
+		 *pjs-buffers-class-methods-cache*))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight namespace functions (current and other namespaces) 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -296,6 +375,17 @@
       (progn (init-pjs-namespace-cache)
 	     *pjs-namespace-list-regexp-cache*)))
 
+(defun search-pjs-namespace-name (end)
+  (let ((ns-list-regexp (list-pjs-namespaces-regexp)))
+    (re-search-forward ns-list-regexp end t)))
+
+(defun search-pjs-namespace-functions (end)
+  (when (re-search-forward (list-pjs-namespaces-regexp) end t)
+    (when (fast-looking-at ".")
+      (right-char)
+      (or (re-search-forward (format "\\=%s" (list-pjs-namespace-functions-regexp (match-string 0))))
+	  (set-match-data nil)))))
+
 (defun init-pjs-namespace-cache ()
   (unless (hash-table-p *pjs-namespace-functions-cache*)    
     (setq *pjs-namespace-functions-cache* (make-hash-table :test 'equal)))
@@ -310,7 +400,7 @@
   (unless (hash-table-p *pjs-namespace-classes-regexp-cache*)    
     (setq *pjs-namespace-classes-regexp-cache* (make-hash-table :test 'equal)))    
 
-  (when (fi::lep-open-connection-p)
+  (when (pjs-configuration-ok)
     (dolist (ns (fi:eval-in-lisp "(jvs::get-all-namespace-members)"))
       (push (car ns) *pjs-namespace-list-cache*)      
       (puthash (car ns) (js--regexp-opt-symbol (car (cdr ns)))    *pjs-namespace-variables-regexp-cache*)
@@ -368,18 +458,13 @@
 ;; highlight plw kernel functions 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar-resetable *pjs-kernel-functions-cache* nil 'pjs-compile)
-
-(defvar *pjs-kernel-functions-present* t)
+(defvar-resetable *pjs-kernel-functions-cache* nil 'pjs-reset)
 
 (defun list-pjs-kernel-functions ()
   (cond (*pjs-kernel-functions-cache*
 	 *pjs-kernel-functions-cache*)
-	(*pjs-kernel-functions-present*
-	 (progn (setq *pjs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-all-js-functions) t nil)")))
-		(when *pjs-kernel-functions-present*
-		  (setq *pjs-kernel-functions-cache* (format "\\(\\(?:plw\\)?\\.%s\\)\\s-*(" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions)"))))))
-		*pjs-kernel-functions-cache*))
+	((pjs-configuration-ok)
+	 (setq *pjs-kernel-functions-cache* (format "\\(\\(?:plw\\)?\\.%s\\)\\s-*(" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions t)"))))))
 	(t
 	 nil)))
 
@@ -398,17 +483,14 @@
 ;; highlight "plc" types 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar-resetable *pjs-plc-types-cache* nil 'pjs-compile)
-(defvar-resetable *pjs-plc-types-to-kernel-cache* nil 'pjs-compile)
-(defvar-resetable *pjs-plc-types-cache-regexp* nil 'pjs-compile)
-
-(defvar *pjs-plc-types-present* t)
+(defvar-resetable *pjs-plc-types-cache* nil 'pjs-reset)
+(defvar-resetable *pjs-plc-types-to-kernel-cache* nil 'pjs-reset)
+(defvar-resetable *pjs-plc-types-cache-regexp* nil 'pjs-reset)
 
 ;;(defvar *regexp-elements-limit* 1000)
 
 (defun init-pjs-plc-types-cache ()
-  (let* ((functions-list-of-cons (progn (setq *pjs-plc-types-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::pjs-list-plc-types) t nil)")))
-				(when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::pjs-list-plc-types)"))))
+  (let* ((functions-list-of-cons (when (pjs-configuration-ok) (fi:eval-in-lisp "(jvs::pjs-list-plc-types)")))
 	 (functions-list (mapcar 'car functions-list-of-cons))
 	 regexp-list)
     (dolist (sublist (partition-list functions-list *regexp-elements-limit*)) 
@@ -466,13 +548,10 @@
 (defvar *pjs-plw-types-cache* nil)
 (defvar *pjs-plw-types-cache-regexp* nil)
 
-(defvar *pjs-plw-types-present* t)
-
 ;;(defvar *regexp-elements-limit* 1000)
 
 (defun init-pjs-plw-types-cache ()
-  (let* ((functions-list-of-cons (progn (setq *pjs-plc-types-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::pjs-list-plw-types) t nil)")))
-					(when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::pjs-list-plw-types)"))))
+  (let* ((functions-list-of-cons (when (pjs-configuration-ok) (fi:eval-in-lisp "(jvs::pjs-list-plw-types)")))
 	 (functions-list functions-list-of-cons)
 	 regexp-list)
     (dolist (sublist (partition-list functions-list *regexp-elements-limit*)) 
@@ -633,6 +712,9 @@
 ;;  (push (cons 'search-pjs-kernel-functions pjs-kernel-functions-face) font-locks)
   (push (list 'search-pjs-kernel-functions 1 pjs-kernel-functions-face) font-locks)
 
+  ;; namespace functions
+  (push (cons 'search-pjs-namespace-functions font-lock-function-name-face) font-locks)
+  
   ;; keywords
   (push (cons pjs-font-lock-keywords font-lock-keyword-face) font-locks)
   ;; constants
@@ -647,6 +729,9 @@
 
   ;; Namespace vars
   (push (cons 'search-pjs-current-namespace-variables pjs-var-definition-face) font-locks)
+
+  ;; Namespace names
+  (push (cons 'search-pjs-namespace-name pjs-namespace-face) font-locks) 
 
   ;; Variable definitions with type
 ;;  (push (list *pjs-vars-with-type-regexp* 1 font-lock-type-face) font-locks)

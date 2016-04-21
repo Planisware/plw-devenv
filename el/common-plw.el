@@ -103,3 +103,45 @@
   (define-key c++-mode-map "\C-c." 'ojs-find-definition))
 
 (add-hook 'c++-mode-hook 'set-ojs-mode-hook)
+
+
+(defvar *js-vars-to-reset* nil)
+
+(defmacro defvar-resetable (varname def when &optional local)
+  (unless (hash-table-p *js-vars-to-reset*)
+    (setq *js-vars-to-reset* (make-hash-table :test 'eq)))
+  `(progn
+     (dolist (w (if (consp ,when) ,when (list ,when)))
+       (pushnew ',varname (gethash w *js-vars-to-reset*)))
+     ,(if local
+	  `(defvar-local ,varname ,def)
+	`(defvar ,varname ,def))))
+
+;; global functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; like looking back but only on str, not on regexp
+(defun fast-looking-back (str)
+  (let ((point (point))
+	(lstr (length str)))	
+  (catch 'ret
+    (do* ((i 0 (1+ i)))
+	((= i lstr)
+	 t)
+      (let ((c (aref str (- lstr i 1)))
+	    (char (char-before (- point i))))
+	(unless (eq char c)
+	  (throw 'ret nil)))))))
+
+(defun fast-looking-at (str)
+  (let ((point (point))
+	(lstr (length str)))	
+  (catch 'ret
+    (do* ((i 0 (1+ i)))
+	((= i lstr)
+	 t)
+      (let ((c (aref str i))
+	    (char (char-after (+ point i))))
+	(unless (eq char c)
+	  (throw 'ret nil)))))))
+

@@ -73,6 +73,32 @@
 ;; we don't want to stack definition declarations
 (setq fi:maintain-definition-stack nil)
 
+(defvar *pjs-required-fixes* '("sc8384"
+			       ("sc9213" "3.44")))
+
+(defvar-resetable *pjs-configuration-status* nil 'pjs-reset)
+
+;; check that we have the proper configuration
+(defun pjs-configuration-ok ()
+  (unless *pjs-configuration-status*
+    (setq *pjs-configuration-status*
+	  (if (catch 'exit
+		(dolist (fix *pjs-required-fixes* t)
+		  (cond ((consp fix)
+			 (when (fi::lep-open-connection-p)
+			   (unless (fi:eval-in-lisp "(let ((fix (object::get-object 'object::fix \"%s\"))) (if (and fix (or (string= (object::fix-version fix) \"$%s\$\") (object::version>= (object::fix-version fix) \"%s\"))) t nil))" (car fix) "Revision" (second fix))
+			     (throw 'exit nil))))
+			((stringp fix)
+			 (when (fi::ensure-lep-connection)
+			   (unless (fi:eval-in-lisp "(let ((fix (object::get-object 'object::fix \"%s\"))) (if fix t nil))" fix)
+			     (throw 'exit nil)))))))
+	      :ok :ko)))
+  (cond ((and (eq *pjs-configuration-status* :ok)
+	      (fi::lep-open-connection-p))
+	 t)
+	(t
+	 nil)))
+
 ;; try to get a full symbol from the position given
 (defun find-symbol-at-point (start end)
   ;; is the previous char a : ?
@@ -221,22 +247,27 @@
   (save-buffer)
   (semantic-force-refresh))
 
-(defun pjs-save-and-compile-ojs-file ()
+(defun save-and-compile-pjs-file ()
   (interactive)
   (save-and-compile-ojs-file)
   (semantic-force-refresh))
 
-(defun pjs-compile-ojs-file ()
+(defun compile-pjs-file ()
   (interactive)
   (compile-ojs-file)
   (semantic-force-refresh))
 
-(defun pjs-check-ojs-region ()
+(defun check-pjs-region ()
   (interactive)
   (compile-ojs-region)
   (semantic-force-refresh))
 
-  
+(defun pjs-reset-cache-on-reset ()
+  (interactive)
+  (js-reset-vars 'pjs-reset)
+  (save-buffer)
+  (find-alternate-file (buffer-file-name)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mode definition
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -257,12 +288,13 @@
   (define-key *pjs-mode-map* "\C-c." '%pjs-find-definition)
   (define-key *pjs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
   (define-key *pjs-mode-map* "\C-cc" '%pjs-list-who-calls)
-  (define-key *pjs-mode-map* "\C-ce" 'pjs-compile-ojs-file)
+  (define-key *pjs-mode-map* "\C-ce" 'compile-pjs-file)
   (define-key *pjs-mode-map* "\C-ck" 'check-ojs-region)
-  (define-key *pjs-mode-map* "\C-cr" 'pjs-compile-ojs-region)
-  (define-key *pjs-mode-map* "\C-c\C-b" 'pjs-save-and-compile-ojs-file)
-  (define-key *pjs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
+  (define-key *pjs-mode-map* "\C-cr" 'compile-pjs-region)
+  (define-key *pjs-mode-map* "\C-c\C-b" 'save-and-compile-pjs-file)
+  (define-key *pjs-mode-map* "\C-cs" 'save-and-compile-pjs-file)
   (define-key *pjs-mode-map* "\C-ct" 'trace-pjs-function)
+  (define-key *pjs-mode-map* "\C-cR" 'pjs-reset-cache-on-reset)
 
   (define-key *pjs-mode-map* "\C-cl" 'lock-file)
   (define-key *pjs-mode-map* "\C-cu" 'unlock-file)
@@ -280,17 +312,19 @@
   ;; menu
   (easy-menu-define pjs-menu *pjs-mode-map* "Planisware Script Menu"
     '("Planisware Script"
-      ["Compile and load file..." compile-ojs-file
+      ["Compile and load file..." compile-pjs-file
        t]
       ["Check syntax of selected region" check-ojs-region
        t]	    
-      ["Compile, load and synchronize file..." save-compile-and-sync-ojs-file
+      ["Compile, load and synchronize file..." save-and-compile-pjs-file
        t]
-      ["Compile and run selected region" compile-ojs-region
+      ["Compile and run selected region" compile-pjs-region
        t]	    
-      ["Find function definition..." %ojs-find-definition
+      ["Find function definition..." %pjs-find-definition
        t]
-      ["Trace/Untrace function..." trace-ojs-function
+      ["Trace/Untrace function..." trace-pjs-function
+       t]
+      ["Reset syntax caches" pjs-reset-cache-on-reset
        t]
       ))
 
