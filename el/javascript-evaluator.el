@@ -204,9 +204,8 @@ the buffer name is the second optional argument."
 	 (buffer (or (get-buffer buffer-name)
 		     (get-buffer-create buffer-name)))
 	 (proc (get-buffer-process buffer))
-	 (repl? (fi:eval-in-lisp "(if (fboundp 'jvs::js-repl) t nil)"))
 	 )
-    (cond (repl?
+    (cond ((ojs-configuration-ok)
 	   (if (fi:process-running-p proc buffer-name)
 	       (fi::switch-to-buffer-new-screen buffer-name)
 	     (progn 

@@ -249,39 +249,41 @@
 
 (defun check-script-path (script-name file-name)
   ;; checks that the path of the current file matches the one in the database
-  (when (fi::lep-open-connection-p) (fi:eval-in-lisp (format "(when (fboundp 'jvs::compare-javascript-source-file)(jvs::compare-javascript-source-file \"%s\" \"%s\"))" script-name file-name))))
+  (when (ojs-configuration-ok) (fi:eval-in-lisp (format "(jvs::compare-javascript-source-file \"%s\" \"%s\")" script-name file-name))))
 
 (defun lock-status(script-name)
-  (fi:eval-in-lisp (format "(jvs::lock-status \"%s\")" script-name)))
+  (when (ojs-configuration-ok)
+    (fi:eval-in-lisp (format "(jvs::lock-status \"%s\")" script-name))))
 
 (defun do-lock-file (kind)
   ;; find the script name
-  (let* ((script-name      (or (get-script-name)
-			       (file-name-base (buffer-file-name))))
-	 (status           (lock-status script-name))
-	 (user             (user-login-name)))
-    (case kind
-      (:lock
-       (cond ((string-equal status "NOT-LOCKED")
-	      (fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::lock-file-by-name \"%s\"))" user script-name))
-	      (message "File locked"))
-	     ((string-equal status "LOCKED-BY-YOURSELF")
-	      (message "File already locked by yourself"))
-	     ((stringp status)
-	      (message "File locked by %s" status))
-	     (t
-	      (message "Err: Unable to lock file"))))
-      (:unlock
-       (cond ((or (string-equal status "LOCKED-BY-YOURSELF")
-		  (string-equal status user))
-	      (fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::unlock-file-by-name \"%s\"))" user script-name))
-	      (message "File unlocked"))
-	     ((string-equal status "NOT-LOCKED")
-	      (message "File already unlocked"))
-	     ((stringp status)
-	      (message "File locked by %s" status))
-	     (t
-	      (message "Err: Unable to lock file")))))))
+  (when (ojs-configuration-ok)
+    (let* ((script-name      (or (get-script-name)
+				 (file-name-base (buffer-file-name))))
+	   (status           (lock-status script-name))
+	   (user             (user-login-name)))
+      (case kind
+	(:lock
+	 (cond ((string-equal status "NOT-LOCKED")
+		(fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::lock-file-by-name \"%s\"))" user script-name))
+		(message "File locked"))
+	       ((string-equal status "LOCKED-BY-YOURSELF")
+		(message "File already locked by yourself"))
+	       ((stringp status)
+		(message "File locked by %s" status))
+	       (t
+		(message "Err: Unable to lock file"))))
+	(:unlock
+	 (cond ((or (string-equal status "LOCKED-BY-YOURSELF")
+		    (string-equal status user))
+		(fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::unlock-file-by-name \"%s\"))" user script-name))
+		(message "File unlocked"))
+	       ((string-equal status "NOT-LOCKED")
+		(message "File already unlocked"))
+	       ((stringp status)
+		(message "File locked by %s" status))
+	       (t
+		(message "Err: Unable to lock file"))))))))
 
 (defun lock-file()
   (interactive)
@@ -344,60 +346,61 @@
 
 (defun do-compile-and-sync-ojs-file (type)
   ;; find the script name
-  (let* ((script-name      (file-name-base (buffer-file-name)))
-	 (script           (or (when (fi::lep-open-connection-p) (fi:eval-in-lisp (format "(when (fboundp 'jvs::find-script)(jvs::find-script \"%s\"))" script-name)))
-			       ;; try to get a comment //PLWSCRIPT :
-			       (save-excursion
-				 (goto-char (point-min))
-				 (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
-				   (match-string-no-properties 1)))))
-	 (buffer-name *ojs-compilation-buffer-name*)
-	 (buffer (or (get-buffer buffer-name)
-		     (get-buffer-create buffer-name)))
-	 (proc (get-buffer-process buffer))
-	 (js-mode major-mode)
-	 )
-    (setq *compiled-script-window* (selected-window))
-    (if (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
-	(catch 'exit
-	  ;; checks that the file matches
-	  (unless (check-script-path script (buffer-file-name))
-	    (message "Impossible to %s the script because the current file does not match script source file :
+  (when (ojs-configuration-ok)
+    (let* ((script-name      (file-name-base (buffer-file-name)))
+	   (script           (or (when (ojs-configuration-ok) (fi:eval-in-lisp (format "(jvs::find-script \"%s\")" script-name)))
+				 ;; try to get a comment //PLWSCRIPT :
+				 (save-excursion
+				   (goto-char (point-min))
+				   (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
+				     (match-string-no-properties 1)))))
+	   (buffer-name *ojs-compilation-buffer-name*)
+	   (buffer (or (get-buffer buffer-name)
+		       (get-buffer-create buffer-name)))
+	   (proc (get-buffer-process buffer))
+	   (js-mode major-mode)
+	   )
+      (setq *compiled-script-window* (selected-window))
+      (if (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
+	  (catch 'exit
+	    ;; checks that the file matches
+	    (unless (check-script-path script (buffer-file-name))
+	      (message "Impossible to %s the script because the current file does not match script source file :
      Current file is                : %s
      Source file in the database is : %s"
-				      (if (eq type :compile) "compile" "synchronize")
-				      (buffer-file-name)
-				      (fi:eval-in-lisp (format "(jvs::javascript-synchronize-with-file (object::get-object 'jvs::javascript \"%s\"))" script))
-				      )
-	    (throw 'exit nil))
-	  ;; check that our file is commited
-	  (when (and (eq type :compile-and-sync)
-		     (equal (fi:eval-in-lisp (format "(jvs::javascript-local-file-up-to-date \"%s\")" script)) "LOCALLY-MODIFIED"))
-	    (unless (y-or-n-p "File is not commited, do you really want to synchronize it in the database ?")
-	      (throw 'exit nil)))
-	  (save-buffer)
-	  (switch-to-buffer-other-window buffer-name t)
-	  ;; we erase previous content
-	  (erase-buffer)
-	  ;; run a new listener if needed
-	  (unless proc
-	    (setq proc
+		       (if (eq type :compile) "compile" "synchronize")
+		       (buffer-file-name)
+		       (fi:eval-in-lisp (format "(jvs::javascript-synchronize-with-file (object::get-object 'jvs::javascript \"%s\"))" script))
+		       )
+	      (throw 'exit nil))
+	    ;; check that our file is commited
+	    (when (and (eq type :compile-and-sync)
+		       (equal (fi:eval-in-lisp (format "(jvs::javascript-local-file-up-to-date \"%s\")" script)) "LOCALLY-MODIFIED"))
+	      (unless (y-or-n-p "File is not commited, do you really want to synchronize it in the database ?")
+		(throw 'exit nil)))
+	    (save-buffer)
+	    (switch-to-buffer-other-window buffer-name t)
+	    ;; we erase previous content
+	    (erase-buffer)
+	    ;; run a new listener if needed
+	    (unless proc
+	      (setq proc
 		    (fi:open-lisp-listener
 		     -1
 		     *ojs-compilation-buffer-name*))
-	    (set-process-query-on-exit-flag (get-process buffer-name) nil))
-	  (set-process-filter proc 'ojs-compilation-filter)
-	  ;; reset vars as needed
-	  (js-reset-vars (if (eq js-mode 'pjs-mode) 'pjs-compile 'ojs-compile))
-	  (cond ((eq type :compile)
-		 (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")\n" script))
-		 )
-		((eq type :compile-and-sync)
-		 ;; check that the file is correct 		   
-		 (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")\n" script))
-		 ))
-	  )
-      (message "Script %s not found" script-name))))
+	      (set-process-query-on-exit-flag (get-process buffer-name) nil))
+	    (set-process-filter proc 'ojs-compilation-filter)
+	    ;; reset vars as needed
+	    (js-reset-vars (if (eq js-mode 'pjs-mode) 'pjs-compile 'ojs-compile))
+	    (cond ((eq type :compile)
+		   (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")\n" script))
+		   )
+		  ((eq type :compile-and-sync)
+		   ;; check that the file is correct 		   
+		   (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")\n" script))
+		   ))
+	    )
+	(message "Script %s not found" script-name)))))
 
 (defun generate-search-string (strings)
   (cond ((= (length strings) 1) (format "function\\s-+%s\\s-*([[:word:]_, ]*)" (downcase (car strings))))

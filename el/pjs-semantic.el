@@ -164,9 +164,9 @@ the semantic cache to see what needs to be changed."
 
 (defun pjs-semantic-parse-list (list &optional nonterminal depth returnonerror)
   ;; list is a list of start / end coordinates in the buffer
-  (when (fi::lep-open-connection-p)
+  (when (pjs-configuration-ok)
     (let ((context 10)
-	  (ltags (fi:eval-in-lisp "(when (fboundp 'jvs::semantics-generate-tags-for-list) (jvs::semantics-generate-tags-for-list '%S))"
+	  (ltags (fi:eval-in-lisp "(jvs::semantics-generate-tags-for-list '%S)"
 				  (mapcar #'(lambda (l)
 					      (buffer-substring-no-properties (car l) (second l)))
 					  list)))

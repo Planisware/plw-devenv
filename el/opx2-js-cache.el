@@ -71,6 +71,25 @@
 ;;;;  (header added automatically)
 ;;;;
 
+;; required patches
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar *ojs-required-fixes* '(("sc8567" "3.41")
+			       ))
+
+(defvar-resetable *ojs-configuration-status* nil 'ojs-reset)
+
+;; check that we have the proper configuration
+(defun ojs-configuration-ok ()
+  (unless *ojs-configuration-status*
+    (setq *ojs-configuration-status*
+	  (check-fixes-configuration *ojs-required-fixes*)))
+  (cond ((and (eq *ojs-configuration-status* :ok)
+	      (fi::lep-open-connection-p))
+	 t)
+	(t
+	 nil)))
+
 ;;;;; global cache for function and methods definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

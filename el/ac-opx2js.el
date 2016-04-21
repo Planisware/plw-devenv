@@ -172,8 +172,8 @@
 
 (defun ojs-classes-ac-init ()
   (or *ojs-classes-candidates-cache*
-      (setq *ojs-classes-candidates-cache* (when (fi::lep-open-connection-p) 
-					     (fi:eval-in-lisp "(when (fboundp 'jvs::list-all-js-classes) (jvs::list-all-js-classes \"[Oo][Pp][Xx][^0-9].*$\"))")))))  
+      (setq *ojs-classes-candidates-cache* (when (pjs-configuration-ok) 
+					     (fi:eval-in-lisp "(jvs::list-all-js-classes \"[Oo][Pp][Xx][^0-9].*$\")")))))  
 
 ;;; generic ojs dictionary 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -207,10 +207,10 @@
 (defun ojs-kernel-ac-init ()
   ;; on récupère les symboles
   (or *ojs-kernel-candidates-cache*
-      (setq *ojs-kernel-candidates-cache* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(when (fboundp 'jvs::list-js-functions)(jvs::list-all-js-functions))"))))
+      (setq *ojs-kernel-candidates-cache* (when (ojs-configuration-ok) (fi:eval-in-lisp "(jvs::list-all-js-functions)"))))
   ;; on set les documents strings
   (or *ojs-kernel-documents-cache*
-      (setq *ojs-kernel-documents-cache* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(when (fboundp 'jvs::list-js-docs)(jvs::list-js-docs))")))))
+      (setq *ojs-kernel-documents-cache* (when (ojs-configuration-ok) (fi:eval-in-lisp "(jvs::list-js-docs)")))))
   
 (defun ojs-kernel-ac-candidates ()
   *ojs-kernel-candidates-cache*

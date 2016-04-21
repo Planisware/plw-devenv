@@ -285,27 +285,29 @@
     (setq *pjs-buffers-class-members-cache* (make-hash-table :test 'equal)))
   (unless (hash-table-p *pjs-buffers-class-members-cache-regexp*)
     (setq *pjs-buffers-class-members-cache-regexp* (make-hash-table :test 'equal)))
-  (let (list
-	(ht (make-hash-table :test 'equal))
-	(type (downcase (format "%s.%s" namespace class-name))))
-    (dolist (item (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-pjs-class-members) (jvs::get-pjs-class-members \"%s\" \"%s\"))" namespace class-name)))
-;;    (dolist (item (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-pjs-class-members) (jvs::get-pjs-class-members \"%s\" \"%s\"))" class-name namespace)))
-      (puthash (car item) (second item) ht)
-      (push (car item) list))
-    (puthash type ht *pjs-buffers-class-members-cache*)
-    (puthash type (js--regexp-opt-symbol list) *pjs-buffers-class-members-cache-regexp*)
-    (if regexp
-	list
-      ht)))
+  (when (pjs-configuration-ok)
+    (let (list
+	  (ht (make-hash-table :test 'equal))
+	  (type (downcase (format "%s.%s" namespace class-name))))    
+      (dolist (item (fi:eval-in-lisp (format "(jvs::get-pjs-class-members \"%s\" \"%s\")" namespace class-name)))
+	;;    (dolist (item (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-pjs-class-members) (jvs::get-pjs-class-members \"%s\" \"%s\"))" class-name namespace)))
+	(puthash (car item) (second item) ht)
+	(push (car item) list))
+      (puthash type ht *pjs-buffers-class-members-cache*)
+      (puthash type (js--regexp-opt-symbol list) *pjs-buffers-class-members-cache-regexp*)
+      (if regexp
+	  list
+	ht))))
 
 (defun pjs-class-methods (namespace class-name)
   (unless (hash-table-p *pjs-buffers-class-methods-cache*)
     (setq *pjs-buffers-class-methods-cache* (make-hash-table :test 'equal)))
-  (let ((type (downcase (format "%s.%s" namespace class-name))))
-    (or (gethash type *pjs-buffers-class-methods-cache*)
-	(puthash type (loop for item in (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-method-for-js-class) (jvs::get-method-for-js-class \"%s\" \"%s\"))" class-name namespace))
-			    collect (downcase item))
-		 *pjs-buffers-class-methods-cache*))))
+  (when (pjs-configuration-ok)
+    (let ((type (downcase (format "%s.%s" namespace class-name))))
+      (or (gethash type *pjs-buffers-class-methods-cache*)
+	  (puthash type (loop for item in (fi:eval-in-lisp (format "(jvs::get-method-for-js-class \"%s\" \"%s\")" class-name namespace))
+			      collect (downcase item))
+		   *pjs-buffers-class-methods-cache*)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight namespace functions (current and other namespaces) 

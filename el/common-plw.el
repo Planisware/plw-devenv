@@ -145,3 +145,14 @@
 	(unless (eq char c)
 	  (throw 'ret nil)))))))
 
+(defun check-fixes-configuration (fixes-list)
+  (catch 'exit
+    (dolist (fix *pjs-required-fixes* t)
+      (cond ((consp fix)
+	     (when (fi::lep-open-connection-p)
+	       (unless (fi:eval-in-lisp "(let ((fix (object::get-object 'object::fix \"%s\"))) (if (and fix (or (string= (object::fix-version fix) \"$%s\$\") (object::version>= (object::fix-version fix) \"%s\"))) t nil))" (car fix) "Revision" (second fix))
+		 (throw 'exit nil))))
+	    ((stringp fix)
+	     (when (fi::ensure-lep-connection)
+	       (unless (fi:eval-in-lisp "(let ((fix (object::get-object 'object::fix \"%s\"))) (if fix t nil))" fix)
+		 (throw 'exit nil))))))))
