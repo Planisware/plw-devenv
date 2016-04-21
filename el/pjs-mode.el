@@ -256,6 +256,7 @@
 (defun pjs-reset-cache-on-reset ()
   (interactive)
   (js-reset-vars 'pjs-reset)
+  (js-reset-vars 'ojs-reset)
   (save-buffer)
   (find-alternate-file (buffer-file-name)))
 
