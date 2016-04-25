@@ -154,7 +154,7 @@
 		 (message "Fix %s version %s not found, some functionalities have been disabled." (car fix) (second fix))
 		 (throw 'exit nil))))
 	    ((stringp fix)
-	     (when (fi::ensure-lep-connection)
+	     (when (fi::lep-open-connection-p)
 	       (unless (fi:eval-in-lisp "(let ((fix (object::get-object 'object::fix \"%s\"))) (if fix t nil))" fix)
 		 (message "Fix %s not found, some functionalities have been disabled." fix)
 		 (throw 'exit nil))))))))
