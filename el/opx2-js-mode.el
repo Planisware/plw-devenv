@@ -591,6 +591,7 @@
   (define-key *ojs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
   (define-key *ojs-mode-map* "\C-ch" 'open-ojs-documentation)
+  (define-key *ojs-mode-map* "\C-cR" 'ojs-reset-cache-on-reset)
 
   (define-key *ojs-mode-map* "\C-cl" 'lock-file)
   (define-key *ojs-mode-map* "\C-cu" 'unlock-file)
@@ -621,6 +622,8 @@
       ["Trace/Untrace function..." trace-ojs-function
        t]
       ["OPX2 javascript documentation"  'open-ojs-documentation
+       t]
+      ["Reset syntax caches" ojs-reset-cache-on-reset
        t]
       ))
 
