@@ -61,7 +61,7 @@
 ;;    (modify-syntax-entry ?_ "_" table)
     (modify-syntax-entry ?: "_" table)
     (modify-syntax-entry ?- "_" table)
-    (modify-syntax-entry ?# "'" table)
+    (modify-syntax-entry ?# "'q" table)
     (modify-syntax-entry ?@ "'" table)
     table)
   "Syntax table used in JavaScript mode.")
@@ -275,6 +275,9 @@
   (c-init-language-vars-for 'c-mode)
   (c-common-init 'c-mode)
 
+  ;; don't trust properties
+  (setq parse-sexp-lookup-properties nil)
+  
   ;; set up syntax hightlighting
   (setup-pjs-syntax-highlighting)
 
