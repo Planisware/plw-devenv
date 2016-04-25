@@ -61,6 +61,8 @@
 ;;    (modify-syntax-entry ?_ "_" table)
     (modify-syntax-entry ?: "_" table)
     (modify-syntax-entry ?- "_" table)
+    (modify-syntax-entry ?# "'" table)
+    (modify-syntax-entry ?@ "'" table)
     table)
   "Syntax table used in JavaScript mode.")
 
@@ -287,6 +289,7 @@
   (define-key *pjs-mode-map* "\C-cs" 'save-and-compile-pjs-file)
   (define-key *pjs-mode-map* "\C-ct" 'trace-pjs-function)
   (define-key *pjs-mode-map* "\C-cR" 'pjs-reset-cache-on-reset)
+  (define-key *pjs-mode-map* "\C-ch" 'open-ojs-documentation)
 
   (define-key *pjs-mode-map* "\C-cl" 'lock-file)
   (define-key *pjs-mode-map* "\C-cu" 'unlock-file)
@@ -315,6 +318,8 @@
       ["Find function definition..." %pjs-find-definition
        t]
       ["Trace/Untrace function..." trace-pjs-function
+       t]
+      ["Planisware javascript documentation"  'open-ojs-documentation
        t]
       ["Reset syntax caches" pjs-reset-cache-on-reset
        t]
