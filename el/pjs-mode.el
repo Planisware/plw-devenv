@@ -259,8 +259,9 @@
   (interactive)
   (js-reset-vars 'pjs-reset)
   (js-reset-vars 'ojs-reset)
-  (save-buffer)
-  (find-alternate-file (buffer-file-name)))
+  (when (buffer-file-name)
+    (save-buffer)
+    (plw-refresh-file-buffer (buffer-file-name))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mode definition

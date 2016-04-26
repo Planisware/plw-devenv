@@ -564,6 +564,14 @@
       (when filename
 	(browse-url-of-file filename)))))
 
+(defun ojs-reset-cache-on-reset ()
+  (interactive)
+  (js-reset-vars 'ojs-reset)
+  (when (buffer-file-name)
+    (save-buffer)
+    (plw-refresh-file-buffer (buffer-file-name))))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mode definition
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
