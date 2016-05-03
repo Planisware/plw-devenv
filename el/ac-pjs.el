@@ -211,7 +211,8 @@
   (add-to-list 'ac-sources 'ac-source-pjs-local-vars)
   (add-to-list 'ac-sources 'ac-source-pjs-variable-members)
   (add-to-list 'ac-sources 'ac-source-pjs-classes)
- 
+  (add-to-list 'ac-sources 'ac-source-ojs-kernel)
+  
   ;; (add-to-list 'ac-sources 'ac-source-ojs-vars)
   ;; (add-to-list 'ac-sources 'ac-source-ojs-kernel)
   ;; (add-to-list 'ac-sources 'ac-source-ojs-dictionary)
