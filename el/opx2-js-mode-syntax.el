@@ -312,54 +312,51 @@
 
 (defvar *use-real-search* t)
 
+(defun re-search-forward-with-test (regexp test limit errorp)
+  (%re-search-with-test 're-search-forward regexp test limit errorp))
+
+(defun re-search-backward-with-test (regexp test limit errorp)
+  (%re-search-with-test 're-search-backward regexp test limit errorp))
+
+(defun %re-search-with-test (search-function regexp test limit errorp)
+  (let ((original-match-data (match-data))
+	(case-fold-search t) ;; case insensitive search
+	(orig-point (point))
+	(last-point (point))
+	;; do a first search
+	(found-point (funcall search-function regexp limit errorp)))	
+    ;; checks that we are moving to avoid loops
+    (while (and found-point
+		(not (equal (point) last-point))
+		(not (funcall test)))
+      (message "pouet")
+      (setq last-point found-point)
+      (setq found-point (funcall search-function regexp limit errorp)))
+    (if found-point
+	found-point
+      ;; reset everything
+      (progn (goto-char orig-point)
+	     (set-match-data original-match-data)
+	     nil))))
+
 ;; like re-real-search-backward but searches text that is not
 ;; inside comments or strings
 (defun re-real-search-backward (regexp limit errorp)
   (if *use-real-search*
-      (let ((original-match-data (match-data))
-	    (case-fold-search t) ;; case insensitive search
-	    (orig-point (point))
-	    (last-point (point))
-	    ;; do a first search
-	    (found-point (re-search-backward regexp limit errorp)))	
-	;; checks that we are moving to avoid loops
-	(while (and found-point
-		    (< (point) last-point)
-		    (or (er--point-is-in-comment-p)
-			(er--point-is-in-string-p)))
-	  (setq last-point found-point)
-	  (setq found-point (re-search-backward regexp limit errorp)))
-	(if found-point
-	    found-point
-	  ;; reset everything
-	  (progn (goto-char orig-point)
-		 (set-match-data original-match-data)
-		 nil)))
+      (re-search-backward-with-test regexp
+				    (lambda () (not (or (er--point-is-in-comment-p)
+							(er--point-is-in-string-p))))
+				    limit errorp)
     (re-search-backward regexp limit errorp)))
 
 ;; like re-search-forward but searches text that is not
 ;; inside comments or strings
 (defun re-real-search-forward (regexp limit errorp)
   (if *use-real-search*
-      (let ((original-match-data (match-data))
-	    (case-fold-search t) ;; case insensitive search
-	    (orig-point (point))
-	    (last-point (point))
-	    ;; do a first search
-	    (found-point (re-search-forward regexp limit errorp)))
-	;; checks that we are moving to avoid loops
-	(while (and found-point
-		    (> (point) last-point)
-		    (or (er--point-is-in-comment-p)
-			(er--point-is-in-string-p)))
-	  (setq last-point found-point)
-	  (setq found-point (re-search-forward regexp limit errorp)))
-	(if found-point
-	    found-point
-	  ;; reset everything
-	  (progn (goto-char orig-point)
-		 (set-match-data original-match-data)
-		 nil)))
+      (re-search-forward-with-test regexp
+				    (lambda () (not (or (er--point-is-in-comment-p)
+							(er--point-is-in-string-p))))
+				    limit errorp)
     (re-search-forward regexp limit errorp)))
 
 (defun function-boundaries ()
