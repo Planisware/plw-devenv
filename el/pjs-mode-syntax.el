@@ -53,6 +53,13 @@
 ;;;;  (header added automatically)
 ;;;;
 
+(defun pjs--regexp-opt-symbol (list &optional prefix)
+  "Like `regexp-opt', but surround the result with `\\\\_<' and `\\\\_>'."
+  (cond ((stringp prefix)
+	 (concat prefix "\\_<" (regexp-opt list) "\\_>"))
+	(t
+	 (concat "\\_<" (regexp-opt list) "\\_>"))))
+
 (defvar *pjs-font-lock-debug* nil)
 
 ;;; FACES ;;;
@@ -98,11 +105,9 @@
 
 ;; symbols : light blue
 
-
-
 ;; constants
 (defconst pjs-font-lock-constants
-  (js--regexp-opt-symbol
+  (pjs--regexp-opt-symbol
    '("this"
      "super"
      "context"
@@ -113,7 +118,7 @@
 
 ;; languages keywords
 (defconst pjs-font-lock-keywords
-  (js--regexp-opt-symbol
+  (pjs--regexp-opt-symbol
    '("order by"
      "default"
      "on"
@@ -152,22 +157,8 @@
      "new"
      "return values")))
 
-;; pjs types
-(defconst pjs-font-lock-types
-  (js--regexp-opt-symbol
-   '(
-     "int32"
-     "int"
-     "longfloat"
-     "shortfloat"
-     "string"
-     "vector"
-     "boolean"
-     "hashtable"
-     )))
-
 (defconst *pjs-function-qualifiers*
-  (js--regexp-opt-symbol
+  (pjs--regexp-opt-symbol
    '("wrappable" "cached")))
 
 (defconst *pjs-function-keyword*
@@ -238,6 +229,15 @@
 (defconst *pjs-symbols*
   "#[[:alnum:]-_:.]+#")
 
+;; match a regexp and check that the character before is not a dot
+;; usefull to match language words but not those used as a member or var name
+(defun pjs-match-constant (regexp end)  
+  (when (re-search-forward regexp end t)
+    (if (save-excursion (backward-word)
+			(not (fast-looking-back ".")))
+	(point)
+      (set-match-data nil))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; class members/methods
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -294,7 +294,7 @@
 	(puthash (car item) (second item) ht)
 	(push (car item) list))
       (puthash type ht *pjs-buffers-class-members-cache*)
-      (puthash type (js--regexp-opt-symbol list) *pjs-buffers-class-members-cache-regexp*)
+      (puthash type (pjs--regexp-opt-symbol list) *pjs-buffers-class-members-cache-regexp*)
       (if regexp
 	  list
 	ht))))
@@ -411,13 +411,13 @@
   (when (pjs-configuration-ok)
     (dolist (ns (fi:eval-in-lisp "(jvs::get-all-namespace-members)"))
       (push (car ns) *pjs-namespace-list-cache*)      
-      (puthash (car ns) (js--regexp-opt-symbol (mapcar 'car (car (cdr ns))))  *pjs-namespace-variables-regexp-cache*)
-      (puthash (car ns) (js--regexp-opt-symbol (mapcar 'car (second (cdr ns)))) *pjs-namespace-functions-regexp-cache*)
-      (puthash (car ns) (js--regexp-opt-symbol (mapcar 'car (third (cdr ns))))  *pjs-namespace-classes-regexp-cache*)
+      (puthash (car ns) (pjs--regexp-opt-symbol (mapcar 'car (car (cdr ns))))  *pjs-namespace-variables-regexp-cache*)
+      (puthash (car ns) (pjs--regexp-opt-symbol (mapcar 'car (second (cdr ns)))) *pjs-namespace-functions-regexp-cache*)
+      (puthash (car ns) (pjs--regexp-opt-symbol (mapcar 'car (third (cdr ns))))  *pjs-namespace-classes-regexp-cache*)
       (puthash (car ns) (car (cdr ns))    *pjs-namespace-variables-cache*)
       (puthash (car ns) (second (cdr ns)) *pjs-namespace-functions-cache*)
       (puthash (car ns) (third (cdr ns))  *pjs-namespace-classes-cache*))
-    (setq *pjs-namespace-list-regexp-cache* (js--regexp-opt-symbol *pjs-namespace-list-cache*))))
+    (setq *pjs-namespace-list-regexp-cache* (pjs--regexp-opt-symbol *pjs-namespace-list-cache*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; local vars based on grammar
@@ -451,9 +451,9 @@
 			       (or (pjs-start-of-next-block current-tag)
 				   (semantic-tag-end current-tag)))))
 ;;		 (message "local-vars %s" local-vars)
-		 (cond ((re-search-forward (js--regexp-opt-symbol (mapcar 'car local-vars)) end t)
+		 (cond ((re-search-forward (pjs--regexp-opt-symbol (mapcar 'car local-vars)) end t)
 			(if (save-excursion (backward-word)
-					    (not (fast-looking-back "plc.")))
+					    (not (fast-looking-back ".")))
 			    (throw 'exit (point))
 			  (set-match-data nil)))
 		       (t
@@ -472,7 +472,7 @@
   (cond (*pjs-kernel-functions-cache*
 	 *pjs-kernel-functions-cache*)
 	((pjs-configuration-ok)
-	 (setq *pjs-kernel-functions-cache* (format "\\(\\(?:plw\\)?\\.%s\\)\\s-*(" (js--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions t)"))))))
+	 (setq *pjs-kernel-functions-cache* (format "\\(\\(?:plw\\)?\\.%s\\)\\s-*(" (pjs--regexp-opt-symbol (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions t)"))))))
 	(t
 	 nil)))
 
@@ -502,7 +502,7 @@
 	 (functions-list (mapcar 'car functions-list-of-cons))
 	 regexp-list)
     (dolist (sublist (partition-list functions-list *regexp-elements-limit*)) 
-      (push (format "plc\\.%s" (js--regexp-opt-symbol sublist)) regexp-list))
+      (push (pjs--regexp-opt-symbol sublist "plc\\.") regexp-list))
     (setq *pjs-plc-types-cache-regexp* regexp-list)
     (setq *pjs-plc-types-cache* functions-list)
     (if (hash-table-p *pjs-plc-types-to-kernel-cache*)
@@ -553,8 +553,8 @@
 ;; highlight "plw" types 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar *pjs-plw-types-cache* nil)
-(defvar *pjs-plw-types-cache-regexp* nil)
+(defvar-resetable *pjs-plw-types-cache* nil 'pjs-reset)
+(defvar-resetable *pjs-plw-types-cache-regexp* nil 'pjs-reset)
 
 ;;(defvar *regexp-elements-limit* 1000)
 
@@ -563,7 +563,8 @@
 	 (functions-list functions-list-of-cons)
 	 regexp-list)
     (dolist (sublist (partition-list functions-list *regexp-elements-limit*)) 
-      (push (format "\\(plw\\.\\)?%s" (replace-regexp-in-string "-" "_?" (js--regexp-opt-symbol sublist))) regexp-list))
+      ;;      (push (format "\\(plw\\.\\|[^.]\\)%s" (replace-regexp-in-string "-" "_?" (pjs--regexp-opt-symbol sublist))) regexp-list))
+      (push (replace-regexp-in-string "-" "_?" (pjs--regexp-opt-symbol sublist "\\(plw\\.\\|[^.]\\)")) regexp-list))
     (setq *pjs-plw-types-cache-regexp* regexp-list)
     (setq *pjs-plw-types-cache* functions-list)))
 
@@ -724,9 +725,10 @@
   (push (cons 'search-pjs-namespace-functions font-lock-function-name-face) font-locks)
   
   ;; keywords
-  (push (cons pjs-font-lock-keywords font-lock-keyword-face) font-locks)
+  (push (cons (lambda (end) (pjs-match-constant pjs-font-lock-keywords end)) font-lock-keyword-face) font-locks)
+  
   ;; constants
-  (push (cons pjs-font-lock-constants font-lock-constant-face) font-locks)
+  (push (cons (lambda (end) (pjs-match-constant pjs-font-lock-constants end)) font-lock-constant-face) font-locks)
   
   ;; Variables in the function 
   ;;  (push (cons 'search-function-local-vars font-lock-variable-name-face) font-locks)
