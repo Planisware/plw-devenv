@@ -329,7 +329,6 @@
     (while (and found-point
 		(not (equal (point) last-point))
 		(not (funcall test)))
-      (message "pouet")
       (setq last-point found-point)
       (setq found-point (funcall search-function regexp limit errorp)))
     (if found-point
