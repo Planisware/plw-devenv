@@ -402,7 +402,7 @@
   ;; the jit-lock-register function prepared a nice cache for us
   (let ((context (get-local-function-environment))
 	res)
-    (when context
+    (when (hash-table-p context)
       (maphash '(lambda (k v)
 		  (if list-of-cons
 		      (push (cons k (car v)) res)
