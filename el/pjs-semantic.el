@@ -66,8 +66,6 @@
     (reverse res)))		 
 
 (setq semantic-edits-verbose-flag nil)
-  
-(defvar-local *semantic-parse-cache* nil)
 
 ;;(defconst *pjs-start-block-regexp* (format "^\\s-*\\(\\(function\\|method\\)\\s-+\\<%s\\>\\s-*(.*)\\|class\\s-+\\<%s\\>\\)\\s-*{" *js-function-name* *js-function-name*))
 ;; try the "lazy" version first
