@@ -231,12 +231,12 @@
 
 ;; match a regexp and check that the character before is not a dot
 ;; usefull to match language words but not those used as a member or var name
-(defun pjs-match-constant (regexp end)  
-  (when (re-search-forward regexp end t)
-    (if (save-excursion (backward-word)
-			(not (fast-looking-back ".")))
-	(point)
-      (set-match-data nil))))
+(defun pjs-match-constant (regexp end)
+  (re-search-forward-with-test regexp
+			       (lambda ()
+				 (save-excursion (backward-word)
+						 (not (fast-looking-back "."))))
+			       end t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; class members/methods
