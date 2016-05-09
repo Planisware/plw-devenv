@@ -155,7 +155,20 @@
 			      (format "%s.%s" (car type) (cdr type)))))
 		   ((fast-looking-back ".")
 		    word)
-;;		    (format "plw.%s" word))
+		   ;;		    (format "plw.%s" word))
+		   ;; method definition
+		   ((save-excursion
+		      (beginning-of-line)
+		      (re-search-forward *pjs-method-heading* (line-end-position) t))
+		    (setq type (convert-pjs-type (match-string-no-properties 3)))
+		    (format "method.%s.%s"
+			    (match-string-no-properties 1)
+			    (if (or (string= (car type) "plc")
+				    (string= (car type) "plw"))
+				(or (and (list-pjs-plc-types-to-kernel)
+					 (gethash (cdr type) (list-pjs-plc-types-to-kernel)))
+				    (cdr type))
+			      (format "%s.%s" (car type) (cdr type)))))
 		   (t
 		    (format "%s.%s" (pjs-current-namespace) word))))))))
 
@@ -342,7 +355,9 @@
   (add-hook 'find-file-hook 'pjs-reset-cache-on-compile nil t)
 
   ;; activete some semantic modes
-  (global-semantic-mru-bookmark-mode 1)  
+  (global-semantic-mru-bookmark-mode 1)
+
+  (setq semantic-idle-scheduler-idle-time 10)
   )
 
 ;; autocomplete
