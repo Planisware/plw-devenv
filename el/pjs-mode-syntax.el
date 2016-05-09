@@ -607,18 +607,19 @@
       (gethash varname ht))))
 
 (defun convert-pjs-type (type)
-  (cond ((null type)
-	 nil)
-	((consp type)
-	 type)
-	((member type *pjs-standard-types*)
-	 (cons "plw" type))
-	(t
-	 (let ((strings (split-string type "\\.")))
-	   (cond ((= (length strings) 1)
-		  (cons (pjs-current-namespace) (car strings)))
-		 (t
-		  (cons (car strings) (second strings))))))))
+  (save-match-data
+    (cond ((null type)
+	   nil)
+	  ((consp type)
+	   type)
+	  ((member type *pjs-standard-types*)
+	   (cons "plw" type))
+	  (t
+	   (let ((strings (split-string type "\\.")))
+	     (cond ((= (length strings) 1)
+		    (cons (pjs-current-namespace) (car strings)))
+		   (t
+		    (cons (car strings) (second strings)))))))))
 
 ;; get the variable type from context :
 ;; if the variable is local to the function, search a var <type> varname =
