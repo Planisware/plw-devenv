@@ -31,7 +31,10 @@
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log$
+
+;;;; Revision 3.10  2016/03/21 13:21:50  troche
+;;;; * merge from git
+;;;;
 ;;;; Revision 3.9  2015/11/06 10:23:33  troche
 ;;;; * proper lisp completion when you start with a package
 ;;;;
@@ -81,6 +84,8 @@
     (match . alisp-ac-match)
     (requires . -1)))
 
+(defvar *packages-to-ignore* '("MODULE" "CL-USER" "COMMON-LISP-USER"))
+
 ;; we return everything, because the list we got from the lisp is already filtered
 (defun alisp-ac-match (string list)
   list)
@@ -126,6 +131,16 @@
 	    (insert "::"))
 	  (lisp-arglist-minibuffer full-candidate))))))
 
+(defun ac-candidate-< (c1 c2)
+  (catch 'return
+    (dolist (ignore *packages-to-ignore*)      
+      (cond ((string-prefix-p ignore (cdr c1) t)
+	     (throw 'return nil))
+	    ((string-prefix-p ignore (cdr c2) t)
+	     (throw 'return t))))
+    (string< (cdr c1) (cdr c2))))
+  
+
 ;; see eli/fi-lep.el in allegro lisp install directory
 (defun alisp-functions-ac-candidates ()
   (interactive)
@@ -151,7 +166,7 @@
 	   (functions-only (if (eq (char-after (1- real-beg)) ?\() t nil))
 	   (downcase (and (eq ':upper fi::lisp-case-mode)
 			  (not (fi::all-upper-case-p pattern))))
-	   (xxalist (fi::lisp-complete-1 pattern xpackage functions-only))
+	   (xxalist (sort (fi::lisp-complete-1 pattern xpackage functions-only) 'ac-candidate-<))
 	   temp
 	   (package-override nil)
 	   (xalist

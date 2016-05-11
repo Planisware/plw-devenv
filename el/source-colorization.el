@@ -31,7 +31,10 @@
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
-;;;; $Log$
+
+;;;; Revision 3.11  2016/03/21 13:21:50  troche
+;;;; * merge from git
+;;;;
 ;;;; Revision 3.10  2015/11/05 10:02:21  mgautier
 ;;;; - rewrite thibault change
 ;;;;

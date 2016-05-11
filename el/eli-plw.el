@@ -31,7 +31,10 @@
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
-;;;; $Log$
+
+;;;; Revision 3.13  2016/03/21 13:21:50  troche
+;;;; * merge from git
+;;;;
 ;;;; Revision 3.12  2015/12/07 12:29:45  troche
 ;;;; * debug
 ;;;;
@@ -171,6 +174,10 @@
 
 (put 'doplist 'fi:common-lisp-indent-hook '(like dolist))
 (put 'doplist 'fi:lisp-indent-hook '(like dolist))
+
+(put 'jvs::defun-js2 'fi:common-lisp-indent-hook 3)
+(put 'defun-js2 'fi:common-lisp-indent-hook 3)
+(put 'javascript::defun-js2 'fi:common-lisp-indent-hook 3)
   
 ;;  controversial
 ;;  (put 'if 'fi:common-lisp-indent-hook nil)
@@ -256,7 +263,7 @@
 	      (while (not (looking-at "\\sw\\|\\s_"))
 		(forward-char 1))
 	      (fi::defontify-string
-	       (buffer-substring
+	       (buffer-substring-no-properties
 		(point)
 		(progn (forward-sexp 1)
 		       ;; advance if we have a |
@@ -294,7 +301,7 @@
 		  (if (re-search-backward "\\sw\\|\\s_" nil t)
 		      (progn (forward-char 1)
 			     (fi::defontify-string
-			      (buffer-substring
+			      (buffer-substring-no-properties
 			       (point)
 			       (progn (forward-sexp -1)
 				      (while (looking-at "\\s'")

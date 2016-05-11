@@ -31,7 +31,10 @@
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log$
+
+;;;; Revision 3.30  2016/03/21 13:21:50  troche
+;;;; * merge from git
+;;;;
 ;;;; Revision 3.29  2015/12/18 15:09:12  troche
 ;;;; * go to error when we have a script compilation error
 ;;;;
@@ -159,7 +162,7 @@
 (defun ojs-mode-insert-lcurly-on-ret ()
   (interactive)
   ;; do we have a { at the point ?
-  (if (looking-back "{")
+  (if (fast-looking-back "{")
       (let ((pps (syntax-ppss)))
 	(when (and (not (or (nth 3 pps) (nth 4 pps)))) ;; EOL and not in string or comment
 	  (c-indent-line-or-region)
@@ -246,37 +249,41 @@
 
 (defun check-script-path (script-name file-name)
   ;; checks that the path of the current file matches the one in the database
-  (when (fi::lep-open-connection-p) (fi:eval-in-lisp (format "(when (fboundp 'jvs::compare-javascript-source-file)(jvs::compare-javascript-source-file \"%s\" \"%s\"))" script-name file-name))))
+  (when (ojs-configuration-ok) (fi:eval-in-lisp (format "(jvs::compare-javascript-source-file \"%s\" \"%s\")" script-name file-name))))
 
-(defun lock-status(script)
-  (fi:eval-in-lisp (format "(jvs::lock-status \"%s\")" script-name)))
+(defun lock-status(script-name)
+  (when (ojs-configuration-ok)
+    (fi:eval-in-lisp (format "(jvs::lock-status \"%s\")" script-name))))
 
 (defun do-lock-file (kind)
   ;; find the script name
-  (let* ((script-name      (file-name-base (buffer-file-name)))
-	 (status           (lock-status script-name))
-	 (user             (user-login-name)))
-    (case kind
-      (:lock
-       (cond ((string-equal status "NOT-LOCKED")
-	      (fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::lock-file-by-name \"%s\"))" user script-name))
-	      (message "File locked"))
-	     ((string-equal status "LOCKED-BY-YOURSELF")
-	      (message "File already locked by yourself"))
-	     ((stringp status)
-	      (message "File locked by %s" status))
-	     (t
-	      (message "Err: Unable to lock file"))))
-      (:unlock
-       (cond ((string-equal status "LOCKED-BY-YOURSELF")
-	      (fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::unlock-file-by-name \"%s\"))" user script-name))
-	      (message "File unlocked"))
-	     ((string-equal status "NOT-LOCKED")
-	      (message "File already unlocked"))
-	     ((stringp status)
-	      (message "File locked by %s" status))
-	     (t
-	      (message "Err: Unable to lock file")))))))
+  (when (ojs-configuration-ok)
+    (let* ((script-name      (or (get-script-name)
+				 (file-name-base (buffer-file-name))))
+	   (status           (lock-status script-name))
+	   (user             (user-login-name)))
+      (case kind
+	(:lock
+	 (cond ((string-equal status "NOT-LOCKED")
+		(fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::lock-file-by-name \"%s\"))" user script-name))
+		(message "File locked"))
+	       ((string-equal status "LOCKED-BY-YOURSELF")
+		(message "File already locked by yourself"))
+	       ((stringp status)
+		(message "File locked by %s" status))
+	       (t
+		(message "Err: Unable to lock file"))))
+	(:unlock
+	 (cond ((or (string-equal status "LOCKED-BY-YOURSELF")
+		    (string-equal status user))
+		(fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::unlock-file-by-name \"%s\"))" user script-name))
+		(message "File unlocked"))
+	       ((string-equal status "NOT-LOCKED")
+		(message "File already unlocked"))
+	       ((stringp status)
+		(message "File locked by %s" status))
+	       (t
+		(message "Err: Unable to lock file"))))))))
 
 (defun lock-file()
   (interactive)
@@ -331,41 +338,49 @@
 
 (defvar *compiled-script-window* nil)
 
+(defun get-script-name ()
+  (save-excursion
+    (goto-char (point-min))
+    (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
+      (match-string-no-properties 1))))
+
 (defun do-compile-and-sync-ojs-file (type)
   ;; find the script name
-  (let* ((script-name      (file-name-base (buffer-file-name)))
-	 (script           (or (when (fi::lep-open-connection-p) (fi:eval-in-lisp (format "(when (fboundp 'jvs::find-script)(jvs::find-script \"%s\"))" script-name)))
-			       ;; try to get a comment //PLWSCRIPT :
-			       (save-excursion
-				 (goto-char (point-min))
-				 (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
-				   (match-string 1)))))
-	 (buffer-name *ojs-compilation-buffer-name*)
-	 (buffer (or (get-buffer buffer-name)
-		     (get-buffer-create buffer-name)))
-	 (proc (get-buffer-process buffer))
-	 )
-    (setq *compiled-script-window* (selected-window))
-    (if script
-	(catch 'exit
-	  ;; checks that the file matches
-	  (unless (check-script-path script (buffer-file-name))
-	    (message "Impossible to %s the script because the current file does not match script source file :
+  (when (ojs-configuration-ok)
+    (let* ((script-name      (file-name-base (buffer-file-name)))
+	   (script           (or (when (ojs-configuration-ok) (fi:eval-in-lisp (format "(jvs::find-script \"%s\")" script-name)))
+				 ;; try to get a comment //PLWSCRIPT :
+				 (save-excursion
+				   (goto-char (point-min))
+				   (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
+				     (match-string-no-properties 1)))))
+	   (buffer-name *ojs-compilation-buffer-name*)
+	   (buffer (or (get-buffer buffer-name)
+		       (get-buffer-create buffer-name)))
+	   (proc (get-buffer-process buffer))
+	   (js-mode major-mode)
+	   )
+      (setq *compiled-script-window* (selected-window))
+      (if (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
+	  (catch 'exit
+	    ;; checks that the file matches
+	    (unless (check-script-path script (buffer-file-name))
+	      (message "Impossible to %s the script because the current file does not match script source file :
      Current file is                : %s
      Source file in the database is : %s"
-				      (if (eq type :compile) "compile" "synchronize")
-				      (buffer-file-name)
-				      (fi:eval-in-lisp (format "(jvs::javascript-synchronize-with-file (object::get-object 'jvs::javascript \"%s\"))" script))
-				      )
-	    (throw 'exit nil))
-	  ;; check that our file is commited
-	  (when (and (eq type :compile-and-sync)
-		     (equal (fi:eval-in-lisp (format "(jvs::javascript-local-file-up-to-date \"%s\")" script)) "LOCALLY-MODIFIED"))
-	    (unless (y-or-n-p "File is not commited, do you really want to synchronize it in the database ?")
-	      (throw 'exit nil)))
-	  (save-buffer)
-	  (switch-to-buffer-other-window buffer-name t)
-	  ;; we erase previous content
+		       (if (eq type :compile) "compile" "synchronize")
+		       (buffer-file-name)
+		       (fi:eval-in-lisp (format "(jvs::javascript-synchronize-with-file (object::get-object 'jvs::javascript \"%s\"))" script))
+		       )
+	      (throw 'exit nil))
+	    ;; check that our file is commited
+	    (when (and (eq type :compile-and-sync)
+		       (equal (fi:eval-in-lisp (format "(jvs::javascript-local-file-up-to-date \"%s\")" script)) "LOCALLY-MODIFIED"))
+	      (unless (y-or-n-p "File is not commited, do you really want to synchronize it in the database ?")
+		(throw 'exit nil)))
+	    (save-buffer)
+	    (switch-to-buffer-other-window buffer-name t)
+	    ;; we erase previous content
 	    (erase-buffer)
 	    ;; run a new listener if needed
 	    (unless proc
@@ -375,6 +390,8 @@
 		     *ojs-compilation-buffer-name*))
 	      (set-process-query-on-exit-flag (get-process buffer-name) nil))
 	    (set-process-filter proc 'ojs-compilation-filter)
+	    ;; reset vars as needed
+	    (js-reset-vars (if (eq js-mode 'pjs-mode) 'pjs-compile 'ojs-compile))
 	    (cond ((eq type :compile)
 		   (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")\n" script))
 		   )
@@ -383,7 +400,20 @@
 		   (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")\n" script))
 		   ))
 	    )
-      (message "Script %s not found" script-name))))
+	(message "Script %s not found" script-name)))))
+
+(defun generate-search-string (strings)
+  (cond ((= (length strings) 1) (format "function\\s-+%s\\s-*([[:word:]_, ]*)" (downcase (car strings))))
+	((and (>= (length strings) 4)
+	      (string= (car strings) "method")
+	      (string= (third strings) "on"))
+	 (let* ((dot (position ?. (fourth strings)))
+		(class-name (cond (dot
+				   (format "\\(?:%s\\)?\\.%s" (substring-no-properties (fourth strings) 0 dot)
+					   (substring-no-properties (fourth strings) (1+ dot))))
+				  (t
+				   (fourth strings)))))
+	   (format "method\\s-+%s\\s-+on\\s-+%s\\s-*(.*" (downcase (second strings)) class-name)))))
 
 (defun ojs-compilation-filter (proc string)
   (cond ((and (stringp string)
@@ -401,13 +431,17 @@
 	       (set-window-point *compiled-script-window* (point)))))
 	 (fi::subprocess-filter proc string))
 	((and (stringp string)
-	      (string-match "In (\\([[:word:]_-]+\\)):" string))
-	 (let ((function-name (match-string-no-properties 1 string)))
-	   (with-current-buffer (window-buffer *compiled-script-window*)
-	     (when function-name
-	       (goto-char (point-min))		 
-	       (when (re-real-search-forward (format "function\\s-+%s\\s-*([[:word:]_,]*)" (downcase function-name)) nil t)
-		 (set-window-point *compiled-script-window* (point))))))
+	      (string-match "In \\(\\(.\\|\n\\)*?\\):" string))
+	 (let* ((error-context (match-string-no-properties 1 string))
+		(strings (split-string error-context))
+		(search-string (generate-search-string strings))
+		)
+	   (when (window-buffer *compiled-script-window*)
+	     (with-current-buffer (window-buffer *compiled-script-window*)
+	       (when search-string
+		 (goto-char (point-min))		 
+		 (when (re-real-search-forward search-string nil t)
+		   (set-window-point *compiled-script-window* (point)))))))
 	 (fi::subprocess-filter proc string))
 	((and (stringp string)
 	      (string-match "\\`[[:upper:]-]+([0-9]+): \\'" string)) ;; exit when we go back to the top level (ie :res, :pop, etc)
@@ -415,7 +449,8 @@
 	 )
 	((and (stringp string)
 	      (string-match ":EXIT-JS" string)) ;; exit when we read this, returned by the compilation functions
-	 (insert "----------------------------------------------------------------------------------------------")
+	 (with-current-buffer (get-buffer *ojs-compilation-buffer-name*)
+	   (insert "----------------------------------------------------------------------------------------------"))
 	 (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))	   
 	 ;;(delete-process proc)
 	 )	  
@@ -519,6 +554,24 @@
    (string-match-p "writeln(\"$Id.*\");" str)
    ))
 
+;; Javascript documentation
+
+;;;
+(defun open-ojs-documentation ()
+  (interactive)
+  (when (fi::lep-open-connection-p)
+    (let ((filename (fi:eval-in-lisp "(main::call-script-doc)")))
+      (when filename
+	(browse-url-of-file filename)))))
+
+(defun ojs-reset-cache-on-reset ()
+  (interactive)
+  (js-reset-vars 'ojs-reset)
+  (when (buffer-file-name)
+    (save-buffer)
+    (plw-refresh-file-buffer (buffer-file-name))))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mode definition
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -545,6 +598,8 @@
   (define-key *ojs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
   (define-key *ojs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
+  (define-key *ojs-mode-map* "\C-ch" 'open-ojs-documentation)
+  (define-key *ojs-mode-map* "\C-cR" 'ojs-reset-cache-on-reset)
 
   (define-key *ojs-mode-map* "\C-cl" 'lock-file)
   (define-key *ojs-mode-map* "\C-cu" 'unlock-file)
@@ -574,14 +629,18 @@
        t]
       ["Trace/Untrace function..." trace-ojs-function
        t]
+      ["OPX2 javascript documentation"  'open-ojs-documentation
+       t]
+      ["Reset syntax caches" ojs-reset-cache-on-reset
+       t]
       ))
 
   ;; custom keymap
   (use-local-map *ojs-mode-map*)  
   
   ;; rebuild  function and vars cache on save and when we open a file
-  (add-hook 'after-save-hook 'ojs-reset-cache nil t)
-  (add-hook 'find-file-hook 'ojs-reset-cache nil t)
+  (add-hook 'after-save-hook 'ojs-reset-cache-on-save nil t)
+  (add-hook 'find-file-hook 'ojs-reset-cache-on-save nil t)
 )
 
 ;; kludge : in opx2 script, the first line sets the mode to C++, and we want to avoid that

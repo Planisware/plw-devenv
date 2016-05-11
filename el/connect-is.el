@@ -31,7 +31,10 @@
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log$
+
+;;;; Revision 3.2  2016/03/21 13:21:50  troche
+;;;; * merge from git
+;;;;
 ;;;; Revision 3.1  2014/04/01 14:40:59  folli
 ;;;; Connect to a running IS
 ;;;;  (header added automatically)

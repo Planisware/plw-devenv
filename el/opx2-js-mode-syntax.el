@@ -31,7 +31,10 @@
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log$
+
+;;;; Revision 3.15  2016/03/21 13:21:50  troche
+;;;; * merge from git
+;;;;
 ;;;; Revision 3.13  2015/12/22 15:47:49  troche
 ;;;; * oops
 ;;;;
@@ -76,7 +79,7 @@
 
 (defun js--regexp-opt-symbol (list)
   "Like `regexp-opt', but surround the result with `\\\\_<' and `\\\\_>'."
-  (concat "\\_<" (regexp-opt list t) "\\_>"))
+  (concat "\\_<" (regexp-opt list) "\\_>"))
 
 ;; constants
 (defconst opx2-js-font-lock-constants
@@ -215,7 +218,7 @@
 
 (defun search-buffer-functions (end)
   (let ((search-pattern (ojs-functions-in-buffers-regexp)))
-    (re-real-search-forward search-pattern end t)))
+    (re-search-forward search-pattern end t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight kernel functions 
@@ -225,7 +228,7 @@
 
 (defvar *ojs-kernel-functions-present* t)
 
-(defvar *regexp-elements-limit* 1000)
+(defvar *regexp-elements-limit* 500)
 
 (defun partition-list (list length)
   (loop
@@ -233,7 +236,7 @@
      collect (subseq list 0 (min (length list) length))
      do (setf list (nthcdr (min (length list) length) list))))
 
-(defun list-ojs-kernel-functions ()
+(defun list-ojs-kernel-functions ()  
   (cond (*ojs-kernel-functions-cache*
 	 *ojs-kernel-functions-cache*)
 	(*ojs-kernel-functions-present*
@@ -241,6 +244,7 @@
 	       (let ((functions-list (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-js-functions) t nil)")))
 					    (sort (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-js-functions)")) 'string<)))
 		     regexp-list)
+		 
 		 (dolist (sublist (partition-list functions-list *regexp-elements-limit*))
 		   (push (format "\\(%s\\)" (js--regexp-opt-symbol sublist)) regexp-list))
 		 regexp-list)))
@@ -252,7 +256,7 @@
 	(start (point)))
     (dolist (regexp (list-ojs-kernel-functions))
       (goto-char start)
-      (setq found (or (re-real-search-forward regexp (or found end) t)
+      (setq found (or (re-search-forward regexp (or found end) t)
 		      found)))
     (if (eq found end)
 	nil
@@ -263,69 +267,37 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun search-function-local-vars (end)
-  (search-vars-in-context end 'list-local-vars-in-function))
+  (search-vars-in-context end))
 
 (defun list-local-vars-in-function ()
   (js--regexp-opt-symbol (get-local-vars-for-function nil)))
 
-;; highligh vars in the context of the current function
-(defun search-vars-in-context (end var-list-function)
-;;  ;;(message "Searching %s to %s" (point) end)
-  (let (found last-point)
-    (catch 'exit
-      (while (and (not found)
-		  (< (point) end)
-		  (if (not (equal (point) last-point)) ;; make sure we move to avoid infinite loops
-		      t
-		    (progn (message "We did not move, exit %s" (point))
-			   nil))
-		  
-		  )
-	(setq last-point (point))
-	(cond ((inside-function)
-	       ;;(message "inside function %s" (point))
-	       (let ((end-of-fun (cdr (function-boundaries))))
-		 (cond ((null end-of-fun)
-			;;(message "no end of function, exit")
-			(throw 'exit nil))		       
-		       ((setq found (let ((list (funcall var-list-function)))
-				      (when list
-					(re-real-search-forward list (min end-of-fun end) t))))
-			;; we have found something, we can return
-			;;(message "we found %s at point %s, return" (match-string 1) (point))
-			(throw 'exit found))
-		       ((> end end-of-fun)
-			;; our search goes after the end of the function, move to the end of the function and let the loop do its job		    
-			(goto-char end-of-fun)
-			(forward-char)
-			;;(message "Got to the end of the function %s" (point))
-			)
-		       (t
-			;;(message "Nothing found, exit %s" (point))
-			;; we found nothing, exit nil and the search must stop, exit
-			(throw 'exit nil)))))
-	      ;; we are outside a function, go to the next function
-	      ((goto-start-of-next-function end)
-	       (let ((end-of-fun (cdr (function-boundaries))))
-		 ;;(message "went to start of next function %s" (point))
-		 (cond ((null end-of-fun)
-			;;(message "no enf of function found")
-			(throw 'exit nil))
-		       (t
-			(setq found (let ((list (funcall var-list-function)))
-				      (when list
-					(re-real-search-forward list (min end-of-fun end) t)))))))
-	       ;;(message "->found is %s" found)
-	       )
+(defun search-vars-in-context (end)  
+  ;;  ;;(message "Searching %s to %s" (point) end)
+  (catch 'exit
+    (while (< (point) end)      
+      (let ((context (get-local-function-environment)))
+;;	(search
+	(cond ((numberp context)
+	       (goto-char context))
+	      ((consp context)
+	       (let ((vars          (getf context :vars-regexp))
+		     (end-of-fun    (getf context :end))
+		     (next          (getf context :next)))
+		 ;; search for the function vars in the context
+		 ;; we catch something, return
+		 (when (re-search-forward vars (min end-of-fun end) t)
+		   (throw 'exit (point)))
+		 ;; we didn't find anything, go to next function
+		 ;; or exit if we don't have a next function
+		 (goto-char (or (getf (get-local-function-environment next) :start) 
+				(throw 'exit nil)))))
 	      (t
-	       ;; no next function in our scope, exit
-	       ;;(message "exit nil")
-	       (throw 'exit nil))))
-      found)))
+	       (throw 'exit nil)))))))
 
 ;; script-level and global vars.
 (defun search-global-vars (end)
-  (re-real-search-forward (ojs-vars-in-buffer-regexp) end t))
+  (re-search-forward (ojs-vars-in-buffer-regexp) end t))
 
 ;; searches only in non string and non comments 
 
@@ -340,54 +312,50 @@
 
 (defvar *use-real-search* t)
 
+(defun re-search-forward-with-test (regexp test limit errorp)
+  (%re-search-with-test 're-search-forward regexp test limit errorp))
+
+(defun re-search-backward-with-test (regexp test limit errorp)
+  (%re-search-with-test 're-search-backward regexp test limit errorp))
+
+(defun %re-search-with-test (search-function regexp test limit errorp)
+  (let ((original-match-data (match-data))
+	(case-fold-search t) ;; case insensitive search
+	(orig-point (point))
+	(last-point (point))
+	;; do a first search
+	(found-point (funcall search-function regexp limit errorp)))	
+    ;; checks that we are moving to avoid loops
+    (while (and found-point
+		(not (equal (point) last-point))
+		(not (funcall test)))
+      (setq last-point found-point)
+      (setq found-point (funcall search-function regexp limit errorp)))
+    (if found-point
+	found-point
+      ;; reset everything
+      (progn (goto-char orig-point)
+	     (set-match-data original-match-data)
+	     nil))))
+
 ;; like re-real-search-backward but searches text that is not
 ;; inside comments or strings
 (defun re-real-search-backward (regexp limit errorp)
   (if *use-real-search*
-      (let ((original-match-data (match-data))
-	    (case-fold-search t) ;; case insensitive search
-	    (orig-point (point))
-	    (last-point (point))
-	    ;; do a first search
-	    (found-point (re-search-backward regexp limit errorp)))	
-	;; checks that we are moving to avoid loops
-	(while (and found-point
-		    (< (point) last-point)
-		    (or (er--point-is-in-comment-p)
-			(er--point-is-in-string-p)))
-	  (setq last-point found-point)
-	  (setq found-point (re-search-backward regexp limit errorp)))
-	(if found-point
-	    found-point
-	  ;; reset everything
-	  (progn (goto-char orig-point)
-		 (set-match-data original-match-data)
-		 nil)))
+      (re-search-backward-with-test regexp
+				    (lambda () (not (or (er--point-is-in-comment-p)
+							(er--point-is-in-string-p))))
+				    limit errorp)
     (re-search-backward regexp limit errorp)))
 
 ;; like re-search-forward but searches text that is not
 ;; inside comments or strings
 (defun re-real-search-forward (regexp limit errorp)
   (if *use-real-search*
-      (let ((original-match-data (match-data))
-	    (case-fold-search t) ;; case insensitive search
-	    (orig-point (point))
-	    (last-point (point))
-	    ;; do a first search
-	    (found-point (re-search-forward regexp limit errorp)))
-	;; checks that we are moving to avoid loops
-	(while (and found-point
-		    (> (point) last-point)
-		    (or (er--point-is-in-comment-p)
-			(er--point-is-in-string-p)))
-	  (setq last-point found-point)
-	  (setq found-point (re-search-forward regexp limit errorp)))
-	(if found-point
-	    found-point
-	  ;; reset everything
-	  (progn (goto-char orig-point)
-		 (set-match-data original-match-data)
-		 nil)))
+      (re-search-forward-with-test regexp
+				    (lambda () (not (or (er--point-is-in-comment-p)
+							(er--point-is-in-string-p))))
+				    limit errorp)
     (re-search-forward regexp limit errorp)))
 
 (defun function-boundaries ()
@@ -395,18 +363,18 @@
   ;; or nil if we are not in a function
   (save-excursion
     (let* ((start-point (point))
-	   (function-start (re-real-search-backward *ojs-function-start-regexp* nil t)))
+	   (function-start (re-search-backward *ojs-function-start-regexp* nil t)))
       (when function-start
-	(while (and (not (looking-at "{"))
+	(while (and (not (fast-looking-at "{"))
 		    (< (point) (line-end-position)))
 	  (forward-char))
-	(when (looking-at "{")
+	(when (fast-looking-at "{")
 	  (let ((function-end (or (condition-case nil
 				      (progn (forward-list) (point))
 				    ;; return nil when we have a scan error
 				    (scan-error nil))
 				  ;; try to find a lonely }, search only until the next start of function
-				  (re-real-search-forward "^}$" (save-excursion (or (when (re-real-search-forward *ojs-function-start-regexp* nil t)
+				  (re-search-forward "^}$" (save-excursion (or (when (re-search-forward *ojs-function-start-regexp* nil t)
 										 (line-beginning-position))
 									       (point-max)))
 						     t)
@@ -418,7 +386,7 @@
 
 ;; go to the start of the next function, but not after end
 (defun goto-start-of-next-function (end)
-  (re-real-search-forward *ojs-function-start-regexp* end t))
+  (re-search-forward *ojs-function-start-regexp* end t))
 
 (defun inside-function ()
   (when (function-boundaries)
@@ -430,7 +398,7 @@
   ;; the jit-lock-register function prepared a nice cache for us
   (let ((context (get-local-function-environment))
 	res)
-    (when context
+    (when (hash-table-p context)
       (maphash '(lambda (k v)
 		  (if list-of-cons
 		      (push (cons k (car v)) res)
@@ -476,9 +444,12 @@
   	       '(end-of-line)
   	       '(1 ojs-var-definition-face))) font-locks)
   ;; Method definition
-  (push (list *ojs-method-heading* 1 font-lock-function-name-face) font-locks)
-  (push (list *ojs-method-heading* 2 font-lock-keyword-face) font-locks)
-  (push (list *ojs-method-heading* 3 font-lock-type-face) font-locks)  
+  (push (list *ojs-method-heading*
+	      '(1 font-lock-function-name-face)
+	      '(2 font-lock-keyword-face)
+	      '(3 font-lock-type-face))
+	font-locks)
+  
   ;; Method arguments
   (push (list
   	 (concat *ojs-method-arguments-start*)
@@ -516,5 +487,4 @@
 
 (defun force-syntax-highlighting ()
   (interactive)
-  (font-lock-fontify-buffer))
-	       
+  (font-lock-fontify-buffer))	     

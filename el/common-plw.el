@@ -31,7 +31,10 @@
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (when (fboundp :require-patch) (:require-patch ""))
 ;;;; HISTORY :
-;;;; $Log$
+
+;;;; Revision 3.3  2016/03/21 13:21:50  troche
+;;;; * merge from git
+;;;;
 ;;;; Revision 3.2  2014/10/28 12:57:56  troche
 ;;;; * New opx2 javascript emacs mode.
 ;;;; ** Add (defvar *use-opx2-js-mode* t) to your .emacs to use
@@ -100,3 +103,58 @@
   (define-key c++-mode-map "\C-c." 'ojs-find-definition))
 
 (add-hook 'c++-mode-hook 'set-ojs-mode-hook)
+
+
+(defvar *js-vars-to-reset* nil)
+
+(defmacro defvar-resetable (varname def when &optional local)
+  (unless (hash-table-p *js-vars-to-reset*)
+    (setq *js-vars-to-reset* (make-hash-table :test 'eq)))
+  `(progn
+     (dolist (w (if (consp ,when) ,when (list ,when)))
+       (pushnew ',varname (gethash w *js-vars-to-reset*)))
+     ,(if local
+	  `(defvar-local ,varname ,def)
+	`(defvar ,varname ,def))))
+
+;; global functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; like looking back but only on str, not on regexp
+(defun fast-looking-back (str)
+  (let ((point (point))
+	(lstr (length str)))	
+  (catch 'ret
+    (do* ((i 0 (1+ i)))
+	((= i lstr)
+	 t)
+      (let ((c (aref str (- lstr i 1)))
+	    (char (char-before (- point i))))
+	(unless (eq char c)
+	  (throw 'ret nil)))))))
+
+(defun fast-looking-at (str)
+  (let ((point (point))
+	(lstr (length str)))	
+  (catch 'ret
+    (do* ((i 0 (1+ i)))
+	((= i lstr)
+	 t)
+      (let ((c (aref str i))
+	    (char (char-after (+ point i))))
+	(unless (eq char c)
+	  (throw 'ret nil)))))))
+
+(defun check-fixes-configuration (fixes-list)
+  (catch 'exit
+    (dolist (fix *pjs-required-fixes* t)
+      (cond ((consp fix)
+	     (when (fi::lep-open-connection-p)
+	       (unless (fi:eval-in-lisp "(let ((fix (object::get-object 'object::fix \"%s\"))) (if (and fix (or (string= (object::fix-version fix) \"$%s\$\") (object::version>= (object::fix-version fix) \"%s\"))) t nil))" (car fix) "Revision" (second fix))
+		 (message "Fix %s version %s not found, some functionalities have been disabled." (car fix) (second fix))
+		 (throw 'exit nil))))
+	    ((stringp fix)
+	     (when (fi::lep-open-connection-p)
+	       (unless (fi:eval-in-lisp "(let ((fix (object::get-object 'object::fix \"%s\"))) (if fix t nil))" fix)
+		 (message "Fix %s not found, some functionalities have been disabled." fix)
+		 (throw 'exit nil))))))))

@@ -31,7 +31,10 @@
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
 ;;;; HISTORY :
-;;;; $Log$
+
+;;;; Revision 3.13  2016/03/21 13:21:50  troche
+;;;; * merge from git
+;;;;
 ;;;; Revision 3.12  2015/12/28 12:32:20  mgautier
 ;;;; error message when the ojs repl is not found
 ;;;;
@@ -131,6 +134,7 @@
   (define-key *js-evaluator-map* "\C-c," 'fi:lisp-find-next-definition)
   (define-key *js-evaluator-map* "\C-cc" '%ojs-list-who-calls)
   (define-key *js-evaluator-map* "\C-ct" 'trace-ojs-function)
+  (define-key *js-evaluator-map* "\C-c\C-c" 'fi:interrupt-listener)
   
   (define-key *js-evaluator-map* (kbd "RET") 'javascript-evaluator-newline)
 ;;  (define-key *js-evaluator-map* (kbd "RET") 'javascript-evaluator-return)
@@ -200,9 +204,8 @@ the buffer name is the second optional argument."
 	 (buffer (or (get-buffer buffer-name)
 		     (get-buffer-create buffer-name)))
 	 (proc (get-buffer-process buffer))
-	 (repl? (fi:eval-in-lisp "(if (fboundp 'jvs::js-repl) t nil)"))
 	 )
-    (cond (repl?
+    (cond ((ojs-configuration-ok)
 	   (if (fi:process-running-p proc buffer-name)
 	       (fi::switch-to-buffer-new-screen buffer-name)
 	     (progn 
