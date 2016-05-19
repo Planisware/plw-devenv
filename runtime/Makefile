@@ -12,7 +12,7 @@ endif
 
 ZIPFILE="emacs-runtime-${VERSION}.zip"
 
-ZIPTMPDIR=/tmp/runtime
+ZIPTMPDIR=/tmp/runtime_`whoami`
 
 clean:
 	rm -rf ${DIST_DIR}
@@ -36,8 +36,8 @@ copyfiles:
 	@@mkdir -p ${DIST_DIR}/el
 	@@cp -r ${EL_DIR}/* ${DIST_DIR}/el
 
-#	@@echo "Adding version.txt"
-#	@@echo ${VERSION} > ${DIST_DIR}/version.txt
+	@@echo "Adding version.txt"
+	@@echo ${VERSION} > ${DIST_DIR}/version.txt
 
 buildzip:
 	@@echo "Zip files to ${ZIPFILE}"
