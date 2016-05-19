@@ -7,7 +7,7 @@ ELI_DIR = eli
 EL_DIR = ../el
 
 ifndef VERSION
-  VERSION = $(shell git describe --tags --abbrev=0)
+  VERSION = "incremental-$(shell git describe --tags)"
 endif
 
 ZIPFILE="emacs-runtime-${VERSION}.zip"
