@@ -8,8 +8,8 @@ EL_DIR = ../el
 
 ifdef VERSION
 	# do nothing
-else ifdef BUILDNUMBER
-    VERSION = "incremental-${BUILDNUMBER}"
+else ifdef BUILD_NUMBER
+    VERSION = "incremental-${BUILD_NUMBER}"
 else 
     VERSION = "incremental-$(shell git describe --tags)"
 endif
