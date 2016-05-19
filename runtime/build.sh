@@ -1,7 +1,7 @@
 if [ -z "$releaseVersion" ]; then
     # incremental release
     make zip
-    scp zip/emacs-runtime-incremental-`git describe --tags`.zip buildfix@porthos:/u01/web/versions/emacs_runtime/emacs-runtime-dev.zip
+    scp zip/emacs-runtime-incremental-$BUILDNUMBER.zip buildfix@porthos:/u01/web/versions/emacs_runtime/emacs-runtime-dev.zip
 else
     VERSION=$releaseVersion make zip
     git tag $releaseVersion -m "Emacs runtime $releaseVersion released"

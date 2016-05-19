@@ -6,8 +6,12 @@ ZIP_DIR = zip
 ELI_DIR = eli
 EL_DIR = ../el
 
-ifndef VERSION
-  VERSION = "incremental-$(shell git describe --tags)"
+ifdef VERSION
+	# do nothing
+else ifdef BUILDNUMBER
+    VERSION = "incremental-${BUILDNUMBER}"
+else 
+    VERSION = "incremental-$(shell git describe --tags)"
 endif
 
 ZIPFILE="emacs-runtime-${VERSION}.zip"
@@ -38,6 +42,7 @@ copyfiles:
 
 	@@echo "Adding version.txt"
 	@@echo ${VERSION} > ${DIST_DIR}/version.txt
+	@@echo $(shell git describe --tags --abbrev=20) >> ${DIST_DIR}/version.txt
 
 buildzip:
 	@@echo "Zip files to ${ZIPFILE}"
