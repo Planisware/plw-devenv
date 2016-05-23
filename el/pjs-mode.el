@@ -48,8 +48,6 @@
 
 (require 'cc-mode)
 
-(load (fullpath-relative-to-current-file "pjs-mode-copyright.el"))
-
 (defvar pjs-mode-syntax-table
   (let ((table (make-syntax-table)))
     (c-populate-syntax-table table)

@@ -226,6 +226,8 @@
 (defvar *copyright-strings-to-replace* '(("__MODE__" mode)
 					 ("__FILENAME__" filename)))
 
+(load (fullpath-relative-to-current-file "script-mode-copyright.el"))
+
 (defun check-header (&optional force)
   (interactive)
   (let ((head *script-copyright-head*))
