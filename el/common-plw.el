@@ -242,11 +242,13 @@
 	      (filename (file-name-nondirectory (buffer-file-name))))
 	  (goto-char (point-min))	
 	  ;; try to remove existing headers first
-	  (when (or (looking-at "/+\\*")
-		    (looking-at "^$"))
-	    (while (and (or (looking-at "/+")
-			    (looking-at "^$"))
-			(not (looking-at "/+\\*\\{10,\\}")))
+	  (when (or (looking-at "//")
+		    (looking-at "^\\s-*$"))
+	    ;; at least one line
+	    (forward-line)
+	    (while (and (or (looking-at "//")
+			    (looking-at "^\\s-*$"))
+			(not (looking-at "//+\\*\\{10,\\}")))
 	      (forward-line))
 	    (delete-region (point-min) (line-end-position)))
 	  (dolist (replacement *copyright-strings-to-replace*)
