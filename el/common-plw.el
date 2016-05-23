@@ -158,3 +158,95 @@
 	       (unless (fi:eval-in-lisp "(let ((fix (object::get-object 'object::fix \"%s\"))) (if fix t nil))" fix)
 		 (message "Fix %s not found, some functionalities have been disabled." fix)
 		 (throw 'exit nil))))))))
+
+
+;; searches only in non string and non comments 
+
+(defun er--point-is-in-comment-p ()
+  "t if point is in comment, otherwise nil"
+  (or (nth 4 (syntax-ppss))
+      (memq (get-text-property (point) 'face) '(font-lock-comment-face font-lock-comment-delimiter-face))))
+
+(defun er--point-is-in-string-p ()
+  "The char that is the current quote delimiter"
+  (nth 3 (syntax-ppss)))
+
+(defvar *use-real-search* t)
+
+(defun re-search-forward-with-test (regexp test limit errorp)
+  (%re-search-with-test 're-search-forward regexp test limit errorp))
+
+(defun re-search-backward-with-test (regexp test limit errorp)
+  (%re-search-with-test 're-search-backward regexp test limit errorp))
+
+(defun %re-search-with-test (search-function regexp test limit errorp)
+  (let ((original-match-data (match-data))
+	(case-fold-search t) ;; case insensitive search
+	(orig-point (point))
+	(last-point (point))
+	;; do a first search
+	(found-point (funcall search-function regexp limit errorp)))	
+    ;; checks that we are moving to avoid loops
+    (while (and found-point
+		(not (equal (point) last-point))
+		(not (funcall test)))
+      (setq last-point found-point)
+      (setq found-point (funcall search-function regexp limit errorp)))
+    (if found-point
+	found-point
+      ;; reset everything
+      (progn (goto-char orig-point)
+	     (set-match-data original-match-data)
+	     nil))))
+
+;; like re-real-search-backward but searches text that is not
+;; inside comments or strings
+(defun re-real-search-backward (regexp limit errorp)
+  (if *use-real-search*
+      (re-search-backward-with-test regexp
+				    (lambda () (not (or (er--point-is-in-comment-p)
+							(er--point-is-in-string-p))))
+				    limit errorp)
+    (re-search-backward regexp limit errorp)))
+
+;; like re-search-forward but searches text that is not
+;; inside comments or strings
+(defun re-real-search-forward (regexp limit errorp)
+  (if *use-real-search*
+      (re-search-forward-with-test regexp
+				    (lambda () (not (or (er--point-is-in-comment-p)
+							(er--point-is-in-string-p))))
+				    limit errorp)
+    (re-search-forward regexp limit errorp)))
+
+
+;;; Header checking
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar *copyright-strings-to-replace* '(("__MODE__" mode)
+					 ("__FILENAME__" filename)))
+
+(defun check-header (&optional force)
+  (interactive)
+  (let ((head *script-copyright-head*))
+    (when (or force
+	      (and (not (string= (buffer-substring-no-properties 1 (min (point-max) (1+ (length head)))) head))
+		   (y-or-n-p "Your copyright header seems absent or corrupted. Do you want to add or repair it ?")))
+      (save-excursion
+	(let ((copyright *script-copyright*)
+	      (mode (cond ((eq major-mode 'pjs-mode) "pjs")
+			  ((eq major-mode 'opx2-js-mode) "opx2-js")
+			  (t "C++")))
+	      (filename (file-name-nondirectory (buffer-file-name))))
+	  (goto-char (point-min))	
+	  ;; try to remove existing headers first
+	  (when (or (looking-at "/+\\*")
+		    (looking-at "^$"))
+	    (while (and (or (looking-at "/+")
+			    (looking-at "^$"))
+			(not (looking-at "/+\\*\\{10,\\}")))
+	      (forward-line))
+	    (delete-region (point-min) (line-end-position)))
+	  (dolist (replacement *copyright-strings-to-replace*)
+	    (setq copyright (replace-regexp-in-string (first replacement) (symbol-value (second replacement)) copyright t)))
+	  (insert copyright))))))

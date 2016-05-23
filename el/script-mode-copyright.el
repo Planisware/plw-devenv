@@ -36,7 +36,7 @@
 ;;;; * new files
 ;;;;  (header added automatically)
 ;;;;
-(defconst *pjs-copyright* "//* -*- Mode: pjs -*- *****************************************************
+(defconst *script-copyright* "//* -*- Mode: __MODE__ -*- *****************************************************
 //  COPYRIGHT (C) PLANISWARE 
 //
 //  All Rights Reserved
@@ -62,14 +62,9 @@
 //**************************************************************************
 ")
 
-(defvar *pjs-copyright-lines-to-check* 20)
+(defvar *script-copyright-lines-to-check* 20)
 
-(defvar *pjs-copyright-head* (substring *pjs-copyright* 0 (with-temp-buffer
-							    (insert *pjs-copyright*)
-							    (goto-char (point-min))
-							    (or (re-search-forward "\n" nil t *pjs-copyright-lines-to-check*) (point-max)))))
-
-(defvar *pjs-copyright-footer* (substring *pjs-copyright* (with-temp-buffer
-							    (insert *pjs-copyright*)
-							    (goto-char (point-max))
-							    (or (re-search-backward "\n" nil t 5) (point-max)))))
+(defvar *script-copyright-head* (substring *script-copyright* 0 (with-temp-buffer
+								  (insert *script-copyright*)
+								  (goto-char (point-min))
+								  (or (re-search-forward "\n" nil t *script-copyright-lines-to-check*) (point-max)))))

@@ -299,65 +299,6 @@
 (defun search-global-vars (end)
   (re-search-forward (ojs-vars-in-buffer-regexp) end t))
 
-;; searches only in non string and non comments 
-
-(defun er--point-is-in-comment-p ()
-  "t if point is in comment, otherwise nil"
-  (or (nth 4 (syntax-ppss))
-      (memq (get-text-property (point) 'face) '(font-lock-comment-face font-lock-comment-delimiter-face))))
-
-(defun er--point-is-in-string-p ()
-  "The char that is the current quote delimiter"
-  (nth 3 (syntax-ppss)))
-
-(defvar *use-real-search* t)
-
-(defun re-search-forward-with-test (regexp test limit errorp)
-  (%re-search-with-test 're-search-forward regexp test limit errorp))
-
-(defun re-search-backward-with-test (regexp test limit errorp)
-  (%re-search-with-test 're-search-backward regexp test limit errorp))
-
-(defun %re-search-with-test (search-function regexp test limit errorp)
-  (let ((original-match-data (match-data))
-	(case-fold-search t) ;; case insensitive search
-	(orig-point (point))
-	(last-point (point))
-	;; do a first search
-	(found-point (funcall search-function regexp limit errorp)))	
-    ;; checks that we are moving to avoid loops
-    (while (and found-point
-		(not (equal (point) last-point))
-		(not (funcall test)))
-      (setq last-point found-point)
-      (setq found-point (funcall search-function regexp limit errorp)))
-    (if found-point
-	found-point
-      ;; reset everything
-      (progn (goto-char orig-point)
-	     (set-match-data original-match-data)
-	     nil))))
-
-;; like re-real-search-backward but searches text that is not
-;; inside comments or strings
-(defun re-real-search-backward (regexp limit errorp)
-  (if *use-real-search*
-      (re-search-backward-with-test regexp
-				    (lambda () (not (or (er--point-is-in-comment-p)
-							(er--point-is-in-string-p))))
-				    limit errorp)
-    (re-search-backward regexp limit errorp)))
-
-;; like re-search-forward but searches text that is not
-;; inside comments or strings
-(defun re-real-search-forward (regexp limit errorp)
-  (if *use-real-search*
-      (re-search-forward-with-test regexp
-				    (lambda () (not (or (er--point-is-in-comment-p)
-							(er--point-is-in-string-p))))
-				    limit errorp)
-    (re-search-forward regexp limit errorp)))
-
 (defun function-boundaries ()
   ;; returns either a cons of (start end) containing the beginning and the end of the function
   ;; or nil if we are not in a function
