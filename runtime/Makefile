@@ -37,8 +37,8 @@ copyfiles:
 	@@cp -r ${ELI_DIR}/* ${DIST_DIR}/eli
 
 	@@echo "Copying el files"
-	@@mkdir -p ${DIST_DIR}/el
-	@@cp -r ${EL_DIR}/* ${DIST_DIR}/el
+	@@mkdir -p ${DIST_DIR}/devenv/el
+	@@cp -r ${EL_DIR}/* ${DIST_DIR}/devenv/el
 
 	@@echo "Adding version.txt"
 	@@echo ${VERSION} > ${DIST_DIR}/version.txt

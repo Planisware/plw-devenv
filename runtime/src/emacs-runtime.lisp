@@ -3,10 +3,14 @@
 (defvar *emacs-runtime-mode* nil)
 
 (defvar *emacs-runtime-initial-bindings 
-    '(intranet::*emacs-runtime-mode* t
-      sockets::*verbose-startup* nil
-      sockets::*running-under-watchdog* nil
-      ))
+    (list
+     'intranet::*emacs-runtime-mode* t
+     'sockets::*verbose-startup* nil
+     'sockets::*running-under-watchdog* nil
+;;;     'common-lisp-user::*compilation-mode* :runtime-with-macro
+;;;     'foreign-file::*opx2-temporary-path* #+UNIX (format nil "~A~A/emacs/" (sys::temporary-directory) (foreign-interface::get-login))
+;;;     #-UNIX (format nil "~Aemacs/" (sys::temporary-directory))
+     ))
 
 (defun :start-emacs-runtime-mode ()
   (doplist (var value *emacs-runtime-initial-bindings)
