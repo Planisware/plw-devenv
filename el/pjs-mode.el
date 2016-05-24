@@ -287,8 +287,6 @@
     '("Planisware Script"
       ["Compile and load file..." compile-pjs-file
        t]
-      ["Check syntax of selected region" check-ojs-region
-       t]	    
       ["Compile, load and synchronize file..." save-and-compile-pjs-file
        t]
       ;; ["Compile and run selected region" compile-pjs-region
