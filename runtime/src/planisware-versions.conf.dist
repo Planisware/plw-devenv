@@ -1,6 +1,7 @@
 # Enter below the path to your root installations with this pattern
 # VERSIONNAME<tab>PATHTOROOTDIRECTORY
-# The root directory must be the one containing the Planisware exe and dxl. 
+# The root directory must be the Modules directory of your root installation
 # On Windows, make sure to replace the \ in the path by /
 # Example
-# 600SP0    C:/Program Files/Planisware/600SP0/Modules/bin
+# 600SP0    C:/Program Files/Planisware/600SP0/Modules/
+# 610SP1    /opt/opx2/610SP1/modules/

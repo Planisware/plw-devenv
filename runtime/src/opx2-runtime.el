@@ -16,13 +16,21 @@
 
 (defvar *runtime-exe* (if (on-ms-windows) "intranet.exe" "opx2-intranet.exe"))
 
-(defvar *runtime-dxl* (if (on-ms-windows) "opx2-intranet.dxl" "opx2-intranet.dxl"))
+(defvar *runtime-dxl* (if (on-ms-windows) "intranet.dxl" "opx2-intranet.dxl"))
 
 (defvar *planisware-menu-name* "Planisware")
 
 (defvar *start-planisware-menu-item* "Start Planisware %s ...")
 
-(defvar *runtime-verbose* t)
+(defvar *runtime-verbose* nil)
+
+(defvar *display-windows-console* nil)
+
+(defun trim-string (string)
+  "Remove white spaces in beginning and ending of STRING.
+White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
+  (replace-regexp-in-string "\\`[ \t\n]*" "" (replace-regexp-in-string "[ \t\n]*\\'" "" string))
+)
 
 (defun runopx2runtime (rootdir)
   (catch 'exit
@@ -38,22 +46,28 @@
       (when *runtime-verbose*
 	(message "Starting in directory %s" satdir))
       (setq fi::started-via-file nil)
-      (fi:common-lisp fi:common-lisp-buffer-name
-		      satdir
-		      ;;		    "/usr/local/acl90-smp.64/alisp8"
-		      (format "%s%s" rootdir *runtime-exe*)
-		      ;;'("-e" "(setq *dede* t)")
-		      (nconc *start-emacs-lisp-interface*
-			     (list
-			      "-H" rootdir
-			      "-L" (format "%s/emacs-runtime.lisp" *opx2-network-folder-work-path*)
-			      ;;			     "-e" "(setq excl::*restart-app-function* :start-emacs-runtime-mode)"
-			      "-e" "(setq excl::*restart-app-function* nil)"
-			      ))
-		      fi:common-lisp-host
-		      (format "%s%s" rootdir *runtime-dxl*))
-      (process-send-string fi:common-lisp-buffer-name "(:start-emacs-runtime-mode)\n")
-      (switch-to-buffer fi:common-lisp-buffer-name))))
+      (unless (on-ms-windows)
+	(setenv "OPX2_HOME" (substring rootdir 0 (1- (length rootdir)))))
+      (let* ((mt (if (on-ms-windows) "" (format "/%s" (trim-string (shell-command-to-string (format "%sbin/machine" rootdir))))))
+	     (rootdir (format "%sbin%s" rootdir mt))	     
+	     (exe (format "%s/%s" rootdir *runtime-exe*)))
+	(unless (file-exists-p exe)
+	  (message "Planisware executable %s not found !!" exe)
+	  (throw 'exit nil))
+	(fi:common-lisp fi:common-lisp-buffer-name
+			satdir
+			exe
+			(append *start-emacs-lisp-interface*
+				(when *display-windows-console* (list "+cc" "+p"))
+				(list
+				 "-H" rootdir
+				 "-L" (format "%s/emacs-runtime.lisp" *opx2-network-folder-work-path*)
+				 "-e" "(setq excl::*restart-app-function* nil)"
+				 ))
+			fi:common-lisp-host
+			(format "%s/%s" rootdir *runtime-dxl*))
+	(process-send-string fi:common-lisp-buffer-name "(:start-emacs-runtime-mode)\n")
+	(switch-to-buffer fi:common-lisp-buffer-name)))))
 
 (defun load-version-configuration-file()
   (let ((file (format "%s/%s" *opx2-network-folder-work-path* *opx2-installations-paths-conf-file*))
@@ -92,7 +106,7 @@
 	     (with-temp-buffer
 	       (insert (format *runtime-function-body*
 			       funname
-			       path))
+			       (file-name-as-directory path)))
 	       (eval-buffer))
 	     ;; menu bar
 	     (define-key
