@@ -348,23 +348,26 @@
   ;; find the script name
   (when (ojs-configuration-ok)
     (let* ((script-name      (file-name-base (buffer-file-name)))
-	   (script           (or (when (ojs-configuration-ok) (fi:eval-in-lisp (format "(jvs::find-script \"%s\")" script-name)))
-				 ;; try to get a comment //PLWSCRIPT :
+	   (script           (or ;; try to get a comment //PLWSCRIPT :
 				 (save-excursion
 				   (goto-char (point-min))
-				   (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
-				     (match-string-no-properties 1)))))
+				   (if (re-search-forward "^/+\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
+				       (match-string-no-properties 1)
+				     nil))
+				 (fi:eval-in-lisp (format "(jvs::find-script \"%s\")" script-name))))
 	   (buffer-name *ojs-compilation-buffer-name*)
 	   (buffer (or (get-buffer buffer-name)
 		       (get-buffer-create buffer-name)))
 	   (proc (get-buffer-process buffer))
 	   (js-mode major-mode)
+	   (filename (buffer-file-name))
 	   )
       (setq *compiled-script-window* (selected-window))
       (if (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
 	  (catch 'exit
-	    ;; checks that the file matches
-	    (unless (check-script-path script (buffer-file-name))
+	    ;; checks that the file matches only for synchronize	    
+	    (when (and (eq type :compile-and-sync)
+		       (not (check-script-path script (buffer-file-name))))
 	      (message "Impossible to %s the script because the current file does not match script source file :
      Current file is                : %s
      Source file in the database is : %s"
@@ -393,13 +396,11 @@
 	    ;; reset vars as needed
 	    (js-reset-vars (if (eq js-mode 'pjs-mode) 'pjs-compile 'ojs-compile))
 	    (cond ((eq type :compile)
-		   (process-send-string *ojs-compilation-buffer-name* (format "(:rjs \"%s\")\n" script))
+		   (process-send-string *ojs-compilation-buffer-name* (format "(:rjs-one \"%s\" :source \"%s\")\n" script filename))
 		   )
 		  ((eq type :compile-and-sync)
 		   ;; check that the file is correct 		   
-		   (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")\n" script))
-		   ))
-	    )
+		   (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")\n" script)))))
 	(message "Script %s not found" script-name)))))
 
 (defun generate-search-string (strings)
