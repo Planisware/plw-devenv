@@ -17,7 +17,6 @@
 ;;;; There shall be no exceptions to the terms and conditions set forth
 ;;;; herein except as authorized in writing by the responsible PLANISWARE General
 ;;;; Manager.
-
 ;;;;
 ;;;; FILE    : $RCSfile$
 ;;;;
@@ -30,12 +29,6 @@
 ;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
-;;;; HISTORY :
-
-;;;; Revision 3.1  2016/03/21 13:22:46  troche
-;;;; * new files
-;;;;  (header added automatically)
-;;;;
 (defconst *script-copyright* "//* -*- Mode: __MODE__ -*- *****************************************************
 //  COPYRIGHT (C) PLANISWARE 
 //
