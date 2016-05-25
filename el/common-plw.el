@@ -147,7 +147,7 @@
 
 (defun check-fixes-configuration (fixes-list)
   (catch 'exit
-    (dolist (fix *pjs-required-fixes* t)
+    (dolist (fix fixes-list t)
       (cond ((consp fix)
 	     (when (fi::lep-open-connection-p)
 	       (unless (fi:eval-in-lisp "(let ((fix (object::get-object 'object::fix \"%s\"))) (if (and fix (or (string= (object::fix-version fix) \"$%s\$\") (object::version>= (object::fix-version fix) \"%s\"))) t nil))" (car fix) "Revision" (second fix))
