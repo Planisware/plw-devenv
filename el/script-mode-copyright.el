@@ -29,7 +29,7 @@
 ;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$ "))
 ;;;; (when (fboundp :doc-patch) (:doc-patch ""))
 ;;;; (:require-patch "")
-(defconst *script-copyright* "//* -*- Mode: __MODE__ -*- *****************************************************
+(defconst *plw-copyright* "//* -*- Mode: __MODE__ -*- *****************************************************
 //  COPYRIGHT (C) PLANISWARE 
 //
 //  All Rights Reserved
@@ -54,9 +54,9 @@
 // 
 //**************************************************************************")
 
-(defvar *script-copyright-lines-to-check* 20)
+(defvar *plw-copyright-lines-to-check* 20)
 
-(defvar *script-copyright-head* (substring *script-copyright* 0 (with-temp-buffer
-								  (insert *script-copyright*)
-								  (goto-char (point-min))
-								  (or (re-search-forward "\n" nil t *script-copyright-lines-to-check*) (point-max)))))
+(defvar *plw-copyright-head* (substring *plw-copyright* 0 (with-temp-buffer
+							    (insert *plw-copyright*)
+							    (goto-char (point-min))
+							    (or (re-search-forward "\n" nil t *plw-copyright-lines-to-check*) (point-max)))))
