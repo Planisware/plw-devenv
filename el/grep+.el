@@ -1,44 +1,14 @@
-;;;;
-;;;; COPYRIGHT (C) PLANISWARE $Date$ 
-;;;;
-;;;; All Rights Reserved
-;;;;
-;;;; This program and the information contained herein are confidential to
-;;;; and the property of PLANISWARE and are made available only to PLANISWARE
-;;;; employees for the sole purpose of conducting PLANISWARE business.
-;;;;
-;;;; This program and copy therof and the information contained herein shall
-;;;; be maintained in strictest confidence ; shall not be copied in whole or
-;;;; in part except as authorized by the employee's manager ; and shall not
-;;;; be disclosed or distributed (a) to persons who are not PLANISWARE employees,
-;;;; or (b) to PLANISWARE employees for whom such information is not necessary in
-;;;; connection with their assigned responsabilities.
-;;;;
-;;;; There shall be no exceptions to the terms and conditions set forth
-;;;; herein except as authorized in writing by the responsible PLANISWARE General
-;;;; Manager.
+;;* 
+;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;;
+;;  All Rights Reserved
+;;
+;;  This program and the information contained herein are confidential to
+;;  and the property of PLANISWARE and are made available only to PLANISWARE
+;;  employees for the sole purpose of conducting PLANISWARE business.
+;;
+;;**************************************************************************
 
-;;;;
-;;;; FILE    : $RCSfile$
-;;;;
-;;;; AUTHOR  : $Author$
-;;;;
-;;;; VERSION : $Id$
-;;;;
-;;;; PURPOSE :
-;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$ "))
-;;;; (when (fboundp :doc-patch) (:doc-patch ""))
-;;;; (when (fboundp :require-patch) (:require-patch ""))
-;;;; HISTORY :
-
-;;;; Revision 3.2  2016/03/21 13:21:50  troche
-;;;; * merge from git
-;;;;
-;;;; Revision 3.1  2011/11/02 13:40:57  pierre
-;;;; grep+.el
-;;;;  (header added automatically)
-;;;;
 ;;; grep+.el --- Extensions to standard library `grep.el'.
 ;; 
 ;; Filename: grep+.el
