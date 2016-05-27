@@ -1,80 +1,13 @@
-;;;;
-;;;; COPYRIGHT (C) PLANISWARE $Date$ 
-;;;;
-;;;; All Rights Reserved
-;;;;
-;;;; This program and the information contained herein are confidential to
-;;;; and the property of PLANISWARE and are made available only to PLANISWARE
-;;;; employees for the sole purpose of conducting PLANISWARE business.
-;;;;
-;;;; This program and copy therof and the information contained herein shall
-;;;; be maintained in strictest confidence ; shall not be copied in whole or
-;;;; in part except as authorized by the employee's manager ; and shall not
-;;;; be disclosed or distributed (a) to persons who are not PLANISWARE employees,
-;;;; or (b) to PLANISWARE employees for whom such information is not necessary in
-;;;; connection with their assigned responsabilities.
-;;;;
-;;;; There shall be no exceptions to the terms and conditions set forth
-;;;; herein except as authorized in writing by the responsible PLANISWARE General
-;;;; Manager.
-
-;;;;
-;;;; FILE    : $RCSfile$
-;;;;
-;;;; AUTHOR  : $Author$
-;;;;
-;;;; VERSION : $Id$
-;;;;
-;;;; PURPOSE :
-;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$ "))
-;;;; (when (fboundp :doc-patch) (:doc-patch ""))
-;;;; (when (fboundp :require-patch) (:require-patch ""))
-;;;; HISTORY :
-
-;;;; Revision 3.11  2016/03/21 13:21:50  troche
-;;;; * merge from git
-;;;;
-;;;; Revision 3.10  2015/11/05 10:02:21  mgautier
-;;;; - rewrite thibault change
-;;;;
-;;;; Revision 3.9  2015/11/05 09:49:17  mgautier
-;;;; - revert change in shell colorization due to emacs freeze
-;;;;
-;;;; Revision 3.8  2015/11/02 14:54:03  troche
-;;;; * force the matching of package names with -
-;;;;
-;;;; Revision 3.7  2015/02/23 09:13:27  sspanu
-;;;; Dirty hack for xemacs.
-;;;;
-;;;; Revision 3.6  2015/02/20 09:37:09  mgautier
-;;;; - add some highlighting in lisp
-;;;; - add highlighting in listeners
-;;;;
-;;;; just define *enable-tutu-highlighting* before loading emacs-plw.el
-;;;;
-;;;; Revision 3.5  2011/07/23 13:30:16  folli
-;;;; Debug emacs windows
-;;;;
-;;;; Revision 3.4  2011/07/22 14:05:57  folli
-;;;; Window compat 2
-;;;;
-;;;; Revision 3.3  2011/07/22 14:05:37  folli
-;;;; Window compat
-;;;;
-;;;; Revision 3.2  2011/07/22 13:56:47  folli
-;;;; Xemacs compat
-;;;;
-;;;; Revision 3.1  2011/07/22 13:43:21  folli
-;;;; Colorize background to know if a function has been redefined
-;;;; or not
-;;;;  (header added automatically)
-;;;;
-;; -*-no-byte-compile: t; -*-
-
-;;Force no byte compilation (elc compiled by xemacs won't be readable via emacs and
-;; the other way around)
-
+;;* 
+;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;;
+;;  All Rights Reserved
+;;
+;;  This program and the information contained herein are confidential to
+;;  and the property of PLANISWARE and are made available only to PLANISWARE
+;;  employees for the sole purpose of conducting PLANISWARE business.
+;;
+;;**************************************************************************
 (require 'overlay) ;;needed by Xemacs, provided by the fsf-compat package
 
 (defface plw-source-color-ok
