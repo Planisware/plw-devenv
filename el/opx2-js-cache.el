@@ -1,79 +1,13 @@
-;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date$ 
-;;;;
-;;;; All Rights Reserved
-;;;;
-;;;; This program and the information contained herein are confidential to
-;;;; and the property of PLANISWARE and are made available only to PLANISWARE
-;;;; employees for the sole purpose of conducting PLANISWARE business.
-;;;;
-;;;; This program and copy therof and the information contained herein shall
-;;;; be maintained in strictest confidence ; shall not be copied in whole or
-;;;; in part except as authorized by the employee's manager ; and shall not
-;;;; be disclosed or distributed (a) to persons who are not PLANISWARE employees,
-;;;; or (b) to PLANISWARE employees for whom such information is not necessary in
-;;;; connection with their assigned responsabilities.
-;;;;
-;;;; There shall be no exceptions to the terms and conditions set forth
-;;;; herein except as authorized in writing by the responsible PLANISWARE General
-;;;; Manager.
-
-;;;;
-;;;; FILE    : $RCSfile$
-;;;;
-;;;; AUTHOR  : $Author$
-;;;;
-;;;; VERSION : $Id$
-;;;;
-;;;; PURPOSE :
-;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$ "))
-;;;; (when (fboundp :doc-patch) (:doc-patch ""))
-;;;; (:require-patch "")
-;;;; HISTORY :
-
-;;;; Revision 3.12  2016/03/21 13:21:50  troche
-;;;; * merge from git
-;;;;
-;;;; Revision 3.11  2016/02/11 17:14:59  troche
-;;;; * no real search
-;;;;
-;;;; Revision 3.10  2016/02/04 16:55:35  troche
-;;;; * don't use real search when not needed
-;;;;
-;;;; Revision 3.9  2015/12/22 12:31:09  troche
-;;;; * build local cache before syntax highlighting
-;;;;
-;;;; Revision 3.8  2015/12/18 15:08:46  troche
-;;;; * use real-search
-;;;;
-;;;; Revision 3.7  2015/12/15 13:39:11  troche
-;;;; * debug
-;;;;
-;;;; Revision 3.6  2015/12/14 12:13:59  troche
-;;;; * only highlight functions names followed by a (
-;;;;
-;;;; Revision 3.5  2015/12/14 10:41:09  troche
-;;;; * pjs class members cache
-;;;;
-;;;; Revision 3.4  2015/06/18 08:32:28  troche
-;;;; * configuration
-;;;;
-;;;; Revision 3.3  2015/05/06 14:31:51  troche
-;;;; * do not match variables with the same name as a function
-;;;;
-;;;; Revision 3.2  2015/01/06 17:03:37  troche
-;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
-;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
-;;;;
-;;;; Revision 3.1  2014/12/30 12:06:42  troche
-;;;;  OPX2 javascript mode cache
-;;;;  (header added automatically)
-;;;;
-
-;; required patches
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;;* 
+;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;;
+;;  All Rights Reserved
+;;
+;;  This program and the information contained herein are confidential to
+;;  and the property of PLANISWARE and are made available only to PLANISWARE
+;;  employees for the sole purpose of conducting PLANISWARE business.
+;;
+;;**************************************************************************
 (defvar *ojs-required-fixes* '(("sc8567" "3.41")
 			       ))
 

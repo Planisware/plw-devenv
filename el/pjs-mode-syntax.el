@@ -1,58 +1,13 @@
-;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date$ 
-;;;;
-;;;; All Rights Reserved
-;;;;
-;;;; This program and the information contained herein are confidential to
-;;;; and the property of PLANISWARE and are made available only to PLANISWARE
-;;;; employees for the sole purpose of conducting PLANISWARE business.
-;;;;
-;;;; This program and copy therof and the information contained herein shall
-;;;; be maintained in strictest confidence ; shall not be copied in whole or
-;;;; in part except as authorized by the employee's manager ; and shall not
-;;;; be disclosed or distributed (a) to persons who are not PLANISWARE employees,
-;;;; or (b) to PLANISWARE employees for whom such information is not necessary in
-;;;; connection with their assigned responsabilities.
-;;;;
-;;;; There shall be no exceptions to the terms and conditions set forth
-;;;; herein except as authorized in writing by the responsible PLANISWARE General
-;;;; Manager.
-
-;;;;
-;;;; FILE    : $RCSfile$
-;;;;
-;;;; AUTHOR  : $Author$
-;;;;
-;;;; VERSION : $Id$
-;;;;
-;;;; PURPOSE :
-;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$ "))
-;;;; (when (fboundp :doc-patch) (:doc-patch ""))
-;;;; (:require-patch "")
-;;;; HISTORY :
-
-;;;; Revision 3.6  2016/03/21 13:21:50  troche
-;;;; * merge from git
-;;;;
-;;;; Revision 3.5  2015/12/22 12:32:06  troche
-;;;; * use local environment
-;;;; * type detection (first version)
-;;;;
-;;;; Revision 3.4  2015/12/18 15:09:40  troche
-;;;; * better syntax colorations
-;;;;
-;;;; Revision 3.3  2015/12/14 15:34:18  troche
-;;;; * var with types
-;;;;
-;;;; Revision 3.2  2015/12/14 10:42:12  troche
-;;;; * colorization
-;;;;
-;;;; Revision 3.1  2015/12/10 14:51:39  troche
-;;;; * pjs mode
-;;;;  (header added automatically)
-;;;;
-
+;;* 
+;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;;
+;;  All Rights Reserved
+;;
+;;  This program and the information contained herein are confidential to
+;;  and the property of PLANISWARE and are made available only to PLANISWARE
+;;  employees for the sole purpose of conducting PLANISWARE business.
+;;
+;;**************************************************************************
 (defun pjs--regexp-opt-symbol (list &optional prefix)
   "Like `regexp-opt', but surround the result with `\\\\_<' and `\\\\_>'."
   (cond ((stringp prefix)

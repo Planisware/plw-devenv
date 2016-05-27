@@ -1,86 +1,13 @@
-;;;;
-;;;; COPYRIGHT (C) PLANISWARE $Date$ 
-;;;;
-;;;; All Rights Reserved
-;;;;
-;;;; This program and the information contained herein are confidential to
-;;;; and the property of PLANISWARE and are made available only to PLANISWARE
-;;;; employees for the sole purpose of conducting PLANISWARE business.
-;;;;
-;;;; This program and copy therof and the information contained herein shall
-;;;; be maintained in strictest confidence ; shall not be copied in whole or
-;;;; in part except as authorized by the employee's manager ; and shall not
-;;;; be disclosed or distributed (a) to persons who are not PLANISWARE employees,
-;;;; or (b) to PLANISWARE employees for whom such information is not necessary in
-;;;; connection with their assigned responsabilities.
-;;;;
-;;;; There shall be no exceptions to the terms and conditions set forth
-;;;; herein except as authorized in writing by the responsible PLANISWARE General
-;;;; Manager.
-
-;;;;
-;;;; FILE    : $RCSfile$
-;;;;
-;;;; AUTHOR  : $Author$
-;;;;
-;;;; VERSION : $Id$
-;;;;
-;;;; PURPOSE :
-;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$ "))
-;;;; (when (fboundp :doc-patch) (:doc-patch ""))
-;;;; (when (fboundp :require-patch) (:require-patch ""))
-;;;; HISTORY :
-
-;;;; Revision 3.13  2016/03/21 13:21:50  troche
-;;;; * merge from git
-;;;;
-;;;; Revision 3.12  2015/12/07 12:29:45  troche
-;;;; * debug
-;;;;
-;;;; Revision 3.11  2015/12/03 15:33:24  troche
-;;;; * debug of control C + . in callers / list methods buffer
-;;;;
-;;;; Revision 3.10  2015/11/18 10:01:19  troche
-;;;; * New entry in ACL menu : Restart Emacs / Common Lisp connection
-;;;;
-;;;; Revision 3.9  2015/11/10 12:38:19  troche
-;;;; * optimization of previous commit
-;;;;
-;;;; Revision 3.8  2015/11/10 10:17:12  troche
-;;;; * better identification of symbols in lisp modes
-;;;;
-;;;; Revision 3.7  2015/11/09 09:18:39  troche
-;;;; * control C + . working properly on defmethod
-;;;;
-;;;; Revision 3.6  2015/09/28 12:18:07  mgautier
-;;;; vim '%' -> go to the closing/opening parenthesis if on a parenthesis or insert a %
-;;;;
-;;;; Revision 3.5  2015/09/22 08:15:41  troche
-;;;; * nicer display of callers / definitions with source file and sort possibilities
-;;;; * C-C ! on a defgeneric lists all defined methods in a buffer
-;;;;
-;;;; Revision 3.4  2015/06/26 13:22:20  mgautier
-;;;; bind C c-: to uncomment region
-;;;;
-;;;; Revision 3.3  2015/03/06 09:18:33  mgautier
-;;;; - add better indent for doplist and flet for every body
-;;;;
-;;;; Revision 3.2  2015/03/06 09:09:03  mgautier
-;;;; - add better indent for letf and if macro. Just define *enable-tutu-indent* in your .emacs (minor-mode coming soon)
-;;;;
-;;;; Revision 3.1  2011/07/21 15:16:46  folli
-;;;; - (plw)CVS support in emacs
-;;;; - New common files shared between xemacs & emacs
-;;;;  (header added automatically)
-;;;;
-;; -*-no-byte-compile: t; -*-
-
-;;Force no byte compilation (elc compiled by xemacs won't be readable via emacs and
-;; the other way around)
-
-;;Fxx bindings
-
+;;* 
+;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;;
+;;  All Rights Reserved
+;;
+;;  This program and the information contained herein are confidential to
+;;  and the property of PLANISWARE and are made available only to PLANISWARE
+;;  employees for the sole purpose of conducting PLANISWARE business.
+;;
+;;**************************************************************************
 (defun revert-truncate-lines ()
   (interactive)
   (setq truncate-lines (not truncate-lines))

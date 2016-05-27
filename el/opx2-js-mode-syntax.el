@@ -1,82 +1,13 @@
-;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date$ 
-;;;;
-;;;; All Rights Reserved
-;;;;
-;;;; This program and the information contained herein are confidential to
-;;;; and the property of PLANISWARE and are made available only to PLANISWARE
-;;;; employees for the sole purpose of conducting PLANISWARE business.
-;;;;
-;;;; This program and copy therof and the information contained herein shall
-;;;; be maintained in strictest confidence ; shall not be copied in whole or
-;;;; in part except as authorized by the employee's manager ; and shall not
-;;;; be disclosed or distributed (a) to persons who are not PLANISWARE employees,
-;;;; or (b) to PLANISWARE employees for whom such information is not necessary in
-;;;; connection with their assigned responsabilities.
-;;;;
-;;;; There shall be no exceptions to the terms and conditions set forth
-;;;; herein except as authorized in writing by the responsible PLANISWARE General
-;;;; Manager.
-
-;;;;
-;;;; FILE    : $RCSfile$
-;;;;
-;;;; AUTHOR  : $Author$
-;;;;
-;;;; VERSION : $Id$
-;;;;
-;;;; PURPOSE :
-;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$ "))
-;;;; (when (fboundp :doc-patch) (:doc-patch ""))
-;;;; (:require-patch "")
-;;;; HISTORY :
-
-;;;; Revision 3.15  2016/03/21 13:21:50  troche
-;;;; * merge from git
-;;;;
-;;;; Revision 3.13  2015/12/22 15:47:49  troche
-;;;; * oops
-;;;;
-;;;; Revision 3.12  2015/12/22 15:47:25  troche
-;;;; * deactivate
-;;;;
-;;;; Revision 3.11  2015/12/22 12:31:37  troche
-;;;; * use get-local-function-environment
-;;;;
-;;;; Revision 3.10  2015/12/18 15:08:14  troche
-;;;; * real-search is back (and working this time)
-;;;;
-;;;; Revision 3.9  2015/12/15 13:39:48  troche
-;;;; * limit size of regexps in kernel functions
-;;;;
-;;;; Revision 3.8  2015/12/14 15:33:23  troche
-;;;; * debug
-;;;;
-;;;; Revision 3.7  2015/12/14 10:41:58  troche
-;;;; * debug local vars in function
-;;;;
-;;;; Revision 3.6  2015/06/18 08:32:28  troche
-;;;; * configuration
-;;;;
-;;;; Revision 3.5  2015/05/12 12:39:25  troche
-;;;; * debug
-;;;;
-;;;; Revision 3.4  2015/05/12 11:35:30  troche
-;;;; * debug when the file is almost empty
-;;;;
-;;;; Revision 3.3  2015/05/06 14:32:14  troche
-;;;; * idem
-;;;;
-;;;; Revision 3.2  2015/01/06 17:03:37  troche
-;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
-;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
-;;;;
-;;;; Revision 3.1  2014/12/22 17:50:23  troche
-;;;;  Proper syntax highlighting for ojs
-;;;;  (header added automatically)
-;;;;
-
+;;* 
+;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;;
+;;  All Rights Reserved
+;;
+;;  This program and the information contained herein are confidential to
+;;  and the property of PLANISWARE and are made available only to PLANISWARE
+;;  employees for the sole purpose of conducting PLANISWARE business.
+;;
+;;**************************************************************************
 (defun js--regexp-opt-symbol (list)
   "Like `regexp-opt', but surround the result with `\\\\_<' and `\\\\_>'."
   (concat "\\_<" (regexp-opt list) "\\_>"))

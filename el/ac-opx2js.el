@@ -1,73 +1,13 @@
-;;;; -*- coding: windows-1252 -*-
-;;;; COPYRIGHT (C) PLANISWARE $Date$ 
-;;;;
-;;;; All Rights Reserved
-;;;;
-;;;; This program and the information contained herein are confidential to
-;;;; and the property of PLANISWARE and are made available only to PLANISWARE
-;;;; employees for the sole purpose of conducting PLANISWARE business.
-;;;;
-;;;; This program and copy therof and the information contained herein shall
-;;;; be maintained in strictest confidence ; shall not be copied in whole or
-;;;; in part except as authorized by the employee's manager ; and shall not
-;;;; be disclosed or distributed (a) to persons who are not PLANISWARE employees,
-;;;; or (b) to PLANISWARE employees for whom such information is not necessary in
-;;;; connection with their assigned responsabilities.
-;;;;
-;;;; There shall be no exceptions to the terms and conditions set forth
-;;;; herein except as authorized in writing by the responsible PLANISWARE General
-;;;; Manager.
-
-;;;;
-;;;; FILE    : $RCSfile$
-;;;;
-;;;; AUTHOR  : $Author$
-;;;;
-;;;; VERSION : $Id$
-;;;;
-;;;; PURPOSE :
-;;;;
-;;;; (when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$ "))
-;;;; (when (fboundp :doc-patch) (:doc-patch ""))
-;;;; (:require-patch "")
-;;;; HISTORY :
-
-;;;; Revision 3.12  2016/03/21 13:21:50  troche
-;;;; * merge from git
-;;;;
-;;;; Revision 3.11  2015/05/12 14:11:46  troche
-;;;; * use list-all-js-functions
-;;;;
-;;;; Revision 3.10  2015/05/12 12:50:36  troche
-;;;; * new classes completion based on kernel
-;;;;
-;;;; Revision 3.9  2015/05/06 16:24:01  mgautier
-;;;; - fix auto-complete in js evaluator mode
-;;;;
-;;;; Revision 3.8  2015/05/06 14:30:33  troche
-;;;; * always complete on backtab
-;;;;
-;;;; Revision 3.7  2015/01/06 17:03:37  troche
-;;;; * update of the opx2 javascript mode with (almost) intelligent syntax highlighting and completion
-;;;; * update of the javascript evaluator, now you don't exit it if you have a lisp error
-;;;;
-;;;; Revision 3.6  2014/11/24 15:49:23  troche
-;;;; In emacs and xemacs, new binding C-x C-y to open a patch by typing only the number
-;;;;
-;;;; Revision 3.5  2014/11/04 12:46:44  troche
-;;;; * get functions methods and vars from all ojs buffers
-;;;;
-;;;; Revision 3.4  2014/10/31 16:10:14  troche
-;;;; * match all items
-;;;;
-;;;; Revision 3.3  2014/10/31 15:09:55  troche
-;;;; * debug
-;;;;
-;;;; Revision 3.2  2014/10/31 15:05:57  troche
-;;;; * autocompletion for ojs files in emacs (requires sc8567 v3.12)
-;;;; ** to use, add (defvar *use-opx2-js-mode* t) to your emacs conf file before loading the common configuration
-;;;;  (header added automatically)
-;;;;
+;;* 
+;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;;
+;;  All Rights Reserved
+;;
+;;  This program and the information contained herein are confidential to
+;;  and the property of PLANISWARE and are made available only to PLANISWARE
+;;  employees for the sole purpose of conducting PLANISWARE business.
+;;
+;;**************************************************************************
 (require 'auto-complete)
 
 ;;; find functions/methods defined in the current file and other open files with the same mode
