@@ -267,7 +267,7 @@
   (use-local-map *pjs-mode-map*)  
   
   ;; rebuild  function and vars cache on save and when we open a file
-  (add-hook 'after-save-hook 'check-header nil t)
+;;  (add-hook 'after-save-hook 'check-header nil t)
 ;;  (add-hook 'after-save-hook 'pjs-check-footer nil t)
   (add-hook 'after-save-hook 'pjs-reset-cache-on-save nil t)
   (add-hook 'after-save-hook 'semantic-force-refresh nil t)
