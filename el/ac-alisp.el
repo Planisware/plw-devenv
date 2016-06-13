@@ -8,8 +8,6 @@
 ;;  employees for the sole purpose of conducting PLANISWARE business.
 ;;
 ;;**************************************************************************
-(when (fboundp :set-source-info) (:set-source-info "$RCSfile$" :id "$Id$" :version "$Revision$" :date "$Date$"))
-(when (fboundp :doc-patch) (:doc-patch "add auto-complete for alisp"))
 
 (require 'auto-complete nil 'noerror)
 ;(require 'pos-tip)
