@@ -10,7 +10,22 @@
 ;;**************************************************************************
 (defvar *profile-font-lock* t)
 (defvar *profile-font-lock-threshold* 0.1)
-  
+
+(defvar *max-in-colors* nil)
+
+(defun color-at-point (position)
+  (interactive (list (point)))
+  (let ((face (get-text-property position 'face)))
+    (when face
+      (let ((col (face-attribute face :foreground nil t)))
+	(unless *max-in-colors*
+	  (setq *max-in-colors* (car (color-values "white"))))
+	(multiple-value-bind (r g b)
+	    (color-values col)
+	  (message "R: %s G: %s B: %s"
+		   (/ (* r 255) *max-in-colors*)
+		   (/ (* g 255) *max-in-colors*)
+		   (/ (* b 255) *max-in-colors*)))))))    
 
 (defun font-lock-fontify-keywords-region-with-profiling (start end &optional loudly)
   "Fontify according to `font-lock-keywords' between START and END.
