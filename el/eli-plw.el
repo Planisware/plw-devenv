@@ -292,3 +292,19 @@
 (add-hook 'fi:inferior-common-lisp-mode-hook 'add-restart-item t)
 (add-hook 'fi:common-lisp-mode-hook 'add-restart-item t)
 (add-hook 'fi:lisp-listener-mode-hook 'add-restart-item t)
+
+
+(defvar *eli-prompt-package-regexp* "^\\(?:[\\[0-9c\\]*]\\)?\\s-*\\(.*\\)([0-9]+):")
+
+(defun find-prompt-package ()
+  (save-excursion
+    (save-match-data
+      (goto-char (point-max))
+      (when (re-search-backward *eli-prompt-package-regexp* (point-min) t)
+	(match-string-no-properties 1)))))
+
+(defun fi::package ()
+  (or (and (not fi::multiple-in-packages)
+	   fi:package)
+      (save-excursion (fi::parse-package-from-buffer t t t))
+      (find-prompt-package)))
