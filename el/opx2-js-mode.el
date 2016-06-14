@@ -265,7 +265,7 @@
 	    ;; reset vars as needed
 	    (js-reset-vars (if (eq js-mode 'pjs-mode) 'pjs-compile 'ojs-compile))
 	    (cond ((eq type :compile)
-		   (process-send-string *ojs-compilation-buffer-name* (format "(if (fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\") (:rjs-one \"%s\"))\n" script filename))
+		   (process-send-string *ojs-compilation-buffer-name* (format "(if (fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\") (:rjs-one \"%s\"))\n" script filename script))
 		   )
 		  ((eq type :compile-and-sync)
 		   ;; check that the file is correct 		   
