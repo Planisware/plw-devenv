@@ -304,7 +304,8 @@
 	(match-string-no-properties 1)))))
 
 (defun fi::package ()
-  (or (and (not fi::multiple-in-packages)
-	   fi:package)
-      (save-excursion (fi::parse-package-from-buffer t t t))
-      (find-prompt-package)))
+  (substring-no-properties
+   (or (and (not fi::multiple-in-packages)
+	    fi:package)
+       (save-excursion (fi::parse-package-from-buffer t t t))
+       (find-prompt-package))))
