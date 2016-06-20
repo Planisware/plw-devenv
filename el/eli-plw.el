@@ -99,6 +99,13 @@
 (put 'letf 'fi:common-lisp-indent-hook '(like flet))
 (put 'letf 'fi:lisp-indent-hook '(like flet))
 
+(put 'letnf 'fi:common-lisp-indent-hook '(like flet))
+(put 'letnf 'fi:lisp-indent-hook '(like flet))
+
+(put 'ol::letnf 'fi:common-lisp-indent-hook '(like flet))
+(put 'ol::letnf 'fi:lisp-indent-hook '(like flet))
+
+
 (put 'doplist 'fi:common-lisp-indent-hook '(like dolist))
 (put 'doplist 'fi:lisp-indent-hook '(like dolist))
 
