@@ -197,7 +197,8 @@
   (js-reset-vars 'ojs-reset)
   (when (buffer-file-name)
     (save-buffer)
-    (plw-refresh-file-buffer (buffer-file-name))))
+    (plw-refresh-file-buffer (buffer-file-name))
+    (semantic-force-refresh)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mode definition
