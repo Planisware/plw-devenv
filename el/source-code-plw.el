@@ -265,6 +265,7 @@
   (define-key fi:common-lisp-mode-map "\C-od" 'opx2-add-documentation)
   (define-key fi:common-lisp-mode-map "\C-ov" 'opx2-compare-redefinition)
   (define-key fi:common-lisp-mode-map "\C-ot" 'opx2-create-test-template)
+  (define-key fi:common-lisp-mode-map "\C-cn" 'fi:lisp-find-next-definition)
   )
 
 (add-hook 'fi:common-lisp-mode-hook 'add-redefinition-shortcuts)

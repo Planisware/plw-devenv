@@ -221,7 +221,7 @@
 
   ;; custom keybindings from menu
   (define-key *pjs-mode-map* "\C-c." '%pjs-find-definition)
-  (define-key *pjs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
+  (define-key *pjs-mode-map* "\C-cn" 'fi:lisp-find-next-definition)
   (define-key *pjs-mode-map* "\C-cc" '%pjs-list-who-calls)
   (define-key *pjs-mode-map* "\C-ce" 'compile-pjs-file)
 ;;  (define-key *pjs-mode-map* "\C-ck" 'check-ojs-region)
