@@ -294,7 +294,6 @@
       (setq ret (list (read-string "Description:"))))
     ret))
 
-
 ;; new find definition which tries to find the definition in the file if no point is returned
 ;; also manages ojs files
 (defun fi::show-found-definition (thing pathname point n-more
@@ -331,12 +330,44 @@
 		   (message (concat mess "No more %ss of %s")
 			    (lep::meta-dot-what) thing)))
 		(n-more
- 		 (message (concat mess "%d more %ss of %s")
+ 		 (message (concat mess "%d more %ss.")
 			  n-more
 			  (lep::meta-dot-what)
-			  (or (lep::meta-dot-from-fspec) thing))))
+			  )))
+;;;			  (or (lep::meta-dot-from-fspec) thing))))
 	  (when pop-stack (fi::pop-metadot-session))))
     (message "cannot find file for %s" thing)))
+
+;; use lep::meta-dot-string if available
+(defun fi::lisp-find-definition-common (something other-window-p
+					&optional what from-fspec)
+  (when (not (fi::lep-open-connection-p))
+    (error "connection to ACL is down--can't find tag"))
+  (message "Finding %s for %s..." (or what "definition") something)
+  (fi::push-metadot-session
+   (or what "definition")
+   something
+   from-fspec
+   (fi::make-complex-request
+    (scm::metadot-session
+     :package (fi::string-to-keyword (fi::package))
+     :type t				; used to be (or type t), but
+					; `type' is not bound in this
+					; context
+     :fspec something)
+    ((something other-window-p what from-fspec)
+     (pathname point n-more)
+     (fi::show-found-definition (or lep::meta-dot-string
+				    (if (symbolp something)
+					(symbol-name something)
+				      something))
+				pathname
+				point n-more other-window-p
+				(eq 0 n-more))
+     (if (= 0 n-more) (fi::pop-metadot-session)))
+    (() (error)
+	(when (fi::pop-metadot-session)
+	  (fi::show-error-text "%s" error))))))
 
 (defconst *defun-words*
   (regexp-opt
@@ -421,11 +452,8 @@
 	  ;; go to the beginning of the line
 	  (beginning-of-line)
 	  "")
-      (progn 
-	(fi::double-char-in-string
-	 ?%
-	 (format "The definition of %s is somewhere in this file! "
-		 thing))
+      (progn
+	(message "The definition of %s is somewhere in this file!" thing)
 	(goto-char (point-min))))))
       
 
