@@ -298,7 +298,7 @@
 ;; new find definition which tries to find the definition in the file if no point is returned
 ;; also manages ojs files
 (defun fi::show-found-definition (thing pathname point n-more
-				  &optional other-window-p pop-stack)
+				  &optional other-window-p pop-stack next)
   (if pathname
       (if (equal pathname "top-level")
 	  (message
@@ -329,19 +329,23 @@
 		     (message (concat mess "%ss of %s")
 			      (lep::meta-dot-what) (lep::meta-dot-from-fspec))
 		   (message (concat mess "No more %ss of %s")
-			    (lep::meta-dot-what) thing)))
+			    (lep::meta-dot-what) (or (lep::meta-dot-string) thing))))
 		(n-more
- 		 (message (concat mess "%d more %ss.")
+ 		 (message (concat mess "%s of %s. %d more %ss"
+				  (if next (format ", next is %s" next) "."))
+			  (capitalize (lep::meta-dot-what))
+			  thing
 			  n-more
 			  (lep::meta-dot-what)
+			  next
 			  )))
 ;;;			  (or (lep::meta-dot-from-fspec) thing))))
 	  (when pop-stack (fi::pop-metadot-session))))
     (message "cannot find file for %s" thing)))
 
-;; use lep::meta-dot-string if available
+;; new argument : next def
 (defun fi::lisp-find-definition-common (something other-window-p
-					&optional what from-fspec)
+						  &optional what from-fspec)
   (when (not (fi::lep-open-connection-p))
     (error "connection to ACL is down--can't find tag"))
   (message "Finding %s for %s..." (or what "definition") something)
@@ -357,18 +361,39 @@
 					; context
      :fspec something)
     ((something other-window-p what from-fspec)
-     (pathname point n-more)
-     (fi::show-found-definition (or lep::meta-dot-string
+     (pathname point n-more what next)
+     (fi::show-found-definition (or what
+				    lep::meta-dot-string
 				    (if (symbolp something)
 					(symbol-name something)
 				      something))
 				pathname
 				point n-more other-window-p
-				(eq 0 n-more))
+				(eq 0 n-more)
+				next)
      (if (= 0 n-more) (fi::pop-metadot-session)))
     (() (error)
 	(when (fi::pop-metadot-session)
 	  (fi::show-error-text "%s" error))))))
+
+(defun fi:lisp-find-next-definition ()
+  "Continue last tags search, started by fi:lisp-find-definition.
+fi:package is used to determine from which Common Lisp package the
+operation is done.  In a subprocess buffer, the package is tracked
+automatically.  In source buffer, the package is parsed at file visit
+time."
+  (interactive)
+  (message "Finding next %s..." (lep::meta-dot-what))
+  (if (not (lep::meta-dot-session)) (error "No more definitions"))
+  (fi::make-request-in-existing-session
+   (lep::meta-dot-session)
+   (:next)
+   (() (pathname point n-more what next)
+       (fi::show-found-definition (or what (lep::meta-dot-string)) pathname point n-more
+				  nil (eq 0 n-more) next))
+   (() (error)
+       (when (fi::pop-metadot-session)
+	 (fi::show-error-text "%s" error)))))
 
 (defconst *defun-words*
   (regexp-opt
