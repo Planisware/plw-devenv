@@ -61,7 +61,7 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
 				(when *display-windows-console* (list "+cc" "+p"))
 				(list
 				 "-H" rootdir
-				 "-L" (format "%s/emacs-runtime.lisp" *opx2-network-folder-work-path*)
+				 "-L" (format "%semacs-runtime.lisp" *opx2-network-folder-work-path*)
 				 "-e" "(setq excl::*restart-app-function* nil)"
 				 ))
 			fi:common-lisp-host
