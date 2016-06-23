@@ -35,6 +35,6 @@ Note : To open the .emacs file, do the following under emacs
 How to launch an Intranet
 -------------------------
 
-Warning : You have to make sure that the installation you want to use has the sc9044 loaded !
+Warning : You have to make sure that the installation you want to use has the sc9404 loaded !
 
 In the Planisware menu, select "Start Planisware VERSION..." and select the intranet.ini file of the installation you want to start. The intranet port will be read from the database declaration, so make sure to update it. 

@@ -150,7 +150,7 @@
      '("t" "nil" "null" "not" "and" "or" "eq" "equal" "string-equal" "=" "<" ">" "!=" "=<" "=>") :func))
   
   (setq highlight-rules-new
-	`((,opx2-hg-comment        1 comment-tag-face t)
+	`(;;(,opx2-hg-comment        1 comment-tag-face t)
 	  (,opx2-hg-alisp-getset   1 opx2-hg-getset-face)
 	  (,opx2-hg-alisp-format   1 opx2-hg-getset-face)
 	  (,opx2-hg-alisp-boolop   1 opx2-hg-boolop-face)
