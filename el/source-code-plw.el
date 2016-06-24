@@ -343,57 +343,60 @@
 	  (when pop-stack (fi::pop-metadot-session))))
     (message "cannot find file for %s" thing)))
 
-;; new argument : next def
-(defun fi::lisp-find-definition-common (something other-window-p
-						  &optional what from-fspec)
-  (when (not (fi::lep-open-connection-p))
-    (error "connection to ACL is down--can't find tag"))
-  (message "Finding %s for %s..." (or what "definition") something)
-  (fi::push-metadot-session
-   (or what "definition")
-   something
-   from-fspec
-   (fi::make-complex-request
-    (scm::metadot-session
-     :package (fi::string-to-keyword (fi::package))
-     :type t				; used to be (or type t), but
+(when (and (boundp 'plw-source-methods) plw-source-methods)
+  ;; new argument : next def
+  (defun fi::lisp-find-definition-common (something other-window-p
+						    &optional what from-fspec)
+    (when (not (fi::lep-open-connection-p))
+      (error "connection to ACL is down--can't find tag"))
+    (message "Finding %s for %s..." (or what "definition") something)
+    (fi::push-metadot-session
+     (or what "definition")
+     something
+     from-fspec
+     (fi::make-complex-request
+      (scm::metadot-session
+       :package (fi::string-to-keyword (fi::package))
+       :type t				; used to be (or type t), but
 					; `type' is not bound in this
 					; context
-     :fspec something)
-    ((something other-window-p what from-fspec)
-     (pathname point n-more what next)
-     (fi::show-found-definition (or what
-				    lep::meta-dot-string
-				    (if (symbolp something)
-					(symbol-name something)
-				      something))
-				pathname
-				point n-more other-window-p
-				(eq 0 n-more)
-				next)
-     (if (= 0 n-more) (fi::pop-metadot-session)))
-    (() (error)
-	(when (fi::pop-metadot-session)
-	  (fi::show-error-text "%s" error))))))
+       :fspec something)
+      ((something other-window-p what from-fspec)
+       (pathname point n-more what next)
+       (fi::show-found-definition (or what
+				      lep::meta-dot-string
+				      (if (symbolp something)
+					  (symbol-name something)
+					something))
+				  pathname
+				  point n-more other-window-p
+				  (eq 0 n-more)
+				  next)
+       (if (= 0 n-more) (fi::pop-metadot-session)))
+      (() (error)
+       (when (fi::pop-metadot-session)
+	 (fi::show-error-text "%s" error))))))
 
-(defun fi:lisp-find-next-definition ()
-  "Continue last tags search, started by fi:lisp-find-definition.
+  (defun fi:lisp-find-next-definition ()
+    "Continue last tags search, started by fi:lisp-find-definition.
 fi:package is used to determine from which Common Lisp package the
 operation is done.  In a subprocess buffer, the package is tracked
 automatically.  In source buffer, the package is parsed at file visit
 time."
-  (interactive)
-  (message "Finding next %s..." (lep::meta-dot-what))
-  (if (not (lep::meta-dot-session)) (error "No more definitions"))
-  (fi::make-request-in-existing-session
-   (lep::meta-dot-session)
-   (:next)
-   (() (pathname point n-more what next)
-       (fi::show-found-definition (or what (lep::meta-dot-string)) pathname point n-more
-				  nil (eq 0 n-more) next))
-   (() (error)
-       (when (fi::pop-metadot-session)
-	 (fi::show-error-text "%s" error)))))
+    (interactive)
+    (message "Finding next %s..." (lep::meta-dot-what))
+    (if (not (lep::meta-dot-session)) (error "No more definitions"))
+    (fi::make-request-in-existing-session
+     (lep::meta-dot-session)
+     (:next)
+     (() (pathname point n-more what next)
+      (fi::show-found-definition (or what (lep::meta-dot-string)) pathname point n-more
+				 nil (eq 0 n-more) next))
+     (() (error)
+      (when (fi::pop-metadot-session)
+	(fi::show-error-text "%s" error)))))
+
+  )
 
 (defconst *defun-words*
   (regexp-opt
