@@ -11,13 +11,13 @@
 (require 'semantic)
 ;;(require 'semantic/edit)
 
-;;; replace prefix in semantic shortcut , -> :
+;;; replace prefix in semantic shortcut , -> $
 
 (defun redefine-semantic-shortcuts ()
   (cl-labels ((map-keymap (map)
 			  (dolist (item (cdr map))
 			    (when (eq (car item) 44)
-			      (setcar item 58))
+			      (setcar item 36))
 			    (when (keymapp (cdr item))
 			      (map-keymap (cdr item))))))
     (map-keymap semantic-mode-map)))
