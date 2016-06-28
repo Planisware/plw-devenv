@@ -18,7 +18,7 @@
     ;; "\\<xyz\\>" matches part of e.g. "_xyz" and "xyz_abc". Defines
     ;; it as word constituent for now.
     (modify-syntax-entry ?_ "w" table)
-;;    (modify-syntax-entry ?_ "_" table)
+    ;;    (modify-syntax-entry ?_ "_" table)
     (modify-syntax-entry ?: "_" table)
     (modify-syntax-entry ?- "_" table)
     (modify-syntax-entry ?# "'q" table)
@@ -73,7 +73,7 @@
   (let* ((symbol-at-point (fi::get-symbol-at-point up-p no-method))
 	 (function-at-point (if (string-match ":" symbol-at-point)
 				symbol-at-point
-			     (_find-function-at-point))))
+			      (_find-function-at-point))))
     (if fi::use-symbol-at-point
 	(list function-at-point)
       (let ((read-symbol
@@ -100,7 +100,7 @@
 	     (beginning-of-thing 'word)
 	     (cond ((fast-looking-back "plw.")
 		    word)
-;;		    (format "plw.%s" word))
+		   ;;		    (format "plw.%s" word))
 		   ((looking-back (format "%s\\." (list-pjs-namespaces-regexp)) (line-beginning-position))
 		    (backward-word)
 		    (format "%s.%s" (thing-at-point 'word t) word))
@@ -139,13 +139,13 @@
    (if current-prefix-arg
        '(nil)
      (list (car (pjs-get-default-symbol "Lisp locate source" t t)))))
-;;  (interactive)
+  ;;  (interactive)
   (if (string-match ":" tag)
       (fi::lisp-find-definition-common tag nil)
     (fi::lisp-find-definition-common (if (string-prefix-p "plw." tag t)
 					 (concat "js::" (substring tag (1+ (position ?. tag))))
 				       (concat "js::" tag)) nil)))
-  
+
 (defun %pjs-list-who-calls (tag)
   (interactive
    (if current-prefix-arg
@@ -209,10 +209,40 @@
   :syntax-table pjs-mode-syntax-table
 
   ;; load a little bit of cc-mode for indentation
-  (c-initialize-cc-mode t)
-  (c-init-language-vars-for 'c-mode)
-  (c-common-init 'c-mode)
+;;  (c-initialize-cc-mode t)
+;;  (c-init-language-vars c-mode)
+;;  (c-init-language-vars-for 'pjs-mode)
+;;  (c-common-init 'c-mode)
 
+  ;; indentation like js mode
+  (setq-local indent-line-function 'js-indent-line)
+  (setq-local beginning-of-defun-function 'js-beginning-of-defun)
+  (setq-local end-of-defun-function 'js-end-of-defun)
+  (setq-local open-paren-in-column-0-is-defun-start nil)
+
+  (setq c-comment-prefix-regexp "//+\\|\\**"
+        c-paragraph-start "$"
+        c-paragraph-separate "$"
+        c-block-comment-prefix "* "
+        c-line-comment-starter "//"
+        c-comment-start-regexp "/[*/]\\|\\s!"
+        comment-start-skip "\\(//+\\|/\\*+\\)\\s *")
+
+  (let ((c-buffer-is-cc-mode t))
+    ;; FIXME: These are normally set by `c-basic-common-init'.  Should
+    ;; we call it instead?  (Bug#6071)
+    (make-local-variable 'paragraph-start)
+    (make-local-variable 'paragraph-separate)
+    (make-local-variable 'paragraph-ignore-fill-prefix)
+    (make-local-variable 'adaptive-fill-mode)
+    (make-local-variable 'adaptive-fill-regexp)
+    (c-setup-paragraph-variables))
+  
+;;  (setq c-current-comment-prefix  c-comment-prefix-regexp)
+  
+;;  (setq-local parse-sexp-ignore-comments t)
+;;  (setq-local parse-sexp-lookup-properties t)
+  
   ;; don't trust properties
   (setq parse-sexp-lookup-properties nil)
   
@@ -224,8 +254,8 @@
   (define-key *pjs-mode-map* "\C-cn" 'fi:lisp-find-next-definition)
   (define-key *pjs-mode-map* "\C-cc" '%pjs-list-who-calls)
   (define-key *pjs-mode-map* "\C-ce" 'compile-pjs-file)
-;;  (define-key *pjs-mode-map* "\C-ck" 'check-ojs-region)
-;;  (define-key *pjs-mode-map* "\C-cr" 'compile-pjs-region)
+  ;;  (define-key *pjs-mode-map* "\C-ck" 'check-ojs-region)
+  ;;  (define-key *pjs-mode-map* "\C-cr" 'compile-pjs-region)
   (define-key *pjs-mode-map* "\C-c\C-b" 'save-and-compile-pjs-file)
   (define-key *pjs-mode-map* "\C-cs" 'save-and-compile-pjs-file)
   (define-key *pjs-mode-map* "\C-ct" 'trace-pjs-function)
@@ -241,9 +271,9 @@
 
   ;; autoindentation on new line and add a closing } if needed
   (define-key *pjs-mode-map* (kbd "RET") 'newline-and-indent)
-;;  (define-key *ojs-mode-map* (kbd "RET") 'ojs-mode-insert-lcurly-on-ret)
+  ;;  (define-key *ojs-mode-map* (kbd "RET") 'ojs-mode-insert-lcurly-on-ret)
   ;; auto insert closing }
-;;  (define-key *ojs-mode-map* (kbd "{") 'ojs-mode-insert-lcurly)
+  ;;  (define-key *ojs-mode-map* (kbd "{") 'ojs-mode-insert-lcurly)
   
   ;; menu
   (easy-menu-define pjs-menu *pjs-mode-map* "Planisware Script Menu"
@@ -268,8 +298,8 @@
   (use-local-map *pjs-mode-map*)  
   
   ;; rebuild  function and vars cache on save and when we open a file
-;;  (add-hook 'after-save-hook 'check-header nil t)
-;;  (add-hook 'after-save-hook 'pjs-check-footer nil t)
+  ;;  (add-hook 'after-save-hook 'check-header nil t)
+  ;;  (add-hook 'after-save-hook 'pjs-check-footer nil t)
   (add-hook 'after-save-hook 'pjs-reset-cache-on-save nil t)
   (add-hook 'after-save-hook 'semantic-force-refresh nil t)
   
@@ -284,6 +314,9 @@
 
 ;; autocomplete
 (require 'ac-pjs)
+
+;; js mode
+(require 'js)
 
 ;; pjs files are pjs modes
 (setq auto-mode-alist (cons '("\\.pjs" . pjs-mode) auto-mode-alist))
