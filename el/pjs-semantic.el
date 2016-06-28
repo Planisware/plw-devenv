@@ -95,21 +95,21 @@ the semantic cache to see what needs to be changed."
     (goto-char (point-min))
     (let (list
 	  (cur-point (point)))      
-;;      (condition-case err
-	  (while (< (point) (point-max))
-	    (let ((next-function (re-real-search-forward *pjs-start-block-regexp* nil t)))
-	    ;;(let ((next-function (re-search-forward *pjs-start-block-regexp* nil t)))
-	      (if next-function
-		  (let* ((start-inter cur-point)
-			 (end-inter (1- (line-beginning-position)))
-			 (start-block (line-beginning-position))
-			 (end-block (progn (backward-char) (forward-sexp)(point))))
-		    (setq cur-point (point))
-		    (push (list start-inter end-inter) list)
-		    (push (list start-block end-block) list))
-		(progn (push (list (point) (point-max)) list)
-		       (goto-char (point-max))))))
-	  (pjs-semantic-parse-list (reverse list)))))
+      ;;      (condition-case err
+      (while (< (point) (point-max))
+	(let ((next-function (re-real-search-forward *pjs-start-block-regexp* nil t)))
+	  ;;(let ((next-function (re-search-forward *pjs-start-block-regexp* nil t)))
+	  (if next-function
+	      (let* ((start-inter cur-point)
+		     (end-inter (1- (line-beginning-position)))
+		     (start-block (line-beginning-position))
+		     (end-block (progn (backward-char) (forward-sexp)(point))))
+		(setq cur-point (point))
+		(push (list start-inter end-inter) list)
+		(push (list start-block end-block) list))
+	    (progn (push (list (point) (point-max)) list)
+		   (goto-char (point-max))))))
+      (pjs-semantic-parse-list (reverse list)))))
 
 (defun pjs-semantic-parse-region (start end &optional nonterminal depth returnonerror)
   (prog1
@@ -121,21 +121,21 @@ the semantic cache to see what needs to be changed."
     (jit-lock-refontify start end)))
 
 (defface pjs-semantic-error-font
-    '((t 
-       ;;       :underline (:color "red" :style wave)))
-       :background "grey25"))
-    "Highlight block of error "
-    )
+  '((t 
+     ;;       :underline (:color "red" :style wave)))
+     :background "grey25"))
+  "Highlight block of error "
+  )
 
 (defvar pjs-semantic-error-font
   'pjs-semantic-error-font)
 
 (defface pjs-semantic-error-highlight
-    '((t 
-;;       :background "#255199206"))
-       :background "red4"))
-    "Highlight speficic error"
-    )
+  '((t 
+     ;;       :background "#255199206"))
+     :background "red4"))
+  "Highlight speficic error"
+  )
 
 (defvar pjs-semantic-error-highlight
   'pjs-semantic-error-highlight)
@@ -159,7 +159,7 @@ the semantic cache to see what needs to be changed."
 	      (start (car coords) (car coords))
 	      (end (second coords) (second coords)))
 	    ((= i (length list)))	 	  
-	
+	  
 	  (when *pjs-verbose-parsing*
 	    (let ((parsed-block (cond ((<= (- end start) context)
 				       (buffer-substring-no-properties start end))
@@ -174,12 +174,12 @@ the semantic cache to see what needs to be changed."
 		       parsed-block
 		       nonterminal
 		       (if (listp tags) (length tags) tags))))
-      
+	  
 	  ;; remove previous error overlays
 	  (dolist (overlay (overlays-in start end))
 	    (when (semantic-overlay-get overlay 'pjs-error)
 	      (delete-overlay overlay)))
-	
+	  
 	  (when (stringp tags)
 	    ;; we have an error !!
 	    ;; try to highlight the error       
@@ -203,7 +203,7 @@ the semantic cache to see what needs to be changed."
 			   'pjs-error t)
 	      (overlay-put error-overlay
 			   'help-echo tags)))
-	
+	  
 	  (cond ((and (stringp tags) *pjs-parse-changes*)
 		 (throw 'semantic-parse-changes-failed :error))
 		((listp tags)
@@ -276,7 +276,7 @@ the semantic cache to see what needs to be changed."
 	       (pjs-semantic-collect-local-vars-from-tag parent))))
 	  (t
 	   nil))))
-	  
+
 
 (defun pjs-semantic-get-local-variables (&optional point)
   "Get the local variables based on POINT's context.
@@ -285,7 +285,7 @@ This can be overridden with `get-local-variables'."
   (let ((tag (car (last (semantic-find-tag-by-overlay (or point (point)))))))
     ;; only one tag for now
     (pjs-semantic-collect-local-vars-from-tag tag)))
-  
+
 ;;;###autoload
 (defun semantic-default-pjs-setup ()
   "Setup hook function for pjs files and Semantic."
@@ -307,9 +307,9 @@ This can be overridden with `get-local-variables'."
 (defun semantic--tag-link-to-buffer (tag)
   "Convert TAG from using an overlay proxy to using an overlay.
 This function is for internal use only."
-;;  (unless (derived-mode-p 'prog-mode)
-;;    (message "!!!!!!!! tag is %s buffer is %s" tag (current-buffer))
-;;    (backtrace))
+  ;;  (unless (derived-mode-p 'prog-mode)
+  ;;    (message "!!!!!!!! tag is %s buffer is %s" tag (current-buffer))
+  ;;    (backtrace))
   (when (semantic-tag-p tag)
     (let ((o (semantic-tag-overlay tag)))
       (when (and (vectorp o) (= (length o) 2))
@@ -338,8 +338,8 @@ return nil."
   (let* ((start (semantic-edits-os change))
 	 (end (semantic-edits-oe change))
 	 (tags (nreverse
-		  (semantic-find-tag-by-overlay-in-region
-		   start end))))
+		(semantic-find-tag-by-overlay-in-region
+		 start end))))
     
     (while (and tags
 		(semantic--tag-get-property (car tags) 'no-single-reparse))

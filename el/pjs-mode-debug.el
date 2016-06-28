@@ -5,8 +5,8 @@
 If LOUDLY is non-nil, print status messages while fontifying.
 This function is the default `font-lock-fontify-region-function'."
   (setq loudly *pjs-loudly-syntax-highlighting*)
-;;  (save-buffer-state
-    ;; Use the fontification syntax table, if any.
+  ;;  (save-buffer-state
+  ;; Use the fontification syntax table, if any.
   (with-syntax-table (or font-lock-syntax-table (syntax-table))
     (save-restriction
       (unless font-lock-dont-widen (widen))
@@ -55,8 +55,8 @@ LOUDLY, if non-nil, allows progress-meter bar."
     ;; Fontify each item in `font-lock-keywords' from `start' to `end'.
     (while keywords
       (setq start-time (float-time))
-;;      (if loudly (message "Fontifying %s... (regexps..%s)" bufname
-;;			  (make-string (cl-incf count) ?.)))
+      ;;      (if loudly (message "Fontifying %s... (regexps..%s)" bufname
+      ;;			  (make-string (cl-incf count) ?.)))
       ;;
       ;; Find an occurrence of `matcher' from `start' to `end'.
       (setq keyword (car keywords) matcher (car keyword))

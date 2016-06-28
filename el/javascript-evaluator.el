@@ -14,15 +14,15 @@
 ;; mode pour la coloration syntaxique
 
 (setq *js-keywords*
- '(("^Warning[ ]*:.*" . font-lock-warning-face)
-   ("^Error[ ]*:.*" . font-lock-variable-name-face)
-;;   ("^Return  : .*" . font-lock-type-face)
-   ("^Return[ ]*:[^\"\n]*" . font-lock-type-face)
-;;   ("^Applet used[ ]*: .*" . font-lock-function-name-face)
-   ("^Info[ ]*:.*" . font-lock-function-name-face)
-  ;; ("JS: " . font-lock-string-face)
-   )
- )
+      '(("^Warning[ ]*:.*" . font-lock-warning-face)
+	("^Error[ ]*:.*" . font-lock-variable-name-face)
+	;;   ("^Return  : .*" . font-lock-type-face)
+	("^Return[ ]*:[^\"\n]*" . font-lock-type-face)
+	;;   ("^Applet used[ ]*: .*" . font-lock-function-name-face)
+	("^Info[ ]*:.*" . font-lock-function-name-face)
+	;; ("JS: " . font-lock-string-face)
+	)
+      )
 
 (defvar *js-evaluator-map* (make-sparse-keymap))
 
@@ -33,7 +33,7 @@
     ;; "\\<xyz\\>" matches part of e.g. "_xyz" and "xyz_abc". Defines
     ;; it as word constituent for now.
     (modify-syntax-entry ?_ "w" table)
-;;    (modify-syntax-entry ?_ "_" table)
+    ;;    (modify-syntax-entry ?_ "_" table)
     (modify-syntax-entry ?: "_" table)
     (modify-syntax-entry ?- "_" table)
     (modify-syntax-entry ?. "w" table)
@@ -67,10 +67,10 @@
   (define-key *js-evaluator-map* "\C-c\C-c" 'fi:interrupt-listener)
   
   (define-key *js-evaluator-map* (kbd "RET") 'javascript-evaluator-newline)
-;;  (define-key *js-evaluator-map* (kbd "RET") 'javascript-evaluator-return)
+  ;;  (define-key *js-evaluator-map* (kbd "RET") 'javascript-evaluator-return)
 
   (use-local-map *js-evaluator-map*)  
-)
+  )
 
 (defun fi:open-lisp-listener (&optional buffer-number buffer-name
 					setup-function command mode)
@@ -112,7 +112,7 @@ the buffer name is the second optional argument."
 					      'fi::setup-tcp-connection))))
       (when command
 	(process-send-string proc command))
-	proc)))
+      proc)))
 
 ;;; when we go back to the top level, relaunch the repl
 (defun javascript-evaluator-filter (proc string)
@@ -121,10 +121,10 @@ the buffer name is the second optional argument."
 		(string-match "\\`[[:upper:]-]+([0-9]+): \\'" string));; exit when we go back to the top level (ie :res, :pop, etc)
 	   (process-send-string proc "(jvs::js-repl)")
 	   )
-;;	  ((and (stringp string)
-;;		(string-match ":EXIT-JS" string)) ;; exit when we read this, returned by the compilation functions
-;;	   (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))
-;;	   (delete-process proc))
+	  ;;	  ((and (stringp string)
+	  ;;		(string-match ":EXIT-JS" string)) ;; exit when we read this, returned by the compilation functions
+	  ;;	   (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))
+	  ;;	   (delete-process proc))
 	  (t
 	   (fi::subprocess-filter proc string)))))
 

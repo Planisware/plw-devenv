@@ -210,8 +210,8 @@
   ;; generate the documentation cache
   (setq *ojs-buffers-vars-cache* (append 
 				  (ojs-find-candidates-from-regexp ;;(if (eq major-mode 'pjs-mode)
-								   ;;    *pjs-file-vars-regexp*
-								     *ojs-file-vars-regexp*)
+				   ;;    *pjs-file-vars-regexp*
+				   *ojs-file-vars-regexp*)
 				  (when (eq major-mode 'opx2-js-mode)
 				    (ojs-find-candidates-from-regexp-in-buffers *ojs-global-vars-regexp*))))
   ;; regexp cache

@@ -3,7 +3,7 @@
 ;; MELPA source
 (require 'package)
 (add-to-list 'package-archives
-         '("melpa" . "http://melpa.org/packages/") t)
+	     '("melpa" . "http://melpa.org/packages/") t)
 (package-initialize)
 
 (defvar *plw-required-packages* '((magit 24 4)
@@ -27,18 +27,18 @@
 		(unless (package-installed-p (car p)) (package-install (car p))))
 	       ((y-or-n-p (format "You version of Emacs (%s.%s) does not match the requirement for the package %s, which requires version %s.%s. Do you want to continue without the package %s ?"
 				  emacs-major-version
-				       emacs-minor-version
-				       (car p)
-				       (second p)
-				       (third p)
-				       (car p)))
+				  emacs-minor-version
+				  (car p)
+				  (second p)
+				  (third p)
+				  (car p)))
 		;; do nothing here
 		)
 	       (t
 		(error "Uncompatible version of Emacs (%s.%s), wanted at least %s.%s to use package %s"
 		       emacs-major-version emacs-minor-version
 		       (second p) (third p) (car p)))))))
-  
+
 (unless (plw-packages-installed-p)
   ;; check for new packages (package versions)
   (message "%s" "Refreshing package database...")

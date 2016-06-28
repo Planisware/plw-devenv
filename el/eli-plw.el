@@ -112,7 +112,7 @@
 (put 'jvs::defun-js2 'fi:common-lisp-indent-hook 3)
 (put 'defun-js2 'fi:common-lisp-indent-hook 3)
 (put 'javascript::defun-js2 'fi:common-lisp-indent-hook 3)
-  
+
 ;;  controversial
 ;;  (put 'if 'fi:common-lisp-indent-hook nil)
 ;;  (put 'if 'fi:lisp-indent-hook nil)

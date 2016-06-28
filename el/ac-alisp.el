@@ -10,7 +10,7 @@
 ;;**************************************************************************
 
 (require 'auto-complete nil 'noerror)
-;(require 'pos-tip)
+					;(require 'pos-tip)
 
 (defvar *ac-current-candidates* nil)
 
@@ -29,7 +29,7 @@
 ;; we return everything, because the list we got from the lisp is already filtered
 (defun alisp-ac-match (string list)
   list)
-  
+
 (defun alisp-functions-ac-document (symbol)
   symbol)
 
@@ -41,16 +41,16 @@
   "see fi:lisp-arglist, always use minibufer"
   (interactive (fi::get-default-symbol "Arglist for" t t))
   (fi::make-request (lep::arglist-session :fspec string)
-    ;; Normal continuation
-    (() (what arglist)
-     (progn
-       (message "%s's arglist: %s" what arglist)
-       (fi::note-background-reply)))
-    ;; Error continuation
-    ((string) (error)
-     (progn
-       (message "Cannot get the arglist of %s: %s" string error)
-       (fi::note-background-reply)))))
+		    ;; Normal continuation
+		    (() (what arglist)
+		     (progn
+		       (message "%s's arglist: %s" what arglist)
+		       (fi::note-background-reply)))
+		    ;; Error continuation
+		    ((string) (error)
+		     (progn
+		       (message "Cannot get the arglist of %s: %s" string error)
+		       (fi::note-background-reply)))))
 
 
 (defun alisp-function-ac-action()
@@ -79,7 +79,7 @@
 	    ((string-prefix-p ignore (cdr c2) t)
 	     (throw 'return t))))
     (string< (cdr c1) (cdr c2))))
-  
+
 
 ;; see eli/fi-lep.el in allegro lisp install directory
 (defun alisp-functions-ac-candidates ()

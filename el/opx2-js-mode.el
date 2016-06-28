@@ -18,7 +18,7 @@
     ;; "\\<xyz\\>" matches part of e.g. "_xyz" and "xyz_abc". Defines
     ;; it as word constituent for now.
     (modify-syntax-entry ?_ "w" table)
-;;    (modify-syntax-entry ?_ "_" table)
+    ;;    (modify-syntax-entry ?_ "_" table)
     (modify-syntax-entry ?: "_" table)
     (modify-syntax-entry ?- "_" table)
     table)
@@ -76,7 +76,7 @@
 	  (setq start (point))
 	(setq start (1+ (point))))))
   (buffer-substring-no-properties start end))
-    
+
 ;; <ctrl-c .> in ojs file
 ;; works with ojs and lisp file and properly do the search
 (defun %ojs-find-definition (tag)
@@ -87,7 +87,7 @@
   (if (string-match ":" tag)
       (fi::lisp-find-definition-common tag nil)
     (fi::lisp-find-definition-common (concat "js::" tag) nil)))
-  
+
 (defun %ojs-list-who-calls (tag)
   (interactive
    (if current-prefix-arg
@@ -218,12 +218,12 @@
   (when (ojs-configuration-ok)
     (let* ((script-name      (file-name-base (buffer-file-name)))
 	   (script           (or ;; try to get a comment //PLWSCRIPT :
-				 (save-excursion
-				   (goto-char (point-min))
-				   (if (re-search-forward "^/+\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
-				       (match-string-no-properties 1)
-				     nil))
-				 (fi:eval-in-lisp (format "(jvs::find-script \"%s\")" script-name))))
+			      (save-excursion
+				(goto-char (point-min))
+				(if (re-search-forward "^/+\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
+				    (match-string-no-properties 1)
+				  nil))
+			      (fi:eval-in-lisp (format "(jvs::find-script \"%s\")" script-name))))
 	   (buffer-name *ojs-compilation-buffer-name*)
 	   (buffer (or (get-buffer buffer-name)
 		       (get-buffer-create buffer-name)))
@@ -413,11 +413,11 @@
    (string-match-p "lispcall[ \t]*\".*\"" str)    
    ;; functions to ignore
    (string-match-p *functions-to-ignore* str)
-;   (let (func-ignored)
-;     (dolist (func *functions-to-ignore*)
-;       (when (string-match-p (format "%s[ \t]*(.*\".*\".*)" func) str)
-;	 (setq func-ignored t)))
-;     func-ignored)
+					;   (let (func-ignored)
+					;     (dolist (func *functions-to-ignore*)
+					;       (when (string-match-p (format "%s[ \t]*(.*\".*\".*)" func) str)
+					;	 (setq func-ignored t)))
+					;     func-ignored)
    ;; ignore line finishing by the ignore pattern // NOINT
    (string-match-p (format ".*%s" *ignore-pattern*) str)
    ;; ignore writeln("$Id
@@ -480,9 +480,9 @@
 
   ;; autoindentation on new line and add a closing } if needed
   (define-key *ojs-mode-map* (kbd "RET") 'newline-and-indent)
-;;  (define-key *ojs-mode-map* (kbd "RET") 'ojs-mode-insert-lcurly-on-ret)
+  ;;  (define-key *ojs-mode-map* (kbd "RET") 'ojs-mode-insert-lcurly-on-ret)
   ;; auto insert closing }
-;;  (define-key *ojs-mode-map* (kbd "{") 'ojs-mode-insert-lcurly)
+  ;;  (define-key *ojs-mode-map* (kbd "{") 'ojs-mode-insert-lcurly)
   
   ;; menu
   (easy-menu-define ojs-menu *ojs-mode-map* "OPX2 Javascript Menu"
@@ -511,7 +511,7 @@
   ;; rebuild  function and vars cache on save and when we open a file
   (add-hook 'after-save-hook 'ojs-reset-cache-on-save nil t)
   (add-hook 'find-file-hook 'ojs-reset-cache-on-save nil t)
-)
+  )
 
 ;; kludge : in opx2 script, the first line sets the mode to C++, and we want to avoid that
 ;; so we call our function from the c++ mode hook
@@ -520,7 +520,7 @@
 	 (opx2-js-mode))
 	((equal (downcase (substring buffer-file-name -3 nil)) "pjs")
 	 (pjs-mode))))
-	 
+
 
 (when *use-opx2-js-mode*
   (add-hook 'c++-mode-hook 'override-c++-mode))

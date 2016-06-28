@@ -54,11 +54,11 @@
 
 ;; <ctrl-c .> in ojs file
 (defun ojs-find-definition(tag)
-    (interactive
-     (if current-prefix-arg
-	 '(nil)
-       (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
-    (fi::lisp-find-definition-common (concat "js::" tag) nil))
+  (interactive
+   (if current-prefix-arg
+       '(nil)
+     (list (car (fi::get-default-symbol "Lisp locate source" t t)))))
+  (fi::lisp-find-definition-common (concat "js::" tag) nil))
 
 (defun set-ojs-mode-hook()
   (define-key c++-mode-map "\C-c." 'ojs-find-definition))
@@ -85,26 +85,26 @@
 (defun fast-looking-back (str)
   (let ((point (point))
 	(lstr (length str)))	
-  (catch 'ret
-    (do* ((i 0 (1+ i)))
-	((= i lstr)
-	 t)
-      (let ((c (aref str (- lstr i 1)))
-	    (char (char-before (- point i))))
-	(unless (eq char c)
-	  (throw 'ret nil)))))))
+    (catch 'ret
+      (do* ((i 0 (1+ i)))
+	  ((= i lstr)
+	   t)
+	(let ((c (aref str (- lstr i 1)))
+	      (char (char-before (- point i))))
+	  (unless (eq char c)
+	    (throw 'ret nil)))))))
 
 (defun fast-looking-at (str)
   (let ((point (point))
 	(lstr (length str)))	
-  (catch 'ret
-    (do* ((i 0 (1+ i)))
-	((= i lstr)
-	 t)
-      (let ((c (aref str i))
-	    (char (char-after (+ point i))))
-	(unless (eq char c)
-	  (throw 'ret nil)))))))
+    (catch 'ret
+      (do* ((i 0 (1+ i)))
+	  ((= i lstr)
+	   t)
+	(let ((c (aref str i))
+	      (char (char-after (+ point i))))
+	  (unless (eq char c)
+	    (throw 'ret nil)))))))
 
 (defun check-fixes-configuration (fixes-list)
   (catch 'exit
@@ -175,7 +175,7 @@
 (defun re-real-search-forward (regexp limit errorp)
   (if *use-real-search*
       (re-search-forward-with-test regexp
-				    (lambda () (not (or (er--point-is-in-comment-p)
-							(er--point-is-in-string-p))))
-				    limit errorp)
+				   (lambda () (not (or (er--point-is-in-comment-p)
+						       (er--point-is-in-string-p))))
+				   limit errorp)
     (re-search-forward regexp limit errorp)))

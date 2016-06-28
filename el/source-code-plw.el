@@ -9,7 +9,7 @@
 ;;
 ;;**************************************************************************
 (defun update-db (message)
-" @PURPOSE Updates the database using message content
+  " @PURPOSE Updates the database using message content
    It opens the database and sets the global var *current-db-string*
   @ARGUMENTS
     $message String that is the database name
@@ -44,9 +44,9 @@
       (let* ((start (point))
 	     (end 
 	      (progn (forward-sexp)
-		    (point)))
+		     (point)))
 	     (arg-list (car (read-from-string (buffer-substring start end))))
-	   (mode  " "))
+	     (mode  " "))
 	(dolist (arg arg-list)
 	  (case (type-of arg)
 	    (symbol
@@ -69,7 +69,7 @@
 	
 	(setq message (concat message "  @RESULT\n  @NB\"\n" ))
 	
-      
+	
 	;; check that no string comes righet after function definition
 	(let* ((start (point))
 	       (end (save-excursion 
@@ -94,9 +94,9 @@
 	(let ((full-file-name (concat full-path
 				      file
 				      "/"))
-	    (rel-file-name (concat  short-path
-				   file
-				   "/")))
+	      (rel-file-name (concat  short-path
+				      file
+				      "/")))
 	  (when (file-directory-p full-file-name)
 	    (push rel-file-name res-lst)
 	    (setq res-lst
@@ -111,12 +111,12 @@
   "Creates a test template from an open buffer"
   (interactive)
   (let* ((template-path (concat *opx2-network-folder-work-path* "/devenv/test-template.lisp"))
-	(patch-buffer (current-buffer))
-	(patch-name (subseq (buffer-name patch-buffer) 0 (- (length (buffer-name patch-buffer)) 5)))
-	(test-patch-name (concat *opx2-network-folder-work-path*
-				 "/kernel/tests/dev/test-"
-				 patch-name
-				 ".lisp")))
+	 (patch-buffer (current-buffer))
+	 (patch-name (subseq (buffer-name patch-buffer) 0 (- (length (buffer-name patch-buffer)) 5)))
+	 (test-patch-name (concat *opx2-network-folder-work-path*
+				  "/kernel/tests/dev/test-"
+				  patch-name
+				  ".lisp")))
     (cond ((file-exists-p test-patch-name)
 	   ;; test fix exists do not replace
 	   (find-file test-patch-name))
@@ -191,14 +191,14 @@
 		    (beginning-of-buffer)
 
 		    (if (re-search-forward f-name  nil t)  
-		      (let* ((start (save-excursion (fi:beginning-of-defun)(point)))
-			     (end (save-excursion (end-of-defun)(point)))
-			     (original-body (buffer-substring start end)))
+			(let* ((start (save-excursion (fi:beginning-of-defun)(point)))
+			       (end (save-excursion (end-of-defun)(point)))
+			       (original-body (buffer-substring start end)))
 
-			(with-current-buffer original-subbuff
-			  (normal-mode)
-			  (insert-buffer-substring original-buffer start end)
-			  ))
+			  (with-current-buffer original-subbuff
+			    (normal-mode)
+			    (insert-buffer-substring original-buffer start end)
+			    ))
 		      (progn
 			(kill-buffer original-subbuff)
 			(kill-buffer redef-subbuff )
@@ -217,17 +217,17 @@
 	    (kill-buffer redef-subbuff)
 	    (message-box (format "Could not locate patch %s" patch-name))
 	    ))))))
-    
+
 (defun opx2-redefine-function ()
   "Fetch (in-package) and $Id: from a cvs file"
   (interactive)
   (let* ((location (buffer-file-name (current-buffer)))
-	done package version absolute-prefix-pos
-	revision)
+	 done package version absolute-prefix-pos
+	 revision)
     
     
     ;;building relative location 
-    ;Unix separator
+					;Unix separator
     (dotimes (idx (length location))
       (when (eq (aref location idx)
 		?\\)
@@ -255,7 +255,7 @@
 	   (start (save-excursion
 		    (fi:beginning-of-defun) (point))))
       (kill-new (concat "(in-package " package ")\n\n;;;; VERSION: " (if absolute-prefix-pos
-									(concat location " " revision)
+									 (concat location " " revision)
 								       version)
 			"\n;;Changed: \n" (buffer-substring start end))))))
 
@@ -290,7 +290,7 @@
 	     (if (re-search-forward "^;+\\s-*DOC\\s-*:?\\s-*\\(.*\\)" nil t)
 		 (setq ret (list (match-string 1)))
 	       (error "No doc string was found")))))
-	     
+    
     (unless ret	  
       (setq ret (list (read-string "Description:"))))
     ret))
@@ -298,9 +298,9 @@
 ;; new find definition which tries to find the definition in the file if no point is returned
 ;; also manages ojs files
 (defun fi::show-found-definition (thing pathname point n-more
-				  &optional other-window-p pop-stack next)
+					&optional other-window-p pop-stack next)
   (if pathname
-      (if (equal pathname "top-level")
+      (if (equal (downcase pathname) "top-level")
 	  (message
 	   "%s was defined somewhere at the top-level, %d more definitions"
 	   thing n-more)
@@ -316,7 +316,7 @@
 	    (find-file pathname))
 	  ;; rfe10778. why is the set-mark necessary?
 	  ;; (if xb (set-mark (point)))
-;;	  (message "this is %s point is %s" thing point)
+	  ;;	  (message "this is %s point is %s" thing point)
 	  (if (null point)
 	      (try-to-find-in-file thing pathname)
 	    (progn
@@ -427,7 +427,7 @@ time."
 
 (defun try-to-find-in-file (thing pathname)
   ;; try to find the definition "manually" in the file
-;;  (message "thing is %s and is a %s" thing (cond ((stringp thing) "string") ((symbolp thing) "symbol")))
+  ;;  (message "thing is %s and is a %s" thing (cond ((stringp thing) "string") ((symbolp thing) "symbol")))
   ;; get the name of the function or the name of the method
   (let* ((split (split-string thing ":+" t))
 	 (function-name (car (last split)))
@@ -438,7 +438,7 @@ time."
 	(cond ((equal (substring pathname -3 nil) "ojs")
 	       ;; try to find in ojs file
 	       (goto-char (point-min))
-;;	       (message "Searching %s" (concat "\\(function\\|method\\)[ \t]+\\_<" function-name "\\_>"))
+	       ;;	       (message "Searching %s" (concat "\\(function\\|method\\)[ \t]+\\_<" function-name "\\_>"))
 	       (re-search-forward (concat "^\\s-*\\(function\\|method\\)\\s-+\\_<" function-name "\\_>") (point-max) t))
 	      ((and (equal (substring pathname -3 nil) "pjs")
 		    (string-prefix-p "METHOD" function-name t))
@@ -456,13 +456,13 @@ time."
 			 (re-search-forward (format "^\\s-*method\\s-+\\<%s\\>\\s-+on\\s-+\\<%s\\>" method-name class) (point-max) t) ;; method name on class
 			 (re-search-forward (format "^\\s-*method\\s-+\\<%s\\>\\s-+on\\s-+\\<pl[wc]\\.%s\\>" method-name class) (point-max) t))))));; method name on plc\plw.class
 	      ((and (equal (substring pathname -3 nil) "pjs")
-	       ;; try to find in pjs file : try without the package, then with it
-	       (let* ((split (split-string function-name "\\."))
-		      (short-function-name (when (= (length split) 2) (second split))))
-		 (goto-char (point-min))
-		 (or 
-		  (re-search-forward (format "^\\s-*\\(%s\\)?\\s-*\\(function\\|method\\)\\s-+\\_<%s\\_>" *pjs-function-qualifiers* (or short-function-name function-name)) (point-max) t)
-		  (when short-function-name (re-search-forward (format "^\\s-*\\(%s\\)?\\s-*\\(function\\|method\\)\\s-+\\_<%s\\_>" *pjs-function-qualifiers* function-name) (point-max) t))))))
+		    ;; try to find in pjs file : try without the package, then with it
+		    (let* ((split (split-string function-name "\\."))
+			   (short-function-name (when (= (length split) 2) (second split))))
+		      (goto-char (point-min))
+		      (or 
+		       (re-search-forward (format "^\\s-*\\(%s\\)?\\s-*\\(function\\|method\\)\\s-+\\_<%s\\_>" *pjs-function-qualifiers* (or short-function-name function-name)) (point-max) t)
+		       (when short-function-name (re-search-forward (format "^\\s-*\\(%s\\)?\\s-*\\(function\\|method\\)\\s-+\\_<%s\\_>" *pjs-function-qualifiers* function-name) (point-max) t))))))
 	      ((or (equal (substring pathname -3 nil) "lsp") (equal (substring pathname -4 nil) "lisp"))
 	       ;; try to find in lisp file	       
 	       (goto-char (point-min))
@@ -484,7 +484,7 @@ time."
       (progn
 	(message "The definition of %s is somewhere in this file!" thing)
 	(goto-char (point-min))))))
-      
+
 
 ;; new : list all methods of a defgeneric in a buffer
 (defun opx2-list-methods (&optional fspec)
@@ -497,7 +497,7 @@ time."
 			       "Cannot find the methods of %s"
 			       "caller")
     (message "list-methods function not found")))  
-  
+
 
 ;;;======================== tab list display ===============================
 (defun display-list-in-current-buffer (list header-list sort-list )
@@ -550,8 +550,8 @@ visit time."
 
 ;; use a tabulated list to display things nicely
 (defun lep:display-some-definitions (xpackage buffer-definitions
-				     fn-and-arguments
-				     &optional buffer-name)
+					      fn-and-arguments
+					      &optional buffer-name)
   (let ((buffer (get-buffer-create (or buffer-name "*definitions*")))
 	(i 0)
 	new-list)
@@ -594,7 +594,7 @@ information in the Common Lisp environment."
   (interactive)
   (message "Finding%s definition..."
 	   (if lep::inverse-definitions " inverse" ""))
-;;  (let* ((n (count-lines (point-min)
+  ;;  (let* ((n (count-lines (point-min)
   ;;			 (save-excursion (beginning-of-line) (point))))
   (let* ((n (tabulated-list-get-id))
 	 (buffer (current-buffer))

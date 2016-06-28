@@ -14,11 +14,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (ac-define-source "ojs-functions"
-    '((candidates . ojs-functions-ac-candidates)
-      (document . ojs-functions-ac-document)
-      (action . ojs-functions-ac-action)
-      (symbol . "f ")
-      (requires . -1)))
+  '((candidates . ojs-functions-ac-candidates)
+    (document . ojs-functions-ac-document)
+    (action . ojs-functions-ac-action)
+    (symbol . "f ")
+    (requires . -1)))
 
 ;; use the functions defined in opx2-js-cache.el
 (defun ojs-functions-ac-action ()
@@ -36,11 +36,11 @@
 ;;;;  global vars from all functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ac-define-source "ojs-vars"
-    '((candidates . ojs-vars-ac-candidates)
-      (document . ojs-vars-ac-document)
-      (action . ojs-vars-ac-action)
-      (symbol . "v ")
-      (requires . -1)))
+  '((candidates . ojs-vars-ac-candidates)
+    (document . ojs-vars-ac-document)
+    (action . ojs-vars-ac-action)
+    (symbol . "v ")
+    (requires . -1)))
 
 (defun ojs-vars-ac-action ()
   (message (cdr (assoc candidate *ojs-buffers-vars-cache*))))
@@ -60,11 +60,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (ac-define-source "ojs-members"
-    '((candidates . ojs-members-ac-candidates)
-      (document . ojs-members-ac-document)
-      (action . ojs-members-ac-action)
-      (symbol . "mb")
-      (requires . -1)))
+  '((candidates . ojs-members-ac-candidates)
+    (document . ojs-members-ac-document)
+    (action . ojs-members-ac-action)
+    (symbol . "mb")
+    (requires . -1)))
 
 (defun ojs-members-ac-action ()
   (message (cdr (assoc candidate *ojs-members-candidates-cache*))))
@@ -95,9 +95,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (ac-define-source "ojs-classes"
-    '((candidates . ojs-classes-ac-candidates)
-      (symbol . "c ")
-      (requires . -1)))
+  '((candidates . ojs-classes-ac-candidates)
+    (symbol . "c ")
+    (requires . -1)))
 
 (defvar *ojs-classes-candidates-cache* nil)
 
@@ -151,7 +151,7 @@
   ;; on set les documents strings
   (or *ojs-kernel-documents-cache*
       (setq *ojs-kernel-documents-cache* (when (ojs-configuration-ok) (fi:eval-in-lisp "(jvs::list-js-docs)")))))
-  
+
 (defun ojs-kernel-ac-candidates ()
   *ojs-kernel-candidates-cache*
   )
@@ -168,7 +168,7 @@
 ;; definition of a new autocomplete mode
 (defun opx2-js-setup-auto-complete-mode ()
   "Setup ac-js2 to be used with auto-complete-mode."
-;;  (message "Setting autocomplete")
+  ;;  (message "Setting autocomplete")
   ;; js functions defined in the file
   (setq ac-sources nil)
   ;;(setq ac-sources '(ac-source-ojs-functions ac-source-ojs-methods ac-source-ojs-vars ac-source-ojs-kernel))
@@ -193,7 +193,7 @@
   (setq ac-quick-help-delay 0.1)
   ;; autocomplete only when I ask for it
   (setq ac-auto-start nil)
-)
+  )
 
 (add-hook 'opx2-js-mode-hook 'opx2-js-setup-auto-complete-mode)
 (add-hook 'js-evaluator-mode-hook 'opx2-js-setup-auto-complete-mode)

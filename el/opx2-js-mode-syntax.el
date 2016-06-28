@@ -85,8 +85,8 @@
 
 ;; method definition
 (defconst *ojs-method-heading*
-"^[ \t]*method[ \t]+\\(\\w+\\)[ \t]+\\(\\<on\\>\\)[ \t]+\\(\\w+\\)"
-"Regular expression matching the start of a method header.")
+  "^[ \t]*method[ \t]+\\(\\w+\\)[ \t]+\\(\\<on\\>\\)[ \t]+\\(\\w+\\)"
+  "Regular expression matching the start of a method header.")
 
 ;;method arguments
 (defconst *ojs-method-arguments-start*
@@ -94,8 +94,8 @@
 
 ;; function definition
 (defconst *ojs-function-heading*
-"^\\s-*function\\s-+\\(\\w+\\)"
-"Regular expression matching the start of a function header.")
+  "^\\s-*function\\s-+\\(\\w+\\)"
+  "Regular expression matching the start of a function header.")
 
 ;; function arguments
 (defconst *ojs-function-arguments-start*
@@ -110,7 +110,7 @@
 
 ;; vars definition
 (defconst *ojs-vars-regexp* 
-;;  "^.*var[ \t]+\\(\\w+\\)[ \t]*\\(=\\|in\\|;\\).*$")
+  ;;  "^.*var[ \t]+\\(\\w+\\)[ \t]*\\(=\\|in\\|;\\).*$")
   "^.*var[ \t]+\\(\\w+\\)")
 
 ;; new type(
@@ -123,20 +123,20 @@
 
 ;; kernel functions are in italic
 (defface ojs-kernel-functions-face
-    '((t 
-       :inherit font-lock-function-name-face :slant italic))
-    "OJS kernel fonts are displayed in italic"
-    )
+  '((t 
+     :inherit font-lock-function-name-face :slant italic))
+  "OJS kernel fonts are displayed in italic"
+  )
 
 (defvar ojs-kernel-functions-face
   'ojs-kernel-functions-face)
 
 ;; variable defintion are in bold
 (defface ojs-var-definition-face
-    '((t 
-       :inherit font-lock-variable-name-face :weight bold))
-    "variable defintion are in bold"
-    )
+  '((t 
+     :inherit font-lock-variable-name-face :weight bold))
+  "variable defintion are in bold"
+  )
 
 (defvar ojs-var-definition-face
   'ojs-var-definition-face)
@@ -163,9 +163,9 @@
 
 (defun partition-list (list length)
   (loop
-     while list
-     collect (subseq list 0 (min (length list) length))
-     do (setf list (nthcdr (min (length list) length) list))))
+   while list
+   collect (subseq list 0 (min (length list) length))
+   do (setf list (nthcdr (min (length list) length) list))))
 
 (defun list-ojs-kernel-functions ()  
   (cond (*ojs-kernel-functions-cache*
@@ -208,7 +208,7 @@
   (catch 'exit
     (while (< (point) end)      
       (let ((context (get-local-function-environment)))
-;;	(search
+	;;	(search
 	(cond ((numberp context)
 	       (goto-char context))
 	      ((consp context)
@@ -254,7 +254,7 @@
 	    (when (and function-end
 		       (>= function-end start-point))
 	      (cons function-start function-end))))))))
-    
+
 
 ;; go to the start of the next function, but not after end
 (defun goto-start-of-next-function (end)
@@ -339,7 +339,7 @@
   ;; comments
   (set (make-local-variable 'comment-start) "// ")
   (set (make-local-variable 'comment-end) "")
- 
+  
   (set (make-local-variable 'font-lock-defaults)
        (list font-locks
 	     nil  ;; fontify strings and comments
@@ -351,7 +351,7 @@
   (jit-lock-register 'build-local-vars-cache)  
   
   ;; regexp to mark the beginning of a function
-;;  (setq defun-prompt-regexp *ojs-function-or-method-regexp*)
+  ;;  (setq defun-prompt-regexp *ojs-function-or-method-regexp*)
 
   ;; fontify all the things
   (syntax-propertize (point-max))
