@@ -531,7 +531,7 @@ surrounding the point.  fi:package is used to determine from which Common
 Lisp package the operation is done.  In a subprocess buffer, the package is
 tracked automatically.  In source buffer, the package is parsed at file
 visit time."
-  (interactive (fi::get-default-symbol "List who calls" nil nil))
+  (interactive (fi::get-default-symbol "List who calls" nil nil t))
   ;; Since this takes a while, tell the user that it has started.
   (message "Finding callers of %s..." fspec)
   (lep::list-fspecs-common fspec
