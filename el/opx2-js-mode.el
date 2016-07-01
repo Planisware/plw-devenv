@@ -460,7 +460,7 @@
 
   ;; custom keybindings from menu
   (define-key *ojs-mode-map* "\C-c." '%ojs-find-definition)
-  (define-key *ojs-mode-map* "\C-cn" 'fi:lisp-find-next-definition)
+  (define-key *ojs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
   (define-key *ojs-mode-map* "\C-cc" '%ojs-list-who-calls)
   (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
   (define-key *ojs-mode-map* "\C-ck" 'check-ojs-region)
