@@ -295,6 +295,9 @@
       (setq ret (list (read-string "Description:"))))
     ret))
 
+(defun message-raw (text)
+  (message (replace-regexp-in-string "%" "%%" text)))
+
 ;; new find definition which tries to find the definition in the file if no point is returned
 ;; also manages ojs files
 (defun fi::show-found-definition (thing pathname point n-more
@@ -331,14 +334,14 @@
 		   (message (concat mess "No more %ss of %s")
 			    (lep::meta-dot-what) (or (lep::meta-dot-string) thing))))
 		(n-more
- 		 (message (concat mess "%s of %s. %d more %ss"
-				  (if next (format ", next is %s" next) "."))
-			  (capitalize (lep::meta-dot-what))
-			  thing
-			  n-more
-			  (lep::meta-dot-what)
-			  next
-			  )))
+ 		 (message-raw (concat mess (format "%s of %s. %d more %ss"					      
+					      (capitalize (lep::meta-dot-what))
+					      thing
+					      n-more
+					      (lep::meta-dot-what)
+					      next)
+				      (if next (format ", next is %s" next) "."))
+			      )))
 ;;;			  (or (lep::meta-dot-from-fspec) thing))))
 	  (when pop-stack (fi::pop-metadot-session))))
     (message "cannot find file for %s" thing)))
