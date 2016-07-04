@@ -122,9 +122,22 @@
 (defconst *pjs-variable-name*
   "\\(?:\\.\\.\\.\\)?[_a-zA-Z][_a-zA-Z0-9]*")
 
+;; same as pjs method type but with optional new/delete/etc in front of the class name
+(defconst *pjs-method-on-keywords*
+  (pjs--regexp-opt-symbol
+   '("modifybefore"
+     "modifyafter"
+     "load"
+     "loadsafe"
+     "new"
+     "delete")))
+
+(defconst *pjs-method-type*
+  (format "\\(?:%s\\s-+\\)?%s" *pjs-method-on-keywords* *js-type*))
+
 ;; method definition
 (defconst *pjs-method-heading*
-  (format "^\\s-*\\<method\\>\\s-+\\(%s\\)\\s-+\\(\\<on\\>\\)\\s-+\\(%s\\)" *js-function-name* *js-type*)
+  (format "^\\s-*\\<method\\>\\s-+\\(%s\\)\\s-+\\(\\<on\\>\\)\\s-+\\(%s\\)" *js-function-name* *pjs-method-type*)
   "Regular expression matching the start of a method header.")
 
 ;;method arguments
@@ -563,7 +576,8 @@
 
 (defun convert-pjs-type (type)
   (save-match-data
-    (cond ((null type)
+    (cond ((or (null type)
+	       (eq type t))
 	   nil)
 	  ((consp type)
 	   type)
