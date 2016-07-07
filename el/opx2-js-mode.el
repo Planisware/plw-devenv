@@ -124,6 +124,15 @@
   (when (ojs-configuration-ok)
     (fi:eval-in-lisp (format "(jvs::lock-status \"%s\")" script-name))))
 
+(defun open-lisp-script-file ()
+  (interactive)
+  (when (fi::ensure-lep-connection)
+    (let* ((script-name (or (get-script-name)
+			    (file-name-base (buffer-file-name))))
+	   (lisp-file (fi:eval-in-lisp (format "(ignore-errors (namestring (jvs::script-lisp-file nil \"%s\")))" script-name))))
+      (when lisp-file
+	(find-file lisp-file)))))
+
 (defun do-lock-file (kind)
   ;; find the script name
   (when (ojs-configuration-ok)
