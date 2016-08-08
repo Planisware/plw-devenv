@@ -1,0 +1,4 @@
+# -*- mode: snippet -*-
+#name : alert
+# --
+plw.alert($0);

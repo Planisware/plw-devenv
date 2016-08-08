@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+#name : symbol
+#key : s
+# --
+#${1:identifier}#$0

@@ -1,0 +1,4 @@
+# -*- mode: snippet -*-
+#name : pr
+# --
+plw.pr($0);
