@@ -184,21 +184,7 @@
   (add-to-list 'ac-sources 'ac-source-pjs-variable-members)
   (add-to-list 'ac-sources 'ac-source-pjs-classes)
   (add-to-list 'ac-sources 'ac-source-ojs-kernel)
-  
-  ;; (add-to-list 'ac-sources 'ac-source-ojs-vars)
-  ;; (add-to-list 'ac-sources 'ac-source-ojs-kernel)
-  ;; (add-to-list 'ac-sources 'ac-source-ojs-dictionary)
-  ;; (add-to-list 'ac-sources 'ac-source-ojs-members)
-  ;; (add-to-list 'ac-sources 'ac-source-ojs-classes)
-
-  ;; initialize kernel completion
-  ;;  (ojs-kernel-ac-init)
-
-  ;; classes completion
-  ;;  (ojs-classes-ac-init)
-
-  ;; dictionary cache
-  ;;  (setq *ac-dictionary-candidates-cache* (ac-file-dictionary (concat *opx2-network-folder-work-path* "devenv/el/dict/opx2-js-mode")))
+  (add-to-list 'ac-sources 'ac-source-yasnippet)
   
   ;; display doc quickly
   (setq ac-quick-help-delay 0.1)
