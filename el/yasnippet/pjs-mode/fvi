@@ -1,6 +1,6 @@
 # -*- mode: snippet -*-
 #name : fvi
 # --
-for(var ${1:obj} in ${2:plc.task}) {
+for(var ${1:obj} in ${2:class}) {
   $0
 }
