@@ -603,7 +603,9 @@
   (save-match-data
     (save-excursion
       (goto-char point)
-      (cond ((when (fast-looking-back ")") 	    ;; (stuff as class)
+      (cond ((fast-looking-back "context")
+	     (convert-pjs-type "plc.contextopx2"))
+	    ((when (fast-looking-back ")") 	    ;; (stuff as class)
 	       (backward-sexp)
 	       (re-search-forward (format "(\\s-*.+\\s-+as\\s-+\\<\\(%s\\)\\>)" *js-type*) (line-end-position) t))
 	     (convert-pjs-type (match-string-no-properties 1)))
