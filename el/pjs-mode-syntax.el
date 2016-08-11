@@ -603,31 +603,32 @@
   (save-match-data
     (save-excursion
       (goto-char point)
-      (when (re-search-backward (format "\\<%s\\>" *pjs-variable-name*) (line-beginning-position) t)
-  	(let ((varname (downcase (match-string-no-properties 0)))  	      
-	      var-tag)
-  	  (cond ((fast-looking-back ".")
-  		 ;; we have a dot, try to get the type of the "father"
-  		 (let ((father-type (get-variable-type-in-context (match-beginning 0))))
-  		   (when father-type
-  		     (get-member-type (car father-type) (cdr father-type) varname))))
-		;; this of a method
-		((string= (downcase varname) "this")
-		 (let ((current-tag (car (semantic-find-tag-by-overlay))))
-		   (when (and current-tag
-			      (eq (semantic-tag-class current-tag) 'function))
-		     (convert-pjs-type (semantic-tag-get-attribute current-tag :on-class)))))
-  		;; local variable of the function, try to get the type
-  		((setq var-tag (car (semantic-find-tags-by-name varname (semantic-something-to-tag-table (semantic-get-local-variables)))))
-		 (convert-pjs-type (semantic-tag-get-attribute var-tag :type)))
-  		;; member of a typed variable
-  		()
-  		;; namespace var with type
-  		()
-		(t
-		 ;;		 (message "nothing found :(")
-		 nil)
-		))))))
+      (cond ((when (fast-looking-back ")") 	    ;; (stuff as class)
+	       (backward-sexp)
+	       (re-search-forward (format "(\\s-*.+\\s-+as\\s-+\\<\\(%s\\)\\>)" *js-type*) (line-end-position) t))
+	     (convert-pjs-type (match-string-no-properties 1)))
+	    ((re-search-backward (format "\\<%s\\>" *pjs-variable-name*) (line-beginning-position) t)
+	     (let ((varname (downcase (match-string-no-properties 0)))  	      
+		   var-tag)
+	       (cond ((fast-looking-back ".")
+		      ;; we have a dot, try to get the type of the "father"
+		      (let ((father-type (get-variable-type-in-context (match-beginning 0))))
+			(when father-type
+			  (get-member-type (car father-type) (cdr father-type) varname))))
+		     ;; this of a method
+		     ((string= (downcase varname) "this")
+		      (let ((current-tag (car (semantic-find-tag-by-overlay))))
+			(when (and current-tag
+				   (eq (semantic-tag-class current-tag) 'function))
+			  (convert-pjs-type (semantic-tag-get-attribute current-tag :on-class)))))
+		     ;; local variable of the function, try to get the type
+		     ((setq var-tag (car (semantic-find-tags-by-name varname (semantic-something-to-tag-table (semantic-get-local-variables)))))
+		      (convert-pjs-type (semantic-tag-get-attribute var-tag :type)))
+		     ;; TODO : namespace var with type
+		     ()
+		     (t
+		      ;;		 (message "nothing found :(")
+		      nil))))))))
 
 
 (defconst *pjs-vars-with-members-or-methods*
