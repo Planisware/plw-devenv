@@ -74,7 +74,8 @@
 ;; languages keywords
 (defconst pjs-font-lock-keywords
   (pjs--regexp-opt-symbol
-   '("order by"
+   '("as"
+     "order by"
      "default"
      "on"
      "let"
@@ -627,11 +628,17 @@
 		     ((setq var-tag (car (semantic-find-tags-by-name varname (semantic-something-to-tag-table (semantic-get-local-variables)))))
 		      (convert-pjs-type (semantic-tag-get-attribute var-tag :type)))
 		     ;; TODO : namespace var with type
-		     ()
+		     ;; ((let ((list-of-var (list-pjs-namespace-variables (pjs-current-namespace))))
+		     ;; 	(when list-of-var
+		     ;; 	  (dolist (_var list-of-var nil)
+		     ;; 	    (when (eq (compare-strings (car _var) nil nil varname nil nil t) t)
+		     ;; 	      (if (and (cdr _var)
+		     ;; 		       (not (string-equal (cdr _var) "")))
+		     ;; 		  (return (convert-pjs-type (cdr _var)))
+		     ;; 		(return nil)))))))
 		     (t
 		      ;;		 (message "nothing found :(")
 		      nil))))))))
-
 
 (defconst *pjs-vars-with-members-or-methods*
   (format "\\.\\<\\(%s\\)\\>" *pjs-variable-name*))
