@@ -317,3 +317,21 @@
 	       (find-prompt-package))))
     (when p      
       (substring-no-properties p))))
+
+;;; fix from eli/fi-emacs21.el
+(defun fi::connection-open-composer-loaded ()
+  (when (not (eq fi::*connection* fi::composer-cached-connection))
+    ;; the lisp was (possibly) restarted
+    (setq fi::connection-open-composer-loaded nil)
+    (setq fi::composer-running nil))
+  (and (fi::lep-open-connection-p)
+       (or (when (or (null fi::connection-open-composer-loaded)
+		     ;; check again, it might have been require'd
+		     (eq fi::connection-open-composer-loaded 'no))
+	     (if (let ((fi:package nil))
+		   (fi:eval-in-lisp "(cl:when (cl:find-package :wt) cl:t)"))
+		 (setq fi::connection-open-composer-loaded 'yes)
+	       (setq fi::connection-open-composer-loaded 'no))
+	     (setq fi::composer-cached-connection fi::*connection*)
+	     nil)
+	   (eq fi::connection-open-composer-loaded 'yes))))
