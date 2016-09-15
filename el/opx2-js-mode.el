@@ -1,5 +1,5 @@
-;;* 
-;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;; -*- coding: windows-1252 -*- 
+;;  COPYRIGHT (C) PLANISWARE 2016
 ;;
 ;;  All Rights Reserved
 ;;
@@ -8,6 +8,7 @@
 ;;  employees for the sole purpose of conducting PLANISWARE business.
 ;;
 ;;**************************************************************************
+
 (require 'cc-mode)
 
 (defvar opx2-js-mode-syntax-table
@@ -229,10 +230,12 @@
 	   (script           (or ;; try to get a comment //PLWSCRIPT :
 			      (save-excursion
 				(goto-char (point-min))
-				(if (re-search-forward "^/+\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
+				(if (re-search-forward "^/+\\s-*PLWSCRIPT\\s-*:\\s-*\\([[:alnum:]_-]*\\)\\(\\s-+|\\s-*\\([[:alnum:], ]*\\)\\)?" (point-max) t)
 				    (match-string-no-properties 1)
 				  nil))
 			      (fi:eval-in-lisp (format "(jvs::find-script \"%s\")" script-name))))
+	   (options (when (match-string-no-properties 3)
+		      (split-string (match-string-no-properties 3) "[ \f\t\n\r\v,]+")))
 	   (buffer-name *ojs-compilation-buffer-name*)
 	   (buffer (or (get-buffer buffer-name)
 		       (get-buffer-create buffer-name)))
@@ -240,6 +243,7 @@
 	   (js-mode major-mode)
 	   (filename (buffer-file-name))
 	   )
+      (message (format "options are %s" options))
       (setq *compiled-script-window* (selected-window))
       (if (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
 	  (catch 'exit
@@ -274,7 +278,9 @@
 	    ;; reset vars as needed
 	    (js-reset-vars (if (eq js-mode 'pjs-mode) 'pjs-compile 'ojs-compile))
 	    (cond ((eq type :compile)
-		   (process-send-string *ojs-compilation-buffer-name* (format "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\") (:rjs-one \"%s\"))\n" script filename script))
+		   (if (member "PROPAGATE" options)
+		       (process-send-string *ojs-compilation-buffer-name* (format "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\" :propagate cl:t) (:rjs-one \"%s\"))\n" script filename script))
+		     (process-send-string *ojs-compilation-buffer-name* (format "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\") (:rjs-one \"%s\"))\n" script filename script)))
 		   )
 		  ((eq type :compile-and-sync)
 		   ;; check that the file is correct 		   
