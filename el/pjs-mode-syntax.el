@@ -1,5 +1,5 @@
-;;* 
-;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;; -*- coding: windows-1252 -*- 
+;;  COPYRIGHT (C) PLANISWARE 2016
 ;;
 ;;  All Rights Reserved
 ;;
@@ -8,6 +8,7 @@
 ;;  employees for the sole purpose of conducting PLANISWARE business.
 ;;
 ;;**************************************************************************
+
 (defun pjs--regexp-opt-symbol (list &optional prefix)
   "Like `regexp-opt', but surround the result with `\\\\_<' and `\\\\_>'."
   (cond ((stringp prefix)
@@ -77,6 +78,7 @@
    '("as"
      "order by"
      "default"
+     "default:"
      "on"
      "let"
      "case"

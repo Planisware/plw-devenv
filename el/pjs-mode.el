@@ -1,5 +1,5 @@
-;;* 
-;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;; -*- coding: windows-1252 -*- 
+;;  COPYRIGHT (C) PLANISWARE 2016
 ;;
 ;;  All Rights Reserved
 ;;
@@ -8,6 +8,7 @@
 ;;  employees for the sole purpose of conducting PLANISWARE business.
 ;;
 ;;**************************************************************************
+
 (require 'cc-mode)
 
 (defvar pjs-mode-syntax-table
@@ -233,7 +234,7 @@
 	   ;; same level as the opening statement. Same goes for
 	   ;; "case" and "default".
            (let ((same-indent-p (looking-at "[]})]"))
-                 (switch-keyword-p (looking-at "default\\_>\\|case\\_>[^:]"))
+                 (switch-keyword-p (looking-at "default\\s-*:\\|case\\_>[^:]"))
                  (continued-expr-p (js--continued-expression-p)))
              (goto-char (nth 1 parse-status)) ; go to the opening char
              (if (looking-at "[({[]\\s-*\\(/[/*]\\|$\\)")
