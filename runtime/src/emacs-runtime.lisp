@@ -12,6 +12,7 @@
 (defun :start-emacs-runtime-mode ()
   (doplist (var value *emacs-runtime-initial-bindings)
     (set var value))
+  (:r)
   (startup::load-foreign-code) 
   (load "intranet.ini") 
   (:require-patch "sc9404")
