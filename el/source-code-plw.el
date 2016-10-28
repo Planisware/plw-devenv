@@ -1,5 +1,5 @@
-;;* 
-;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;; -*- coding: windows-1252 -*- 
+;;  COPYRIGHT (C) PLANISWARE 2016
 ;;
 ;;  All Rights Reserved
 ;;
@@ -8,6 +8,7 @@
 ;;  employees for the sole purpose of conducting PLANISWARE business.
 ;;
 ;;**************************************************************************
+
 (defun update-db (message)
   " @PURPOSE Updates the database using message content
    It opens the database and sets the global var *current-db-string*
@@ -652,6 +653,7 @@ Entry to this mode runs the fi:definition-mode-hook."
   (define-key fi:opx2-definition-mode-map "\r"    'fi:definition-mode-goto-definition)
   (define-key fi:opx2-definition-mode-map "\C-c"  (make-sparse-keymap))
   (define-key fi:opx2-definition-mode-map "\C-c." 'fi:definition-mode-goto-definition)
+  (define-key fi:opx2-definition-mode-map "\C-ct" 'fi:toggle-trace-definition
   (define-key fi:opx2-definition-mode-map "n"     'fi:definition-mode-goto-next)
   (define-key fi:opx2-definition-mode-map "p"     'fi:definition-mode-goto-previous)
   (define-key fi:opx2-definition-mode-map "t"     'fi:definition-mode-toggle-trace)
