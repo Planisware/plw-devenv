@@ -1,5 +1,5 @@
-;;* 
-;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;; -*- coding: windows-1252 -*- 
+;;  COPYRIGHT (C) PLANISWARE 2016
 ;;
 ;;  All Rights Reserved
 ;;
@@ -8,6 +8,7 @@
 ;;  employees for the sole purpose of conducting PLANISWARE business.
 ;;
 ;;**************************************************************************
+
 (when (eq *javascript-evaluator-mode* :repl)
   (global-set-key [f3] 'switch-to-script-evaluator))
 
@@ -128,6 +129,8 @@ the buffer name is the second optional argument."
 	  (t
 	   (fi::subprocess-filter proc string)))))
 
+(defvar *javascript-evaluator-initialize* nil)
+
 (defun switch-to-script-evaluator ()
   (interactive)
   (let* ((buffer-name "*javascript-evaluator*")
@@ -144,6 +147,9 @@ the buffer name is the second optional argument."
 	       (delete-region (point-min) (point-max))
 	       (set-process-filter proc 'javascript-evaluator-filter)
 	       (process-send-string proc ":help\n")
+	       (when *javascript-evaluator-initialize*
+		 (dolist (str *javascript-evaluator-initialize*)
+		   (process-send-string proc (format "%s\n" str))))
 	       )))
 	  (t
 	   (fi::switch-to-buffer-new-screen buffer-name)
