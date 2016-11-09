@@ -251,6 +251,8 @@
 ;;     (or (gethash type *pjs-buffers-class-members-cache-regexp*)
 ;; 	(init-class-members-cache namespace class-name t))))
 
+(defvar *max-slots-size* 200)
+
 (defun init-class-members-cache (namespace class-name regexp)  
   (unless (hash-table-p *pjs-buffers-class-members-cache*)
     (setq *pjs-buffers-class-members-cache* (make-hash-table :test 'equal)))
@@ -259,11 +261,13 @@
   (when (pjs-configuration-ok)
     (let (list
 	  (ht (make-hash-table :test 'equal))
-	  (type (downcase (format "%s.%s" namespace class-name))))    
-      (dolist (item (fi:eval-in-lisp (format "(jvs::get-pjs-class-members \"%s\" \"%s\")" namespace class-name)))
-	;;    (dolist (item (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-pjs-class-members) (jvs::get-pjs-class-members \"%s\" \"%s\"))" class-name namespace)))
-	(puthash (car item) (second item) ht)
-	(push (car item) list))
+	  (type (downcase (format "%s.%s" namespace class-name)))
+	  (slots (fi:eval-in-lisp (format "(jvs::get-pjs-class-members \"%s\" \"%s\")" namespace class-name))))
+      (unless (> (length slots) *max-slots-size*)
+	(dolist (item slots)
+	  ;;    (dolist (item (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-pjs-class-members) (jvs::get-pjs-class-members \"%s\" \"%s\"))" class-name namespace)))
+	  (puthash (car item) (second item) ht)
+	  (push (car item) list)))
       (puthash type ht *pjs-buffers-class-members-cache*)
       (puthash type (pjs--regexp-opt-symbol list) *pjs-buffers-class-members-cache-regexp*)
       (if regexp
