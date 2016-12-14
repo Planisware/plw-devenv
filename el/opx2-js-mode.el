@@ -134,44 +134,6 @@
       (when lisp-file
 	(find-file lisp-file)))))
 
-(defun do-lock-file (kind)
-  ;; find the script name
-  (when (ojs-configuration-ok)
-    (let* ((script-name      (or (get-script-name)
-				 (file-name-base (buffer-file-name))))
-	   (status           (lock-status script-name))
-	   (user             (user-login-name)))
-      (case kind
-	(:lock
-	 (cond ((string-equal status "NOT-LOCKED")
-		(fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::lock-file-by-name \"%s\"))" user script-name))
-		(message "File locked"))
-	       ((string-equal status "LOCKED-BY-YOURSELF")
-		(message "File already locked by yourself"))
-	       ((stringp status)
-		(message "File locked by %s" status))
-	       (t
-		(message "Err: Unable to lock file"))))
-	(:unlock
-	 (cond ((or (string-equal status "LOCKED-BY-YOURSELF")
-		    (string-equal status user))
-		(fi:eval-in-lisp (format "(let ((archive::*current-user* \"%s\")) (jvs::unlock-file-by-name \"%s\"))" user script-name))
-		(message "File unlocked"))
-	       ((string-equal status "NOT-LOCKED")
-		(message "File already unlocked"))
-	       ((stringp status)
-		(message "File locked by %s" status))
-	       (t
-		(message "Err: Unable to lock file"))))))))
-
-(defun lock-file()
-  (interactive)
-  (do-lock-file :lock))
-
-(defun unlock-file()
-  (interactive)
-  (do-lock-file :unlock))
-
 (defun check-ojs-region (beg end)
   (interactive (if (use-region-p)
                    (list (region-beginning) (region-end))
@@ -243,7 +205,7 @@
 	   (js-mode major-mode)
 	   (filename (buffer-file-name))
 	   )
-      (message (format "options are %s" options))
+;;      (message (format "options are %s" options))
       (setq *compiled-script-window* (selected-window))
       (if (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
 	  (catch 'exit
@@ -484,13 +446,13 @@
   (define-key *ojs-mode-map* "\C-ck" 'check-ojs-region)
   (define-key *ojs-mode-map* "\C-cr" 'compile-ojs-region)
   (define-key *ojs-mode-map* "\C-c\C-b" 'save-and-compile-ojs-file)
-  (define-key *ojs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
+;;  (define-key *ojs-mode-map* "\C-cs" 'save-compile-and-sync-ojs-file)
   (define-key *ojs-mode-map* "\C-ct" 'trace-ojs-function)
   (define-key *ojs-mode-map* "\C-ch" 'open-ojs-documentation)
   (define-key *ojs-mode-map* "\C-cR" 'ojs-reset-cache-on-reset)
 
-  (define-key *ojs-mode-map* "\C-cl" 'lock-file)
-  (define-key *ojs-mode-map* "\C-cu" 'unlock-file)
+;;  (define-key *ojs-mode-map* "\C-cl" 'lock-file)
+;;  (define-key *ojs-mode-map* "\C-cu" 'unlock-file)
 
   ;; comment / un-comment
   (define-key *ojs-mode-map* "\C-c;" 'comment-region)
@@ -509,8 +471,8 @@
        t]
       ["Check syntax of selected region" check-ojs-region
        t]	    
-      ["Compile, load and synchronize file..." save-compile-and-sync-ojs-file
-       t]
+      ;; ["Compile, load and synchronize file..." save-compile-and-sync-ojs-file
+      ;;  t]
       ["Compile and run selected region" compile-ojs-region
        t]
       ["Find function definition..." %ojs-find-definition

@@ -346,9 +346,6 @@
   (define-key *pjs-mode-map* "\C-cR" 'pjs-reset-cache-on-reset)
   (define-key *pjs-mode-map* "\C-ch" 'open-ojs-documentation)
 
-  (define-key *pjs-mode-map* "\C-cl" 'lock-file)
-  (define-key *pjs-mode-map* "\C-cu" 'unlock-file)
-
   ;; comment / un-comment
   (define-key *pjs-mode-map* "\C-c;" 'comment-region)
   (define-key *pjs-mode-map* "\C-c:" 'uncomment-region)
@@ -364,8 +361,8 @@
     '("Planisware Script"
       ["Compile and load file..." compile-pjs-file
        t]
-      ["Compile, load and synchronize file..." save-and-compile-pjs-file
-       t]
+      ;; ["Compile, load and synchronize file..." save-and-compile-pjs-file
+      ;;  t]
       ;; ["Compile and run selected region" compile-pjs-region
       ;;  t]	    
       ["Find function definition..." %pjs-find-definition
