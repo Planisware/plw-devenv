@@ -111,20 +111,6 @@
   (compile-ojs-file)
   )
 
-(defun save-compile-and-sync-ojs-file ()
-  (interactive)
-  (save-buffer)
-  (do-compile-and-sync-ojs-file :compile-and-sync)
-  )
-
-(defun check-script-path (script-name file-name)
-  ;; checks that the path of the current file matches the one in the database
-  (when (ojs-configuration-ok) (fi:eval-in-lisp (format "(jvs::compare-javascript-source-file \"%s\" \"%s\")" script-name file-name))))
-
-(defun lock-status(script-name)
-  (when (ojs-configuration-ok)
-    (fi:eval-in-lisp (format "(jvs::lock-status \"%s\")" script-name))))
-
 (defun open-lisp-script-file ()
   (interactive)
   (when (fi::ensure-lep-connection)
@@ -210,21 +196,6 @@
       (if (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
 	  (catch 'exit
 	    ;; checks that the file matches only for synchronize	    
-	    (when (and (eq type :compile-and-sync)
-		       (not (check-script-path script (buffer-file-name))))
-	      (message "Impossible to %s the script because the current file does not match script source file :
-     Current file is                : %s
-     Source file in the database is : %s"
-		       (if (eq type :compile) "compile" "synchronize")
-		       (buffer-file-name)
-		       (fi:eval-in-lisp (format "(jvs::javascript-synchronize-with-file (object::get-object 'jvs::javascript \"%s\"))" script))
-		       )
-	      (throw 'exit nil))
-	    ;; check that our file is commited
-	    (when (and (eq type :compile-and-sync)
-		       (equal (fi:eval-in-lisp (format "(jvs::javascript-local-file-up-to-date \"%s\")" script)) "LOCALLY-MODIFIED"))
-	      (unless (y-or-n-p "File is not commited, do you really want to synchronize it in the database ?")
-		(throw 'exit nil)))
 	    (save-buffer)
 	    (switch-to-buffer-other-window buffer-name t)
 	    ;; we erase previous content
@@ -243,10 +214,7 @@
 		   (if (member "PROPAGATE" options)
 		       (process-send-string *ojs-compilation-buffer-name* (format "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\" :propagate cl:t) (:rjs-one \"%s\"))\n" script filename script))
 		     (process-send-string *ojs-compilation-buffer-name* (format "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\") (:rjs-one \"%s\"))\n" script filename script)))
-		   )
-		  ((eq type :compile-and-sync)
-		   ;; check that the file is correct 		   
-		   (process-send-string *ojs-compilation-buffer-name* (format "(:sjs \"%s\")\n" script)))))
+		   ))
 	(message "Script %s not found" script-name)))))
 
 (defun generate-search-string (strings)
