@@ -215,7 +215,7 @@
 		       (process-send-string *ojs-compilation-buffer-name* (format "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\" :propagate cl:t) (:rjs-one \"%s\"))\n" script filename script))
 		     (process-send-string *ojs-compilation-buffer-name* (format "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\") (:rjs-one \"%s\"))\n" script filename script)))
 		   ))
-	(message "Script %s not found" script-name)))))
+	(message "Script %s not found" script-name))))))
 
 (defun generate-search-string (strings)
   (cond ((= (length strings) 1) (format "function\\s-+%s\\s-*([[:word:]_, ]*)" (downcase (car strings))))
