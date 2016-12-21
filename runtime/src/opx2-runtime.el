@@ -204,6 +204,12 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
 	       global-map
 	       (vector 'menu-bar 'plw (intern funname))
 	       (cons (format *start-planisware-menu-item* version) (intern funname)))))
+	 ;; connect to existing IS
+	 (define-key-after
+	   global-map
+	   [menu-bar plw connect-is]
+	   (cons "Connect to already launched Intranet server..." 'connect-is))
+	   
 	 (when (file-exists-p *last-intranet-ini-file*)
 	   (ignore-errors
 	     (load *last-intranet-ini-file*)))
