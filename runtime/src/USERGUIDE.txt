@@ -1,0 +1,32 @@
+==Emacs basics==
+
+Here are a few ways I recommend to familiarize yourself with Emacs : 
+* Read this website as an introduction :  http://www.jesshamrick.com/2012/09/10/absolute-beginners-guide-to-emacs/
+* Follow the Emacs tutorial : Either click on Emacs tutorial on the home page, or use the following shortcut C-H t (It means press Control + H, then release control and just press t)
+* Refer to this reference card : https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf
+
+==Launch an Intranet==
+
+To launch an Intranet server, just click on Planisware -> Start Planisware VERSION and choose your intranet.ini file.
+
+'''The port of the Intranet server will be taken from your database declaration, so be sure to update it !''' It is the line :INTRANET-PORT in the database declaration. If not set, the Intranet server will try to use the port 80 which is not available on most computers. 
+
+The server will start inside the Emacs *common-lisp* buffer, which means all the traces are available in this buffer directly. You can access this buffer with the F5 key. 
+
+==Connect to a running Intranet Server==
+
+To connect to a running Intranet server, click on Planisware -> Connect to already launched intranet server and specifiy the hostname (without the http:// or the trailing /. For example : pascal.planisware.com and the port number. It is advised to connect to a slave and not to the master directly.
+
+==Editing scripts==
+
+To access all the IDE features, it is recommanded to either connect to an Intranet server or wait for the Intranet server to start before opening script files. 
+
+To edit a script in Emacs, just open its source file. If it has the proper extension (.ojs for Script V1 and .pjs for Planisware script2), Emacs will automatically enable thoses functionalities: 
+* Syntax highlighting : variable, function names, classes, etc
+* Auto-completion, accessible with the Shift+Tab shortcut. It will try to complete with function names, variables names, etc.
+* Direct compilation : If you have set the //PLWSCRIPT _MY_JS_OBJECT_NAME line on top of your file, you can compile your script directly from Emacs by clicking Planisware script -> Compile and load file, or with the "C-C e" shortcut. This will load your modified script file in the server, like it would do in Proweb when click the "Check" and "Launch the script" buttons of a script. 
+'''Warning : The direct compilation will never store your modified script in the database, you still have to synchronize it manually when your are done editing it. It will not either change the "Synchronize script content with" field of the Javascript object.'''
+
+==Javascript evaluator==
+
+When in Emacs, you can press the F3 key to access a Javascript Evaluator that allows you to evaluate script forms directly. You can switch script versions with the :V1 and :V2 commands. You can link your evaluator to an existing applet to access its context with the :a command.
