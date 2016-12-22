@@ -13,7 +13,34 @@
 
 (defvar *ignored-commands-regexp* "\\s-*:\\(exit\\|kill\\)\\s-*")
 
-(defun connect-is(host port)
+(defvar *base-url-regexp* "^https?://.*:[0-9]+/")
+(defvar *host-regexp* "^https?://\\([^/]+\\)/")
+
+(defun connect-is-with-url (url)
+  (interactive "sUrl of the Intranet server: ")
+  (let* ((file (make-temp-file "isconnect"))
+	 (baseurl (progn (string-match *base-url-regexp* url)
+			 (match-string 0 url)))
+	 (host (progn (string-match *host-regexp* url)
+		      (match-string 1 url))))
+    (cond (baseurl
+	   (let ((data (with-current-buffer (url-retrieve-synchronously (format "%scomint" baseurl))
+			 (goto-char (point-min))
+			 (re-search-forward "\n\n")
+			 (prog1
+			     (buffer-substring-no-properties (point) (line-end-position))
+			   (kill-buffer)))))
+	     (cond ((string= (substring data 0 1) "")
+		    (with-temp-buffer
+		      (insert data)
+		      (write-region (point-min) (point-max) file))
+		    (fi:start-interface-via-file host "*common-lisp*" file)	   )
+		   (t
+		    (message "There was an error connecting to the Intranet server")))))
+	  (t
+	   (message "Invalid url")))))
+
+(defun connect-is (host port)
   (interactive "sHost: \nnPort: ")
   (telnet host port)
   (let* ((buf (current-buffer))
@@ -21,20 +48,17 @@
 	 (proc (get-buffer-process buf)))
     (when proc
       (telnet-simple-send proc "TELNET"))
-    (message "Opening telnet")
     ;;search for CL-USER(2) before sending data
     (while (not (eq state :done))
       (cond ((and (search-backward "CL-USER(2):" (line-beginning-position) t)
 		  (eq state :start))
 	     (setq state :end)
-	     (message "Initial send")
-	     (telnet-simple-send proc "(ignore-errors (let ((file (system:make-temp-file-name))) (when (excl:new-start-emacs-lisp-interface :port nil :announce-to-file file) (loop (when (probe-file file) (return))) (let ((in (open file :if-does-not-exist nil))) (when in (loop for line = (read-line in nil) while line do (format t  \"~a~%\" line)) (close in))) (delete-file file))))"))
+	     (telnet-simple-send proc "(ignore-errors (let ((file (system:make-temp-file-name))) (when (excl:new-start-emacs-lisp-interface :port nil :announce-to-file file) (loop (when (probe-file file) (return))) (let ((in (open file :if-does-not-exist nil))) (when in (loop for line = (read-line in nil) while line do (format t  \"~a~%\" line)) (close in))) (delete-file file))))
+"))
 	    ((search-backward "CL-USER(3):" (line-beginning-position) t)
-	     (message "Exit telnet")
 	     (telnet-simple-send proc "(:exit-telnet)")
 	     (setq state :done))
 	    (t
-	     (message "Accept process output")
 	     (accept-process-output proc 0.5))))
     ;;Answer we look for is after CL-USER(2)
     (when (search-backward "CL-USER(2):" nil t)      
@@ -45,7 +69,6 @@
 	  ;;write data to a temp file and start emacs lisp interface
 	  (insert data)
 	  (write-region (point-min) (point-max) file)
-	  (message "Starting interface ~a" file)
 	  (fi:start-interface-via-file host "*common-lisp*" file))
 	(with-current-buffer "*common-lisp*"
 	    (setq-local *inside-connect-is* t))	    
