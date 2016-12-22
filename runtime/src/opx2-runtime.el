@@ -183,40 +183,38 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
 	    (cons (format *last-menu-item* (first last) (third last)) funname)))))))
 
 (defun generate-runtime-functions ()
-  (cond ((load-version-configuration-file)  
-	 (define-key-after
-	   global-map
-	   [menu-bar plw]
-	   (cons *planisware-menu-name* (make-sparse-keymap "plw"))
-	   'tools )	 
-	 (do* ((i 0 (+ i 2))
-	       (version (nth i *opx2-installations-paths*) (nth i *opx2-installations-paths*))
-	       (path    (nth (1+ i) *opx2-installations-paths*) (nth (1+ i) *opx2-installations-paths*)))
-	     ((>= i (length *opx2-installations-paths*)))
-	   (let ((funname (format *runtime-function-name* version)))
-	     ;; generate the run function
-	     (with-temp-buffer
-	       (insert (format *runtime-function-body*
-			       funname
-			       (file-name-as-directory path)
-			       version))
-	       (eval-buffer))
-	     ;; menu bar
-	     (define-key-after
-	       global-map
-	       (vector 'menu-bar 'plw (intern funname))
-	       (cons (format *start-planisware-menu-item* version) (intern funname)))))
-	 ;; connect to existing IS
-	 (define-key-after
-	   global-map
-	   [menu-bar plw connect-is]
-	   (cons "Connect to already launched Intranet server..." 'connect-is))
+  (define-key-after
+      global-map
+      [menu-bar plw]
+      (cons *planisware-menu-name* (make-sparse-keymap "plw"))
+      'tools )
+  (define-key-after
+    global-map
+    [menu-bar plw connect-is]
+    (cons "Connect to already launched Intranet server..." 'connect-is))
+  (when (load-version-configuration-file)      	 
+    (do* ((i 0 (+ i 2))
+	  (version (nth i *opx2-installations-paths*) (nth i *opx2-installations-paths*))
+	  (path    (nth (1+ i) *opx2-installations-paths*) (nth (1+ i) *opx2-installations-paths*)))
+	((>= i (length *opx2-installations-paths*)))
+      (let ((funname (format *runtime-function-name* version)))
+	;; generate the run function
+	(with-temp-buffer
+	  (insert (format *runtime-function-body*
+			  funname
+			  (file-name-as-directory path)
+			  version))
+	  (eval-buffer))
+	;; menu bar
+	(define-key-after
+	  global-map
+	  (vector 'menu-bar 'plw (intern funname))
+	  (cons (format *start-planisware-menu-item* version) (intern funname)))))
+	 ;; connect to existing IS	 
 	   
-	 (when (file-exists-p *last-intranet-ini-file*)
-	   (ignore-errors
-	     (load *last-intranet-ini-file*)))
-	 (generate-last-functions))
-	(t
-	 (message "%s file not found or incorrect !" *opx2-installations-paths-conf-file*))))
+    (when (file-exists-p *last-intranet-ini-file*)
+      (ignore-errors
+	(load *last-intranet-ini-file*)))
+    (generate-last-functions)))
 
 (generate-runtime-functions)
