@@ -32,9 +32,14 @@ Note : To open the .emacs file, do the following under emacs
 
 6 - Launch Emacs. If your configuration is OK, the background should be dark and you should see a "Planisware" menu at the right of the Tools menu.
 
-How to launch an Intranet
--------------------------
+Intranet server configuration
+-----------------------------
 
-Warning : You have to make sure that the installation you want to use has the sc9404 loaded !
+To launch an IS from Emacs, make sure :
+* That the IS server is loading sc9404 v3.8 at least
 
-In the Planisware menu, select "Start Planisware VERSION..." and select the intranet.ini file of the installation you want to start. The intranet port will be read from the database declaration, so make sure to update it. 
+In order to be able to connect to a running IS server, make sure:
+* That the IS server is loading sc9404 v3.8 at least
+* Add this line to the intranet.ini
+
+ (setq wttp::*activate-emacs-interface* t)
