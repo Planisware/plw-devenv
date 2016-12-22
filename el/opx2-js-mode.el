@@ -318,9 +318,10 @@
   (setup-ojs-syntax-highlighting)
 
   ;; custom keybindings from menu
-  (define-key *ojs-mode-map* "\C-c." '%ojs-find-definition)
-  (define-key *ojs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
-  (define-key *ojs-mode-map* "\C-cc" '%ojs-list-who-calls)
+  (when (eq *emacs-environment-mode* :dev)
+    (define-key *ojs-mode-map* "\C-c." '%ojs-find-definition)
+    (define-key *ojs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
+    (define-key *ojs-mode-map* "\C-cc" '%ojs-list-who-calls))
   (define-key *ojs-mode-map* "\C-ce" 'compile-ojs-file)
   (define-key *ojs-mode-map* "\C-ck" 'check-ojs-region)
   (define-key *ojs-mode-map* "\C-cr" 'compile-ojs-region)
@@ -345,24 +346,41 @@
   
   ;; menu
   (easy-menu-define ojs-menu *ojs-mode-map* "OPX2 Javascript Menu"
-    '("OPX2 Javascript"
-      ["Compile and load file..." compile-ojs-file
-       t]
-      ["Check syntax of selected region" check-ojs-region
-       t]	    
-      ;; ["Compile, load and synchronize file..." save-compile-and-sync-ojs-file
-      ;;  t]
-      ["Compile and run selected region" compile-ojs-region
-       t]
-      ["Find function definition..." %ojs-find-definition
-       t]
-      ["Trace/Untrace function..." trace-ojs-function
-       t]
-      ["OPX2 javascript documentation"  'open-ojs-documentation
-       t]
-      ["Reset syntax caches" ojs-reset-cache-on-reset
-       t]
-      ))
+    (if (eq *emacs-environment-mode* :dev)
+	'("OPX2 Javascript"
+	  ["Compile and load file..." compile-ojs-file
+	   t]
+	  ["Check syntax of selected region" check-ojs-region
+	   t]	    
+	  ;; ["Compile, load and synchronize file..." save-compile-and-sync-ojs-file
+	  ;;  t]
+	  ["Compile and run selected region" compile-ojs-region
+	   t]
+	  ["Find function definition..." %ojs-find-definition
+	   t]
+	  ["Trace/Untrace function..." trace-ojs-function
+	   t]
+	  ["OPX2 javascript documentation"  'open-ojs-documentation
+	   t]
+	  ["Reset syntax caches" ojs-reset-cache-on-reset
+	   t]
+	  )
+      '("OPX2 Javascript"
+	["Compile and load file..." compile-ojs-file
+	 t]
+	["Check syntax of selected region" check-ojs-region
+	 t]	    
+	;; ["Compile, load and synchronize file..." save-compile-and-sync-ojs-file
+	;;  t]
+	["Compile and run selected region" compile-ojs-region
+	 t]
+	["Trace/Untrace function..." trace-ojs-function
+	 t]
+	["OPX2 javascript documentation"  'open-ojs-documentation
+	 t]
+	["Reset syntax caches" ojs-reset-cache-on-reset
+	 t]
+	)))
 
   ;; custom keymap
   (use-local-map *ojs-mode-map*)  

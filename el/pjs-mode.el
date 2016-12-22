@@ -334,9 +334,10 @@
   (setup-pjs-syntax-highlighting)
 
   ;; custom keybindings from menu
-  (define-key *pjs-mode-map* "\C-c." '%pjs-find-definition)
-  (define-key *pjs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
-  (define-key *pjs-mode-map* "\C-cc" '%pjs-list-who-calls)
+  (when (eq *emacs-environment-mode* :dev)
+    (define-key *pjs-mode-map* "\C-c." '%pjs-find-definition)
+    (define-key *pjs-mode-map* "\C-c," 'fi:lisp-find-next-definition)
+    (define-key *pjs-mode-map* "\C-cc" '%pjs-list-who-calls))
   (define-key *pjs-mode-map* "\C-ce" 'compile-pjs-file)
   ;;  (define-key *pjs-mode-map* "\C-ck" 'check-ojs-region)
   ;;  (define-key *pjs-mode-map* "\C-cr" 'compile-pjs-region)
@@ -358,22 +359,29 @@
   
   ;; menu
   (easy-menu-define pjs-menu *pjs-mode-map* "Planisware Script Menu"
-    '("Planisware Script"
-      ["Compile and load file..." compile-pjs-file
-       t]
-      ;; ["Compile, load and synchronize file..." save-and-compile-pjs-file
-      ;;  t]
-      ;; ["Compile and run selected region" compile-pjs-region
-      ;;  t]	    
-      ["Find function definition..." %pjs-find-definition
-       t]
-      ["Trace/Untrace function..." trace-pjs-function
-       t]
-      ["Planisware javascript documentation"  'open-ojs-documentation
-       t]
-      ["Reset syntax caches" pjs-reset-cache-on-reset
-       t]
-      ))
+    (if (eq *emacs-environment-mode* :dev)
+	'("Planisware Script"
+	  ["Compile and load file..." compile-pjs-file
+	   t]
+	  ["Find function definition..." %pjs-find-definition
+	   t]
+	  ["Trace/Untrace function..." trace-pjs-function
+	   t]
+	  ["Planisware javascript documentation"  'open-ojs-documentation
+	   t]
+	  ["Reset syntax caches" pjs-reset-cache-on-reset
+	   t]
+	  )
+      '("Planisware Script"
+	  ["Compile and load file..." compile-pjs-file
+	   t]
+	  ["Trace/Untrace function..." trace-pjs-function
+	   t]
+	  ["Planisware javascript documentation"  'open-ojs-documentation
+	   t]
+	  ["Reset syntax caches" pjs-reset-cache-on-reset
+	   t]
+	  )))
 
   ;; custom keymap
   (use-local-map *pjs-mode-map*)  

@@ -22,6 +22,8 @@
 
 (defvar *max-of-last-items* 10)
 
+(setq *emacs-environment-mode* :runtime)
+
 (defvar *runtime-function-name*
   "runopx2%s")
 
