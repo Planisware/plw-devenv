@@ -190,7 +190,7 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
       'tools )
   (define-key-after
     global-map
-    [menu-bar plw connect-is]
+    [menu-bar plw connect-is-with-url]
     (cons "Connect to already launched Intranet server..." 'connect-is))
   (when (load-version-configuration-file)      	 
     (do* ((i 0 (+ i 2))
