@@ -15,7 +15,14 @@ The server will start inside the Emacs *common-lisp* buffer, which means all the
 
 ==Connect to a running Intranet Server==
 
-To connect to a running Intranet server, click on Planisware -> Connect to already launched intranet server and specifiy the hostname (without the http:// or the trailing /. For example : pascal.planisware.com and the port number. It is advised to connect to a slave and not to the master directly.
+To connect to a running Intranet server, click on Planisware -> Connect to already launched intranet server and specifiy the url of the '''slave''' that you want to connect to. For example : http://pascal.planisware.com/V6_DEV_COPY/OPX2/pascal:11740/home
+
+Important : In order to be able to connect to a running IS server, you have to make sure
+* You need the following patches on the Intranet server 
+** sc9404 v3.8
+** sc8567 v3.114
+* Add this line to the intranet.ini
+ (setq wttp::*activate-emacs-interface* t)
 
 ==Editing scripts==
 
