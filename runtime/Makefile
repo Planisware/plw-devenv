@@ -1,3 +1,13 @@
+## -*- coding: windows-1252 -*- 
+##  COPYRIGHT (C) PLANISWARE 2016
+##
+##  All Rights Reserved
+##
+##  This program and the information contained herein are confidential to
+##  and the property of PLANISWARE and are made available only to PLANISWARE
+##  employees for the sole purpose of conducting PLANISWARE business.
+##
+##**************************************************************************
 ZIP=/usr/bin/zip -q
 
 SRC_DIR = src
@@ -35,6 +45,9 @@ copyfiles:
 	@@echo "Copying eli files"
 	@@mkdir -p ${DIST_DIR}/eli
 	@@cp -r ${ELI_DIR}/* ${DIST_DIR}/eli
+
+	@@echo "Copying required patches"
+	@@sh ./el/copypatches.sh ${DIST_DIR}/patches/
 
 	@@echo "Copying el files"
 	@@sh ./el/copyfiles.sh ${DIST_DIR}/devenv/
