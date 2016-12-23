@@ -191,7 +191,7 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
   (define-key-after
     global-map
     [menu-bar plw connect-is-with-url]
-    (cons "Connect to already launched Intranet server..." 'connect-is))
+    (cons "Connect to already launched Intranet server..." 'connect-is-with-url))
   (when (load-version-configuration-file)      	 
     (do* ((i 0 (+ i 2))
 	  (version (nth i *opx2-installations-paths*) (nth i *opx2-installations-paths*))
