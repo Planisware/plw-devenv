@@ -34,6 +34,7 @@
 		    (with-temp-buffer
 		      (insert data)
 		      (write-region (point-min) (point-max) file))
+		    (setq *script-compilation-mode* :remote)
 		    (fi:start-interface-via-file host "*common-lisp*" file)	   )
 		   (t
 		    (message "There was an error connecting to the Intranet server")))))
@@ -69,6 +70,7 @@
 	  ;;write data to a temp file and start emacs lisp interface
 	  (insert data)
 	  (write-region (point-min) (point-max) file)
+	  (setq *script-compilation-mode* :remote)
 	  (fi:start-interface-via-file host "*common-lisp*" file))
 	(with-current-buffer "*common-lisp*"
 	    (setq-local *inside-connect-is* t))	    
