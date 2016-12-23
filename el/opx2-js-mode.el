@@ -171,6 +171,8 @@
     (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
       (match-string-no-properties 1))))
 
+(defvar *script-compilation-mode* :local)
+
 (defun do-compile-and-sync-ojs-file (type)
   ;; find the script name
   (when (ojs-configuration-ok)
@@ -182,6 +184,7 @@
 				    (match-string-no-properties 1)
 				  nil))
 			      (fi:eval-in-lisp (format "(jvs::find-script \"%s\")" script-name))))
+	   (script-data (when (eq *script-compilation-mode* :remote) (buffer-substring-no-properties (point-min) (point-max))))
 	   (options (when (match-string-no-properties 3)
 		      (split-string (match-string-no-properties 3) "[ \f\t\n\r\v,]+")))
 	   (buffer-name *ojs-compilation-buffer-name*)
@@ -210,12 +213,17 @@
 	    (set-process-filter proc 'ojs-compilation-filter)
 	    ;; reset vars as needed
 	    (js-reset-vars (if (eq js-mode 'pjs-mode) 'pjs-compile 'ojs-compile))
-	    (cond ((eq type :compile)
-		   (if (member "PROPAGATE" options)
-		       (process-send-string *ojs-compilation-buffer-name* (format "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\" :propagate cl:t) (:rjs-one \"%s\"))\n" script filename script))
-		     (process-send-string *ojs-compilation-buffer-name* (format "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\") (:rjs-one \"%s\"))\n" script filename script)))
-		   ))
-	(message "Script %s not found" script-name))))))
+	    (let ((propagate (if (member "PROPAGATE" options) ":propagate cl:t" ""))
+		  (raw-data (if (eq *script-compilation-mode* :remote) ":raw-data cl:t" ""))
+		  (source (if (eq *script-compilation-mode* :remote) script-data filename)))
+	      (process-send-string *ojs-compilation-buffer-name* (format ;;"(cl:ignore-errors (cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\" %s %s) (:rjs-one \"%s\")))\n"
+								  "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source %S %s %s) (:rjs-one \"%s\"))\n"
+									 script
+									 source
+									 propagate
+									 raw-data
+									 script))))
+	(message "Script %s not found" script-name)))))
 
 (defun generate-search-string (strings)
   (cond ((= (length strings) 1) (format "function\\s-+%s\\s-*([[:word:]_, ]*)" (downcase (car strings))))
