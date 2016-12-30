@@ -16,6 +16,12 @@
 (defvar *base-url-regexp* "^https?://.*:[0-9]+/")
 (defvar *host-regexp* "^https?://\\([^/]+\\)/")
 
+(defun declare-log-stream ()
+  (with-current-buffer "*common-lisp*"
+    (read-only-mode t)
+    (process-send-string (get-buffer-process "*common-lisp*")
+			 "(when (fboundp 'http-utils::declare-additional-log-stream) (http-utils::declare-additional-log-stream *standard-output*))")))
+
 (defun connect-is-with-url (url)
   (interactive "sUrl of the Intranet server: ")
   (let* ((file (make-temp-file "isconnect"))
@@ -35,7 +41,10 @@
 		      (insert data)
 		      (write-region (point-min) (point-max) file))
 		    (setq *script-compilation-mode* :remote)
-		    (fi:start-interface-via-file host "*common-lisp*" file)	   )
+		    (fi:start-interface-via-file host "*common-lisp*" file)
+		    (with-current-buffer "*common-lisp*"
+		      (setq-local *inside-connect-is* t))
+		    (declare-log-stream))
 		   (t
 		    (message "There was an error connecting to the Intranet server")))))
 	  (t
@@ -73,7 +82,8 @@
 	  (setq *script-compilation-mode* :remote)
 	  (fi:start-interface-via-file host "*common-lisp*" file))
 	(with-current-buffer "*common-lisp*"
-	    (setq-local *inside-connect-is* t))	    
+	  (setq-local *inside-connect-is* t))
+	(declare-log-stream)
 	(delete-file file)	
 	(kill-buffer buf)))))
 
