@@ -17,10 +17,10 @@
 (defvar *host-regexp* "^https?://\\([^/]+\\)/")
 
 (defun declare-log-stream ()
-  (with-current-buffer "*common-lisp*"
-    (read-only-mode t)
+  (with-current-buffer "*common-lisp*"    
     (process-send-string (get-buffer-process "*common-lisp*")
-			 "(when (fboundp 'http-utils::declare-additional-log-stream) (http-utils::declare-additional-log-stream *standard-output*))")))
+			 "(when (fboundp 'http-utils::declare-additional-log-stream) (http-utils::declare-additional-log-stream *standard-output*))")
+    (read-only-mode t)))
 
 (defun connect-is-with-url (url)
   (interactive "sUrl of the Intranet server: ")
