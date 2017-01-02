@@ -73,6 +73,8 @@
     ;;Answer we look for is after CL-USER(2)
     (when (search-backward "CL-USER(2):" nil t)      
       (forward-line 1)
+      (while (and (= (line-beginning-position) (line-end-position))
+		  (= (forward-line 1) 0)))
       (let ((data (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
 	    (file (make-temp-file "isconnect")))
 	(with-temp-buffer 
