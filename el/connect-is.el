@@ -1,4 +1,4 @@
-;; -*- coding: windows-1252 -*- 
+;; -*- Coding: windows-1252 -*- 
 ;;  COPYRIGHT (C) PLANISWARE 2016
 ;;
 ;;  All Rights Reserved
@@ -17,6 +17,7 @@
 (defvar *host-regexp* "^https?://\\([^/]+\\)/")
 
 (defun start-connect-is (desc)
+  (setq *inside-connect-is* t)
   (with-current-buffer "*common-lisp*"
     (when (and (fi::ensure-lep-connection)
 	       (fi:eval-in-lisp "(cl:if (cl:fboundp 'http-utils::declare-additional-log-stream) t nil)"))
@@ -49,8 +50,6 @@
 		      (write-region (point-min) (point-max) file))
 		    (setq *script-compilation-mode* :remote)
 		    (fi:start-interface-via-file host "*common-lisp*" file)
-		    (with-current-buffer "*common-lisp*"
-		      (setq-local *inside-connect-is* t))
 		    (start-connect-is url))
 		   (t
 		    (message "There was an error connecting to the Intranet server")))))
@@ -90,8 +89,6 @@
 	  (write-region (point-min) (point-max) file)
 	  (setq *script-compilation-mode* :remote)
 	  (fi:start-interface-via-file host "*common-lisp*" file))
-	(with-current-buffer "*common-lisp*"
-	  (setq-local *inside-connect-is* t))
 	(start-connect-is (format "server %s port %s" host port))
 	(delete-file file)	
 	(kill-buffer buf)))))
