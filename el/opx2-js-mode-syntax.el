@@ -1,5 +1,5 @@
-;;* 
-;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;; -*- coding: windows-1252 -*- 
+;;  COPYRIGHT (C) PLANISWARE 2017
 ;;
 ;;  All Rights Reserved
 ;;
@@ -8,6 +8,7 @@
 ;;  employees for the sole purpose of conducting PLANISWARE business.
 ;;
 ;;**************************************************************************
+
 (defun js--regexp-opt-symbol (list)
   "Like `regexp-opt', but surround the result with `\\\\_<' and `\\\\_>'."
   (concat "\\_<" (regexp-opt list) "\\_>"))
@@ -270,7 +271,7 @@
   ;; the jit-lock-register function prepared a nice cache for us
   (let ((context (get-local-function-environment))
 	res)
-    (when (hash-table-p context)
+    (when (consp context)
       (maphash '(lambda (k v)
 		  (if list-of-cons
 		      (push (cons k (car v)) res)
