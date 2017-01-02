@@ -16,11 +16,18 @@
 (defvar *base-url-regexp* "^https?://.*:[0-9]+/")
 (defvar *host-regexp* "^https?://\\([^/]+\\)/")
 
-(defun declare-log-stream ()
-  (with-current-buffer "*common-lisp*"    
-    (process-send-string (get-buffer-process "*common-lisp*")
-			 "(when (fboundp 'http-utils::declare-additional-log-stream) (http-utils::declare-additional-log-stream *standard-output*))")
-    (read-only-mode t)))
+(defun start-connect-is (desc)
+  (with-current-buffer "*common-lisp*"
+    (when (and (fi::ensure-lep-connection)
+	       (fi:eval-in-lisp "(cl:if (cl:fboundp 'http-utils::declare-additional-log-stream) t nil)"))
+      (erase-buffer)
+      (process-send-string (get-buffer-process "*common-lisp*")
+			   "(http-utils::declare-additional-log-stream *standard-output*)")      
+      (text-mode)))
+  (delete-other-windows)
+  (split-window-below)
+  (other-window 1)
+  (switch-to-listener))
 
 (defun connect-is-with-url (url)
   (interactive "sUrl of the Intranet server: ")
@@ -44,7 +51,7 @@
 		    (fi:start-interface-via-file host "*common-lisp*" file)
 		    (with-current-buffer "*common-lisp*"
 		      (setq-local *inside-connect-is* t))
-		    (declare-log-stream))
+		    (start-connect-is url))
 		   (t
 		    (message "There was an error connecting to the Intranet server")))))
 	  (t
@@ -85,7 +92,7 @@
 	  (fi:start-interface-via-file host "*common-lisp*" file))
 	(with-current-buffer "*common-lisp*"
 	  (setq-local *inside-connect-is* t))
-	(declare-log-stream)
+	(start-connect-is (format "server %s port %s" host port))
 	(delete-file file)	
 	(kill-buffer buf)))))
 
