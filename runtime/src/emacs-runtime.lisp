@@ -16,5 +16,5 @@
   (startup::load-foreign-code) 
   (load "intranet.ini") 
   (:require-patch "sc9404")
-  (:enable-debugger)
+  ;;(:enable-debugger)
   (intranet::main))
