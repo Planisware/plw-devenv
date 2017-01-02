@@ -372,6 +372,8 @@
 	   t]
 	  ["Reset syntax caches" ojs-reset-cache-on-reset
 	   t]
+	  ["Planisware Script evaluator" switch-to-script-evaluator
+	   t]
 	  )
       '("OPX2 Javascript"
 	["Compile and load file..." compile-ojs-file
@@ -388,6 +390,8 @@
 	 t]
 	["Reset syntax caches" ojs-reset-cache-on-reset
 	 t]
+	["Planisware Script evaluator" switch-to-script-evaluator
+	 t]	
 	)))
 
   ;; custom keymap

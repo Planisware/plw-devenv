@@ -371,6 +371,8 @@
 	   t]
 	  ["Reset syntax caches" pjs-reset-cache-on-reset
 	   t]
+	  ["Planisware Script evaluator" switch-to-script-evaluator
+	   t]		  
 	  )
       '("Planisware Script"
 	  ["Compile and load file..." compile-pjs-file
@@ -380,6 +382,8 @@
 	  ["Planisware javascript documentation"  'open-ojs-documentation
 	   t]
 	  ["Reset syntax caches" pjs-reset-cache-on-reset
+	   t]
+	  ["Planisware Script evaluator" switch-to-script-evaluator
 	   t]
 	  )))
 
