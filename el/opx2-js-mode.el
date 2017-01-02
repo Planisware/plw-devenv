@@ -368,7 +368,7 @@
 	   t]
 	  ["Trace/Untrace function..." trace-ojs-function
 	   t]
-	  ["OPX2 javascript documentation"  'open-ojs-documentation
+	  ["OPX2 javascript documentation"  open-ojs-documentation
 	   t]
 	  ["Reset syntax caches" ojs-reset-cache-on-reset
 	   t]
@@ -384,7 +384,7 @@
 	 t]
 	["Trace/Untrace function..." trace-ojs-function
 	 t]
-	["OPX2 javascript documentation"  'open-ojs-documentation
+	["OPX2 javascript documentation"  open-ojs-documentation
 	 t]
 	["Reset syntax caches" ojs-reset-cache-on-reset
 	 t]
