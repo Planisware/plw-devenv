@@ -293,10 +293,10 @@
   :syntax-table pjs-mode-syntax-table
 
   ;; load a little bit of cc-mode for indentation
-;;  (c-initialize-cc-mode t)
-;;  (c-init-language-vars c-mode)
-;;  (c-init-language-vars-for 'pjs-mode)
-;;  (c-common-init 'c-mode)
+  ;;  (c-initialize-cc-mode t)
+  ;;  (c-init-language-vars c-mode)
+  ;;  (c-init-language-vars-for 'pjs-mode)
+  ;;  (c-common-init 'c-mode)
 
   ;; indentation like js mode
   (setq-local indent-line-function 'pjs-indent-line)
@@ -322,10 +322,10 @@
     (make-local-variable 'adaptive-fill-regexp)
     (c-setup-paragraph-variables))
   
-;;  (setq c-current-comment-prefix  c-comment-prefix-regexp)
+  ;;  (setq c-current-comment-prefix  c-comment-prefix-regexp)
   
-;;  (setq-local parse-sexp-ignore-comments t)
-;;  (setq-local parse-sexp-lookup-properties t)
+  ;;  (setq-local parse-sexp-ignore-comments t)
+  ;;  (setq-local parse-sexp-lookup-properties t)
   
   ;; don't trust properties
   (setq parse-sexp-lookup-properties nil)
@@ -375,17 +375,17 @@
 	   t]		  
 	  )
       '("Planisware Script"
-	  ["Compile and load file..." compile-pjs-file
-	   t]
-	  ["Trace/Untrace function..." trace-pjs-function
-	   t]
-	  ["Planisware javascript documentation"  'open-ojs-documentation
-	   t]
-	  ["Reset syntax caches" pjs-reset-cache-on-reset
-	   t]
-	  ["Planisware Script evaluator" switch-to-script-evaluator
-	   t]
-	  )))
+	["Compile and load file..." compile-pjs-file
+	 t]
+	["Trace/Untrace function..." trace-pjs-function
+	 t]
+	["Planisware javascript documentation"  'open-ojs-documentation
+	 t]
+	["Reset syntax caches" pjs-reset-cache-on-reset
+	 t]
+	["Planisware Script evaluator" switch-to-script-evaluator
+	 t]
+	)))
 
   ;; custom keymap
   (use-local-map *pjs-mode-map*)  
@@ -398,6 +398,7 @@
   
   (add-hook 'find-file-hook 'pjs-reset-cache-on-save nil t)
   (add-hook 'find-file-hook 'pjs-reset-cache-on-compile nil t)
+  (add-hook 'find-file-hook 'semantic-force-refresh nil t)
 
   ;; activete some semantic modes
   (global-semantic-mru-bookmark-mode 1)
