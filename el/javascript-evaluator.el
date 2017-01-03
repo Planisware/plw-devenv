@@ -143,10 +143,10 @@ the buffer name is the second optional argument."
 	       (fi::switch-to-buffer-new-screen buffer-name)
 	     (progn 
 	       (setq proc (fi:open-lisp-listener -1 buffer-name 'fi::setup-tcp-connection "(jvs::js-repl)" 'js-evaluator-mode))
-	       (sleep-for 0.1)
 	       (delete-region (point-min) (point-max))
 	       (set-process-filter proc 'javascript-evaluator-filter)
-	       (process-send-string proc ":help\n")
+	       (sleep-for 0.5)
+;;	       (process-send-string proc ":help\n")
 	       (when *javascript-evaluator-initialize*
 		 (dolist (str *javascript-evaluator-initialize*)
 		   (process-send-string proc (format "%s\n" str))))
