@@ -1,5 +1,5 @@
-;;* 
-;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;; -*- coding: windows-1252 -*- 
+;;  COPYRIGHT (C) PLANISWARE 2017
 ;;
 ;;  All Rights Reserved
 ;;
@@ -8,6 +8,7 @@
 ;;  employees for the sole purpose of conducting PLANISWARE business.
 ;;
 ;;**************************************************************************
+
 (defun revert-truncate-lines ()
   (interactive)
   (setq truncate-lines (not truncate-lines))
@@ -202,7 +203,8 @@
 		(progn (forward-sexp 1)
 		       ;; advance if we have a |
 		       (when (looking-at "|")
-			 (forward-sexp 1))
+			 (or (re-search-forward "|" (line-end-position) t 2)
+			     (forward-sexp 1)))
 		       (while (looking-at "\\s'")
 			 (forward-char 1))
 		       (point))))))		
@@ -301,12 +303,11 @@
 (add-hook 'fi:lisp-listener-mode-hook 'add-restart-item t)
 
 
-(defvar *eli-prompt-package-regexp* "^\\(?:[\\[0-9c\\]*]\\)?\\s-*\\(.*\\)([0-9]+):")
+(defvar *eli-prompt-package-regexp* "^\\(?:[\\[0-9c\\]*]\\)?\\s-*\\([a-zA-Z-_]+\\)([0-9]+):")
 
 (defun find-prompt-package ()
   (save-excursion
-    (save-match-data
-      (goto-char (point-max))
+    (save-match-data      
       (when (re-search-backward *eli-prompt-package-regexp* (point-min) t)
 	(match-string-no-properties 1)))))
 
