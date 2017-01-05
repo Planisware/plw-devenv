@@ -11,7 +11,7 @@
 ##**************************************************************************
 DEST_DIR=$1
 PATCHES=el/patches
-PATCHES_SOURCE=/E/versions/plw6/release/620SP2/updates/_en_dev/
+PATCHES_SOURCE=/E/versions/plw6/release/610SP1/updates/_en_dev/
 EXTENSIONS="el txt"
 
 if [ -z $1 ] 
