@@ -1,39 +1,273 @@
 ==Emacs basics==
 
-Here are a few ways I recommend to familiarize yourself with Emacs : 
+===Useful vocabulary===
+
+====Buffer====
+Buffers are roughly the equivalent of "tabs" in other text editors like Notepad ++ or SublimeText. A buffer usually allows the edition of a given file. But in Emacs, buffers can be not linked to a specific file. There is for example a *scratch* buffer created by default to allow to take some notes. The connection to Planisware Intranet also creates a special buffer where the Intranet logs are shown.
+
+====Windows====
+The Emacs windows may be separated horizontally and vertically as many times as your want. Each separate window can contain any buffer. It is useful to see the Intranet logs at the same time as writing some script, or open two script files side by side.
+
+====Minibuffer====
+The minibuffer is the last line of the Emacs main window, below the status bar. It shows useful messages, for example warnings or error messages, so be sure to pay attention to it !
+
+====Keyboard shortcut====
+Emacs relies heavily on keyboard shortcuts. But most of them are also available in the menu bar on the top, with the associated shortcut mentioned (For example : File -> Visit new file displays the associated shortcut which is C-x C-f). 
+
+To understand an Emacs shortcut : 
+* C means the Control key
+* M means the "Meta" key, which is Alt (or Esc)
+* M-x means Alt + x (at the same time)
+* C-o e means Control + o (at the same time), release then press e
+* C-x C-f means Control + x (at the same time), then Control + f (at the same time)
+
+===Basic commands===
+
+====Cancel====
+
+{| class="wikitable"
+! Command
+! Shortcut
+! Menu
+|-
+| Cancel an action in the mini-buffer
+| C-g
+| 
+|-
+| Undo an entry
+| C-x u
+| Edit -> Undo
+|-
+|}
+
+====Files====
+
+{| class="wikitable"
+! Command
+! Shortcut
+! Menu
+|-
+| Open a file
+| C-x C-f
+| File -> Visit new file
+|-
+| Save a file
+| C-x C-s
+| File -> Save
+|-
+| Save as
+| C-x C-w
+| File -> Save as...
+|}
+
+====Buffers====
+
+{| class="wikitable"
+! Command
+! Shortcut
+! Menu
+|-
+| Select a buffer
+| C-x b
+| Buffers -> Select Named buffer
+|-
+| List all buffers
+| C-x C-b
+| Buffers -> List All Buffers
+|-
+| Kill a buffer
+| C-x k
+| NA
+|-
+| Switch to Intranet log buffer (*common-lisp*)
+| F5
+| NA
+|-
+| Switch to Lisp evaluator (*lisp-listener*)
+| F4
+| NA
+|-
+| Switch to Javascript evaluator
+| F3
+| NA
+|}
+
+====Windows====
+
+{| class="wikitable"
+! Command
+! Shortcut
+! Menu
+|-
+| Separate the current window in two horizontally
+| C-x 2
+| File -> New window below
+|-
+| Separate the current window in two vertically
+| C-x 3
+| File -> New window on the Right
+|-
+| Move to other window
+| C-x o
+| NA
+|-
+| Kill all windows except current one
+| C-x 1
+| File -> Remove other window
+|-
+| Kill current window
+| F6
+| NA
+|}
+
+====Editing files====
+
+{| class="wikitable"
+! Command
+! Shortcut
+! Menu
+|-
+| Search some text / search next item 
+| C-s (repeat for next entry)
+| Edit -> Search -> String forward
+|-
+| Search some text backward / search previous item 
+| C-r (repeat for next entry)
+| Edit -> Search -> String backward
+|-
+| Undo
+| C-z
+| Edit -> Undo
+|-
+| Cut
+| Shift + Delete
+| Edit -> Cut
+|-
+| Copy
+| C-Insert
+| Edit -> Copy
+|-
+| Paste
+| Shift + Insert
+| Edit -> Paste
+|}
+
+====Planisware script====
+
+{| class="wikitable"
+! Command
+! Shortcut
+! Menu
+|-
+| Compile and load current script
+| C-c e
+| OPX2 Javascript -> Compile and load file
+|-
+| Trace or untrace current function (under the cursor)
+| C-c t
+| OPX2 Javascript -> Trace / Untrace current function
+|-
+| Open Planisware Script documentation
+| C-c h
+| OPX2 Javascript -> OPX2 Javascript documentation
+|-
+| Reset syntax caches : Useful when coloration or completion is not working properly
+| C-c R
+| OPX2 Javascript -> Reset syntax caches
+|-
+| Open Javascript Evaluator
+| F3
+| OPX2 Javascript -> Planisware Script evaluator
+|}
+
+===Further documentation===
+If you want to go further, I recommend to check  : 
 * Read this website as an introduction :  http://www.jesshamrick.com/2012/09/10/absolute-beginners-guide-to-emacs/
 * Follow the Emacs tutorial : Either click on Emacs tutorial on the home page, or use the following shortcut C-H t (It means press Control + H, then release control and just press t)
 * Refer to this reference card : https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf
 
-==Launch an Intranet==
+==Connect or launch an Intranet server==
 
-To launch an Intranet server, just click on Planisware -> Start Planisware VERSION and choose your intranet.ini file.
+===Pre-requisites===
+
+In order to launch or connect to an Intranet server, you need : 
+* The following patches
+** sc9404 v3.8
+** sc8567 v3.114
+* To Add this line to the intranet.ini
+ (setq wttp::*activate-emacs-interface* t)
+
+===Functionalities===
+* See logs directly in the *common-lisp* buffer, accessible with the F5 key
+* Interact with your Intranet server with the Lisp listener (F4) or the Javascript evaluator (F3)
+* Compile directly your scripts from Emacs into your Intranet server with C-c e
+* Activate / de-activate traces directly and see the results directly in the Intranet log (Buffer *common-lisp*)
+
+===Launch an Intranet server inside Emacs===
+
+To launch an Intranet server, just click on "Planisware -> Start Planisware VERSION" and choose your intranet.ini file. You can also directly click on a Last opened intranet.ini entry.
 
 '''The port of the Intranet server will be taken from your database declaration, so be sure to update it !''' It is the line :INTRANET-PORT in the database declaration. If not set, the Intranet server will try to use the port 80 which is not available on most computers. 
 
-The server will start inside the Emacs *common-lisp* buffer, which means all the traces are available in this buffer directly. You can access this buffer with the F5 key. 
+===Connect to a running Intranet Server===
 
-==Connect to a running Intranet Server==
+To connect to a running Intranet server, click on Planisware -> Connect to already launched intranet server and specifiy the url of the '''slave''' that you want to connect to. For example : 
+ 
+ http://pascal.planisware.com/V6_DEV_COPY/OPX2/pascal:11740/home
 
-To connect to a running Intranet server, click on Planisware -> Connect to already launched intranet server and specifiy the url of the '''slave''' that you want to connect to. For example : http://pascal.planisware.com/V6_DEV_COPY/OPX2/pascal:11740/home
+==IDE features for Planisware script==
 
-Important : In order to be able to connect to a running IS server, you have to make sure
-* You need the following patches on the Intranet server 
-** sc9404 v3.8
-** sc8567 v3.114
-* Add this line to the intranet.ini
- (setq wttp::*activate-emacs-interface* t)
+To access all the IDE features, it is recommended to either connect to an Intranet server or wait for the Intranet server to start before opening script files. If some functionalities do not work, try the Reset syntax caches command (C-c R)
 
-==Editing scripts==
+To edit a script in Emacs, just open its source file. If it has the proper extension (.ojs for Script V1 and .pjs for Planisware script2), Emacs will automatically enable the IDE functionalities
 
-To access all the IDE features, it is recommanded to either connect to an Intranet server or wait for the Intranet server to start before opening script files. 
+===Syntax highlighting===
 
-To edit a script in Emacs, just open its source file. If it has the proper extension (.ojs for Script V1 and .pjs for Planisware script2), Emacs will automatically enable thoses functionalities: 
-* Syntax highlighting : variable, function names, classes, etc
-* Auto-completion, accessible with the Shift+Tab shortcut. It will try to complete with function names, variables names, etc.
-* Direct compilation : If you have set the //PLWSCRIPT _MY_JS_OBJECT_NAME line on top of your file, you can compile your script directly from Emacs by clicking Planisware script -> Compile and load file, or with the "C-C e" shortcut. This will load your modified script file in the server, like it would do in Proweb when click the "Check" and "Launch the script" buttons of a script. 
+Emacs will automatically highlight : 
+* Language keywords (function, for, if, context, this, etc)
+* Global or namespace variable names
+* Local variable names inside functions
+* Function names that are declared inside the script file
+* Kernel function names 
+* Classes names (Script V2)
+
+===Auto-completion===
+
+The auto-completion is available with the '''Shift+Tab''' shortcut. It will try to complete with 
+* Global or namespace variable names
+* Local variable names inside functions
+* Function names that are declared inside the script file
+* Kernel function names 
+* Classes names
+
+The auto-completion will also show a letter showing the class of the proposed item : 
+* v : variable
+* f : function
+* m : method or member
+* c : class name
+* k : kernel function
+It will also show the documentation of the function if available or the variable declaration line.
+
+===Syntax checking (Planisware Script 2 only)===
+
+For pjs files, Emacs will check "on the fly" the syntax of your script and shows you syntax errors directly : it will evaluate your script after a few seconds of inactivity. You can check the error as a tooltip on the highlighted area.
+
+===Direct compilation===
+
+To enable the direct compilation of your script file, you '''must''' add this line at the top of your file : 
+
+ //PLWSCRIPT: _MY_JS_OBJECT_NAME
+
+It will help Emacs to link your script file with the corresponding Planisware script environment object. You cannot compile a file if it is not associated to a Planisware script environment object. 
+
+You can then compile your script directly from Emacs by clicking Planisware script -> Compile and load file, or with the "C-C e" shortcut. This will load your modified script file in the server, like it would do in Proweb when click the "Check" and "Launch the script" buttons of a script. 
+
 '''Warning : The direct compilation will never store your modified script in the database, you still have to synchronize it manually when your are done editing it. It will not either change the "Synchronize script content with" field of the Javascript object.'''
 
-==Javascript evaluator==
+===Javascript evaluator===
 
-When in Emacs, you can press the F3 key to access a Javascript Evaluator that allows you to evaluate script forms directly. You can switch script versions with the :V1 and :V2 commands. You can link your evaluator to an existing applet to access its context with the :a command.
+When in Emacs, you can press the F3 key to access a Javascript Evaluator that allows you to evaluate script forms directly. You can switch script versions with the :V1 and :V2 commands. You can link your evaluator to an existing applet to access its context with the :a command. To see a list of available command, you can use the :h command.
+
+ OJS(6): var act = "opxactivity".get("Colza 01"); alert(act.desc); return act;
+ Warning : Colza 01 - Full template
+ Return  :  [OpxWbsElement] : #{KERNEL-ORDO:NETWORK@Colza 01:Colza 01}
