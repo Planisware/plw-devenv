@@ -1,5 +1,5 @@
-;;* 
-;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;; -*- coding: windows-1252 -*- 
+;;  COPYRIGHT (C) PLANISWARE 2017
 ;;
 ;;  All Rights Reserved
 ;;
@@ -8,6 +8,7 @@
 ;;  employees for the sole purpose of conducting PLANISWARE business.
 ;;
 ;;**************************************************************************
+
 (require 'auto-complete)
 
 ;;;;; configuration of the hook
@@ -185,6 +186,9 @@
   (add-to-list 'ac-sources 'ac-source-pjs-classes)
   (add-to-list 'ac-sources 'ac-source-ojs-kernel)
   (add-to-list 'ac-sources 'ac-source-yasnippet)
+
+  ;; initialize kernel completion
+  (ojs-kernel-ac-init)
   
   ;; display doc quickly
   (setq ac-quick-help-delay 0.1)
