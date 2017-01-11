@@ -14,7 +14,7 @@
 (defvar *ignored-commands-regexp* "\\s-*:\\(exit\\|kill\\)\\s-*")
 
 (defvar *base-url-regexp* "^https?://.*:[0-9]+/")
-(defvar *host-regexp* "^https?://\\([^/]+\\)/")
+(defvar *host-regexp* "^https?://\\([^/:]+\\)\\(?::[0-9]+\\)?/")
 
 (defun start-connect-is (desc)
   (setq *inside-connect-is* t)
