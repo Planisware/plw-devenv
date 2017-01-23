@@ -141,14 +141,10 @@ the buffer name is the second optional argument."
     (cond ((ojs-configuration-ok)
 	   (if (fi:process-running-p proc buffer-name)
 	       (fi::switch-to-buffer-new-screen buffer-name)
-	     (progn 
+	     (progn
 	       (setq proc (fi:open-lisp-listener -1 buffer-name 'fi::setup-tcp-connection "(jvs::js-repl)" 'js-evaluator-mode))
 	       (set-process-filter proc 'javascript-evaluator-filter)
 	       (sleep-for 0.5)
-	       (delete-region (point-min) (point-max))
-	       (save-excursion
-		 (goto-char (point-min))
-		 (insert "// Type :help for a list of command\n"))
 	       (process-send-string proc "\n")
 	       (when *javascript-evaluator-initialize*
 		 (dolist (str *javascript-evaluator-initialize*)
