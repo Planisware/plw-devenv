@@ -23,6 +23,7 @@
 (defvar *max-of-last-items* 10)
 
 (setq *emacs-environment-mode* :runtime)
+(setq *print-error-when-recompiling-script* t)
 
 (defvar *runtime-function-name*
   "runopx2%s")

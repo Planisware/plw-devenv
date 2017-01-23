@@ -173,6 +173,8 @@
 
 (defvar *script-compilation-mode* :local)
 
+(defvar *print-error-when-recompiling-script* nil)
+
 (defun do-compile-and-sync-ojs-file (type)
   ;; find the script name
   (when (ojs-configuration-ok)
@@ -217,7 +219,9 @@
 		  (raw-data (if (eq *script-compilation-mode* :remote) ":raw-data cl:t" ""))
 		  (source (if (eq *script-compilation-mode* :remote) script-data filename)))
 	      (process-send-string *ojs-compilation-buffer-name* (format ;;"(cl:ignore-errors (cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\" %s %s) (:rjs-one \"%s\")))\n"
-								  "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source %S %s %s) (:rjs-one \"%s\"))\n"
+								  (if *print-error-when-recompiling-script*
+								      "(cl:handler-case  (cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source %S %s %s) (:rjs-one \"%s\")) (cl:error (e) (format t \"~%%ERROR : ~%%~a\" (js::errormessage e))))\n"
+								      "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source %S %s %s) (:rjs-one \"%s\"))\n")
 									 script
 									 source
 									 propagate
