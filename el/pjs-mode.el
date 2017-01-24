@@ -367,7 +367,7 @@
 	   t]
 	  ["Trace/Untrace function..." trace-pjs-function
 	   t]
-	  ["Planisware javascript documentation"  'open-ojs-documentation
+	  ["Planisware javascript documentation"  open-ojs-documentation
 	   t]
 	  ["Reset syntax caches" pjs-reset-cache-on-reset
 	   t]
@@ -379,7 +379,7 @@
 	 t]
 	["Trace/Untrace function..." trace-pjs-function
 	 t]
-	["Planisware javascript documentation"  'open-ojs-documentation
+	["Planisware javascript documentation"  open-ojs-documentation
 	 t]
 	["Reset syntax caches" pjs-reset-cache-on-reset
 	 t]
