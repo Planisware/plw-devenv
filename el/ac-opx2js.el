@@ -1,5 +1,5 @@
-;;* 
-;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;; -*- coding: windows-1252 -*- 
+;;  COPYRIGHT (C) PLANISWARE 2017
 ;;
 ;;  All Rights Reserved
 ;;
@@ -8,6 +8,7 @@
 ;;  employees for the sole purpose of conducting PLANISWARE business.
 ;;
 ;;**************************************************************************
+
 (require 'auto-complete)
 
 ;;; find functions/methods defined in the current file and other open files with the same mode

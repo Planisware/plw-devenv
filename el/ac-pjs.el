@@ -194,6 +194,8 @@
   (setq ac-quick-help-delay 0.1)
   ;; autocomplete only when I ask for it
   (setq ac-auto-start nil)
+
+  (setq ac-ignore-case t)
   )
 
 (add-hook 'pjs-mode-hook 'pjs-setup-auto-complete-mode)

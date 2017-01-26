@@ -631,7 +631,10 @@
 				   (eq (semantic-tag-class current-tag) 'function))
 			  (convert-pjs-type (semantic-tag-get-attribute current-tag :on-class)))))
 		     ;; local variable of the function, try to get the type
-		     ((setq var-tag (car (semantic-find-tags-by-name varname (semantic-something-to-tag-table (semantic-get-local-variables)))))
+		     ((setq var-tag (block tag
+				      (dolist (tag (semantic-find-tags-by-name varname (semantic-something-to-tag-table (semantic-get-local-variables))))
+					(when (semantic-tag-get-attribute tag :type)
+					  (return-from tag tag)))))
 		      (convert-pjs-type (semantic-tag-get-attribute var-tag :type)))
 		     ;; TODO : namespace var with type
 		     ;; ((let ((list-of-var (list-pjs-namespace-variables (pjs-current-namespace))))
