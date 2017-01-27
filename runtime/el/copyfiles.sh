@@ -1,4 +1,15 @@
 #!/bin/bash
+## -*- coding: windows-1252 -*- 
+##  COPYRIGHT (C) PLANISWARE 2017
+##
+##  All Rights Reserved
+##
+##  This program and the information contained herein are confidential to
+##  and the property of PLANISWARE and are made available only to PLANISWARE
+##  employees for the sole purpose of conducting PLANISWARE business.
+##
+##**************************************************************************
+
 DEST_DIR=$1
 SRC_DIR=../
 FILES=el/files
@@ -20,8 +31,13 @@ fi
 mkdir -p $DEST_DIR
 
 # copy files
-while read LINE; do    
-    cp $SRC_DIR$LINE $DEST_DIR
+while read LINE; do
+    SUBDIR=`echo $LINE | awk -F"/" 'BEGIN {OFS = FS}/.*\/.*/{$NF=""; print $0}'`
+    if [ ! -d "$DEST_DIR$SUBDIR" ]; then
+	mkdir $DEST_DIR$SUBDIR
+    fi
+    echo "Copying $SRC_DIR$LINE to $DEST_DIR$SUBDIR"
+    cp $SRC_DIR$LINE $DEST_DIR$SUBDIR
 done < $FILES
 
 # copy directories
