@@ -8,6 +8,7 @@ el/common-plw.el
 el/connect-is.el
 el/eli-plw.el
 el/javascript-evaluator.el
+el/generate-run-command.el
 el/lep-debug.el
 el/opx2-js-cache.el
 el/opx2-js-mode.el
