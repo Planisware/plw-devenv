@@ -193,7 +193,7 @@
 
   (setq %hl-shell-err    "\\(\[[0-9c]*\]\\) ")
   (setq %hl-shell-db     "\\([a-zA-Z0-9_]+\\):\\([0-9]+\\)\\s-")
-  (setq %hl-shell-std    "\\(\\sw+\\(-\\sw+\\)\\)?(\\([0-9]+\\)):")
+  (setq %hl-shell-std    "\\(\\sw+\\(-\\sw+\\)?\\)(\\([0-9]+\\)):")
 
   (setq ht-shell (concatenate 'string "^" %hl-shell-std))
   (setq ht-shell-err (concatenate 'string "^" %hl-shell-err %hl-shell-std))
