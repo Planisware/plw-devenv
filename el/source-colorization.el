@@ -198,7 +198,7 @@
   (setq ht-shell (concatenate 'string "^" %hl-shell-std))
   (setq ht-shell-err (concatenate 'string "^" %hl-shell-err %hl-shell-std))
   (setq ht-shell-db (concatenate 'string "^" %hl-shell-db %hl-shell-std))
-  (setq ht-shell-err-db (concatenate 'string "^" %hl-shell-db  %hl-shell-db %hl-shell-std))
+  (setq ht-shell-err-db (concatenate 'string "^" %hl-shell-err %hl-shell-db %hl-shell-std))
 
   (setq lisp-shell-hg-rules
 	`((,ht-shell         (1 lisp-shell-face) (3 lisp-shell-nb-face))
