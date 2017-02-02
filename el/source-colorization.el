@@ -1,5 +1,5 @@
-;;* 
-;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;; -*- coding: windows-1252 -*- 
+;;  COPYRIGHT (C) PLANISWARE 2017
 ;;
 ;;  All Rights Reserved
 ;;
@@ -8,6 +8,7 @@
 ;;  employees for the sole purpose of conducting PLANISWARE business.
 ;;
 ;;**************************************************************************
+
 (require 'overlay) ;;needed by Xemacs, provided by the fsf-compat package
 
 (defface plw-source-color-ok
@@ -173,30 +174,43 @@
   (defface lisp-shell-tcp-face
     '((t :foreground "#66FF66"))
     ""
-    :group 'ophx2-alisp)2
+    :group 'ophx2-alisp)
   (defvar lisp-shell-tcp-face 'lisp-shell-tcp-face)
   
   
   (defface lisp-shell-nb-face
     '((t :foreground "#cccc00"))
     ""
-    :group 'ophx2-alisp)
-  
+    :group 'ophx2-alisp)  
   (defvar lisp-shell-nb-face 'lisp-shell-nb-face)
-  
-;  (setq %hl-shell-regexp "\\(\\(?:\\sw\\|-\\)+\\)(\\([0-9]+\\)):")
-;  (setq %hl-shell-regexp "\\(\\sw+\\)(\\([0-9]+\\)):")
-  (setq %hl-shell-regexp "\\(\\sw+\\(-\\sw+\\)?\\)(\\([0-9]+\\)):")
-  (setq hl-shell-regexp (concatenate 'string "^" %hl-shell-regexp))
-  (setq hl-shell-err-regexp (concatenate 'string "^\\(\[[0-9c]*\]\\) " %hl-shell-regexp))
-  
+
+
+  (defface lisp-db-name-face
+    '((t :weight bold))
+    ""
+    :group 'ophx2-alisp)
+  (defvar lisp-db-name-face 'lisp-db-name-face)
+
+  (setq %hl-shell-err    "\\(\[[0-9c]*\]\\) ")
+  (setq %hl-shell-db     "\\([a-zA-Z0-9_]+\\):\\([0-9]+\\)\\s-")
+  (setq %hl-shell-std    "\\(\\sw+\\(-\\sw+\\)\\)?(\\([0-9]+\\)):")
+
+  (setq ht-shell (concatenate 'string "^" %hl-shell-std))
+  (setq ht-shell-err (concatenate 'string "^" %hl-shell-err %hl-shell-std))
+  (setq ht-shell-db (concatenate 'string "^" %hl-shell-db %hl-shell-std))
+  (setq ht-shell-err-db (concatenate 'string "^" %hl-shell-db  %hl-shell-db %hl-shell-std))
+
   (setq lisp-shell-hg-rules
-	`((,hl-shell-regexp      (1  lisp-shell-face) (3 lisp-shell-nb-face))
-	  (,hl-shell-err-regexp  (1 font-lock-warning-face) (2  lisp-shell-face) (4 lisp-shell-nb-face))))
-  
+	`((,ht-shell         (1 lisp-shell-face) (3 lisp-shell-nb-face))
+	  (,ht-shell-err     (1 font-lock-warning-face) (2 lisp-shell-face) (4 lisp-shell-nb-face))
+	  (,ht-shell-db      (1 lisp-db-name-face) (2 lisp-shell-nb-face) (3 lisp-shell-face) (5 lisp-shell-nb-face))
+	  (,ht-shell-err-db  (1 font-lock-warning-face) (2 lisp-db-name-face) (3 lisp-shell-nb-face) (4 lisp-shell-face) (6 lisp-shell-nb-face))))
+
   (setq lisp-shell-tcp-hg-rules
-	`((,hl-shell-regexp      (1  lisp-shell-tcp-face) (3 lisp-shell-nb-face))
-	  (,hl-shell-err-regexp  (1 font-lock-warning-face) (2  lisp-shell-tcp-face) (4 lisp-shell-nb-face))))
+	`((,ht-shell         (1 lisp-shell-tcp-face) (3 lisp-shell-nb-face))
+	  (,ht-shell-err     (1 font-lock-warning-face) (2 lisp-shell-tcp-face) (4 lisp-shell-nb-face))
+	  (,ht-shell-db      (1 lisp-db-name-face) (2 lisp-shell-nb-face) (3 lisp-shell-tcp-face) (5 lisp-shell-nb-face))
+	  (,ht-shell-err-db  (1 font-lock-warning-face) (2 lisp-db-name-face) (3 lisp-shell-nb-face) (4 lisp-shell-tcp-face) (6 lisp-shell-nb-face))))
   
 
   (font-lock-add-keywords 'fi:common-lisp-mode highlight-rules-new)

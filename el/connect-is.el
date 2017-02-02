@@ -11,7 +11,9 @@
 
 (defvar *inside-connect-is* nil)
 
-(defvar *ignored-commands-regexp* "\\s-*:\\(exit\\|kill\\)\\s-*")
+(defvar *ignore-commands* (list "ex" "exi" "exit" "ki" "kil" "kill"))
+
+(defvar *ignored-commands-regexp* (concatenate 'string "\\s-*:" (regexp-opt *ignore-commands*) "\\s-*"))
 
 (defvar *base-url-regexp* "^https?://.*:[0-9]+/")
 (defvar *host-regexp* "^https?://\\([^/:]+\\)\\(?::[0-9]+\\)?/")
@@ -23,7 +25,8 @@
 	       (fi:eval-in-lisp "(cl:if (cl:fboundp 'http-utils::declare-additional-log-stream) t nil)"))
       (erase-buffer)
       (process-send-string (get-buffer-process "*common-lisp*")
-			   "(http-utils::declare-additional-log-stream *standard-output*)")      
+			   "(http-utils::declare-additional-log-stream *standard-output*)")
+      (fi:eval-in-lisp "(setq opx2-user::*db-in-prompt* t)")
       (text-mode)))
   (delete-other-windows)
   (split-window-below)
@@ -140,3 +143,4 @@ subprocess mode."
       (when (and (on-ms-windows) (not *on-windows-nt*))
 	(delete-char -1))
       (set-marker (process-mark process) (point))))
+

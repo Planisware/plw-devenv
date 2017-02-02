@@ -302,14 +302,14 @@
 (add-hook 'fi:common-lisp-mode-hook 'add-restart-item t)
 (add-hook 'fi:lisp-listener-mode-hook 'add-restart-item t)
 
-
-(defvar *eli-prompt-package-regexp* "^\\(?:[\\[0-9c\\]*]\\)?\\s-*\\([a-zA-Z-_]+\\)([0-9]+):")
+;; link to tpl:*prompt* redefine in devenv/dot-clinit.cl
+(defvar *eli-prompt-package-regexp* "^\\(?:[\\[0-9c\\]*]\\)?\\([a-zA-Z0-9_]+:[0-9]+\\s-\\)?\\s-*\\([a-zA-Z-_]+\\)([0-9]+):")
 
 (defun find-prompt-package ()
   (save-excursion
     (save-match-data      
       (when (re-search-backward *eli-prompt-package-regexp* (point-min) t)
-	(match-string-no-properties 1)))))
+	(match-string-no-properties 2)))))
 
 (defun fi::package ()
   (let ((p (or (and (not fi::multiple-in-packages)
