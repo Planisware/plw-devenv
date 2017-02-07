@@ -394,11 +394,9 @@
   ;;  (add-hook 'after-save-hook 'check-header nil t)
   ;;  (add-hook 'after-save-hook 'pjs-check-footer nil t)
   (add-hook 'after-save-hook 'pjs-reset-cache-on-save nil t)
-  (add-hook 'after-save-hook 'semantic-force-refresh nil t)
   
   (add-hook 'find-file-hook 'pjs-reset-cache-on-save nil t)
   (add-hook 'find-file-hook 'pjs-reset-cache-on-compile nil t)
-  (add-hook 'find-file-hook 'semantic-force-refresh nil t)
 
   ;; activete some semantic modes
   (global-semantic-mru-bookmark-mode 1)

@@ -1,5 +1,5 @@
-;;* 
-;;  COPYRIGHT (C) PLANISWARE 2016-05-27
+;; -*- coding: windows-1252 -*- 
+;;  COPYRIGHT (C) PLANISWARE 2017
 ;;
 ;;  All Rights Reserved
 ;;
@@ -8,6 +8,7 @@
 ;;  employees for the sole purpose of conducting PLANISWARE business.
 ;;
 ;;**************************************************************************
+
 (require 'semantic)
 ;;(require 'semantic/edit)
 
@@ -299,7 +300,7 @@ This can be overridden with `get-local-variables'."
         ;; Setup a dummy parser table to enable parsing!
         semantic--parse-table t
 	)
-  )
+  (semantic-force-refresh))
 
 (add-hook 'pjs-mode-hook 'semantic-default-pjs-setup)
 
