@@ -863,7 +863,9 @@
   (font-lock-fontify-buffer))
 
 (defun pjs-reset-cache-on-save ()
-  (js-reset-vars 'pjs-save))
+  (js-reset-vars 'pjs-save)
+  (semantic-force-refresh))
 
 (defun pjs-reset-cache-on-compile ()
-  (js-reset-vars 'pjs-compile))
+  (js-reset-vars 'pjs-compile)
+  (semantic-force-refresh))
