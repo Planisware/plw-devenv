@@ -113,7 +113,8 @@
      "function"
      ;;     "wrappable function"
      "new"
-     "return values")))
+     "return values"     
+     )))
 
 (defconst *pjs-function-qualifiers*
   (pjs--regexp-opt-symbol
@@ -129,18 +130,23 @@
 (defconst *pjs-method-on-keywords*
   (pjs--regexp-opt-symbol
    '("modifybefore"
+     "modifybeforesmp"
      "modifyafter"
+     "modifyaftersmp"
      "load"
-     "loadsafe"
+     "loadsmp"
      "new"
-     "delete")))
+     "newsmp"
+     "delete"
+     "deletesmp")))
 
 (defconst *pjs-method-type*
-  (format "\\(?:%s\\s-+\\)?%s" *pjs-method-on-keywords* *js-type*))
+  ;;  (format "\\(?:%s\\s-+\\)?%s" *pjs-method-on-keywords* *js-type*))
+  (format "%s" *js-type*))
 
 ;; method definition
 (defconst *pjs-method-heading*
-  (format "^\\s-*\\<method\\>\\s-+\\(%s\\)\\s-+\\(\\<on\\>\\)\\s-+\\(%s\\)" *js-function-name* *pjs-method-type*)
+  (format "^\\s-*\\<method\\>\\s-+\\(%s\\)\\s-+\\(\\<on\\>\\(?:\\s-+%s\\)?\\)\\s-+\\(%s\\)" *js-function-name* *pjs-method-on-keywords* *pjs-method-type*)
   "Regular expression matching the start of a method header.")
 
 ;;method arguments
@@ -794,7 +800,7 @@
   (push (list *pjs-method-heading*
 	      '(1 font-lock-function-name-face)
 	      '(2 font-lock-keyword-face)
-	      '(3 font-lock-type-face))
+	      )
 	font-locks)
   ;;  (push (list *pjs-method-heading* 2 font-lock-keyword-face) font-locks)
   ;;  (push (list *pjs-method-heading* 3 font-lock-type-face) font-locks)  
