@@ -226,7 +226,7 @@ the semantic cache to see what needs to be changed."
 	((null list))
       (push k new-list)
       (if (memq k *semantic-pjs-tag-list-attributes*)
-	  (push (mapcar #'(lambda (tag) (pjs-semantic-expand-tag tag start)) v) new-list)
+	  (push (mapcar #'(lambda (tag) (when tag (pjs-semantic-expand-tag tag start))) v) new-list)
 	(push v new-list))) 	
     (setf (third tag) (reverse new-list))
     ;; lisp positions are off by one
