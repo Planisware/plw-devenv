@@ -257,7 +257,9 @@
 ;;     (or (gethash type *pjs-buffers-class-members-cache-regexp*)
 ;; 	(init-class-members-cache namespace class-name t))))
 
-(defvar *max-slots-size* 200)
+(defvar *max-slots-size* 1000)
+
+(defvar *pjs-attributes-filter* nil)
 
 (defun init-class-members-cache (namespace class-name regexp)  
   (unless (hash-table-p *pjs-buffers-class-members-cache*)
@@ -267,8 +269,11 @@
   (when (pjs-configuration-ok)
     (let (list
 	  (ht (make-hash-table :test 'equal))
-	  (type (downcase (format "%s.%s" namespace class-name)))
-	  (slots (fi:eval-in-lisp (format "(jvs::get-pjs-class-members \"%s\" \"%s\")" namespace class-name))))
+	  (type (downcase (format "%s.%s" namespace class-name)))	  
+	  (slots (fi:eval-in-lisp (if *pjs-attributes-filter*
+				      (format "(jvs::get-pjs-class-members \"%s\" \"%s\" \"%s\")" namespace class-name *pjs-attributes-filter*)
+				    (format "(jvs::get-pjs-class-members \"%s\" \"%s\")" namespace class-name)))))
+      (message (format "%s slots" (length slots)))
       (unless (> (length slots) *max-slots-size*)
 	(dolist (item slots)
 	  ;;    (dolist (item (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-pjs-class-members) (jvs::get-pjs-class-members \"%s\" \"%s\"))" class-name namespace)))
@@ -678,7 +683,7 @@
 		(when var-type
 		  (let* ((members (pjs-class-members (car var-type) (cdr var-type)))
 			 (methods (pjs-class-methods (car var-type) (cdr var-type))))
-		    ;;		    (message "member is %s members are %s methods are %s %s %s" member members methods (member member members) (member member methods))
+;;		    (message "member is %s members are %s methods are %s %s %s" member members methods (gethash member members :unknown) (member member methods))
 		    (when (or (and members (not (eq (gethash member members :unknown) :unknown)))
 			      (member member methods))
 		      (throw 'exit (point)))))))))
