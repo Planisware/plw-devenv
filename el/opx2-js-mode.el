@@ -168,7 +168,7 @@
 (defun get-script-name ()
   (save-excursion
     (goto-char (point-min))
-    (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\(.*\\)\\s-*$" (point-max) t)
+    (when (re-search-forward "^//\\s-*PLWSCRIPT\\s-*:\\s-*\\([^ \n]+\\).*$" (point-max) t)
       (match-string-no-properties 1))))
 
 (defvar *script-compilation-mode* :local)
