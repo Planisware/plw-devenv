@@ -259,8 +259,8 @@ the semantic cache to see what needs to be changed."
 
 ;; recursively collect tags
 ;; if not inside a "block" (block / function ) tag, take the parent
-(defun pjs-semantic-collect-local-vars-from-tag (tag)
-  (let (var-list)
+(defun pjs-semantic-collect-local-vars-from-tag (tag &optional seen)
+  (let (var-list)    
     (cond ((null tag)
 	   nil)
 	  ((memq (semantic-tag-class tag) '(block function))
@@ -269,12 +269,14 @@ the semantic cache to see what needs to be changed."
 	     (push var var-list))
 	   ;; take the local variables of the parent
 	   (let ((parent (semantic-find-tag-parent-by-overlay tag)))
-	     (unless (eq parent tag)
-	       (append var-list (pjs-semantic-collect-local-vars-from-tag (semantic-find-tag-parent-by-overlay tag))))))
+	     (unless (or (eq tag parent)
+			 (memq parent seen))
+	       (append var-list (pjs-semantic-collect-local-vars-from-tag (semantic-find-tag-parent-by-overlay tag) (concatenate 'list (list tag) seen))))))
 	  ((semantic-tag-p tag)
 	   (let ((parent (semantic-current-tag-parent)))
-	     (unless (eq parent tag)
-	       (pjs-semantic-collect-local-vars-from-tag parent))))
+	     (unless (or (eq tag parent)
+			 (memq parent seen))
+	       (pjs-semantic-collect-local-vars-from-tag parent (concatenate 'list (list tag) seen)))))
 	  (t
 	   nil))))
 
