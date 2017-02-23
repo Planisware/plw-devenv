@@ -273,7 +273,6 @@
 	  (slots (fi:eval-in-lisp (if *pjs-attributes-filter*
 				      (format "(jvs::get-pjs-class-members \"%s\" \"%s\" \"%s\")" namespace class-name *pjs-attributes-filter*)
 				    (format "(jvs::get-pjs-class-members \"%s\" \"%s\")" namespace class-name)))))
-      (message (format "%s slots" (length slots)))
       (unless (> (length slots) *max-slots-size*)
 	(dolist (item slots)
 	  ;;    (dolist (item (fi:eval-in-lisp (format "(when (fboundp 'jvs::get-pjs-class-members) (jvs::get-pjs-class-members \"%s\" \"%s\"))" class-name namespace)))
@@ -415,7 +414,7 @@
       (while next-tag
 	(cond ((> (semantic-tag-start next-tag) (semantic-tag-end tag))
 	       (throw 'exit (semantic-tag-end tag)))
-	      ((eq (semantic-tag-class next-tag) 'block)
+	      ((memq (semantic-tag-class next-tag) '(function block))
 	       (throw 'exit (semantic-tag-start next-tag)))
 	      (t
 	       (setq next-tag (semantic-find-tag-by-overlay-next (semantic-tag-start next-tag)))))))
