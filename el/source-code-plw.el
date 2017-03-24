@@ -113,7 +113,8 @@
   (interactive)
   (let* ((template-path (concat *opx2-network-folder-work-path* "/devenv/test-template.lisp"))
 	 (patch-buffer (current-buffer))
-	 (patch-name (subseq (buffer-name patch-buffer) 0 (- (length (buffer-name patch-buffer)) 5)))
+	 (patch-name (progn (string-match "\\(sc[0-9]+\\).*" (buffer-name patch-buffer))
+			    (match-string 1 (buffer-name patch-buffer))))
 	 (test-patch-name (concat *opx2-network-folder-work-path*
 				  "/kernel/tests/dev/test-"
 				  patch-name
