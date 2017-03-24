@@ -263,20 +263,23 @@ the semantic cache to see what needs to be changed."
   (let (var-list)    
     (cond ((null tag)
 	   nil)
-	  ((memq (semantic-tag-class tag) '(block function))
+	  ((semantic-tag-p tag)
+	   ;;(memq (semantic-tag-class tag) '(block function))
 	   ;; iterate on local vars of the tags
 	   (dolist (var (pjs-semantic-tag-local-vars tag))
 	     (push var var-list))
+
 	   ;; take the local variables of the parent
 	   (let ((parent (semantic-find-tag-parent-by-overlay tag)))
 	     (unless (or (eq tag parent)
 			 (memq parent seen))
+;;	       (message (format "tag %s vars %s" (semantic-find-tag-parent-by-overlay tag) (pjs-semantic-collect-local-vars-from-tag (semantic-find-tag-parent-by-overlay tag) (concatenate 'list (list tag) seen))))
 	       (append var-list (pjs-semantic-collect-local-vars-from-tag (semantic-find-tag-parent-by-overlay tag) (concatenate 'list (list tag) seen))))))
-	  ((semantic-tag-p tag)
-	   (let ((parent (semantic-current-tag-parent)))
-	     (unless (or (eq tag parent)
-			 (memq parent seen))
-	       (pjs-semantic-collect-local-vars-from-tag parent (concatenate 'list (list tag) seen)))))
+	  ;; ((semantic-tag-p tag)
+	  ;;  (let ((parent (semantic-current-tag-parent)))
+	  ;;    (unless (or (eq tag parent)
+	  ;; 		 (memq parent seen))
+	  ;;      (pjs-semantic-collect-local-vars-from-tag parent (concatenate 'list (list tag) seen)))))
 	  (t
 	   nil))))
 
