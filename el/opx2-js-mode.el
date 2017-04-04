@@ -227,7 +227,35 @@
 									 propagate
 									 raw-data
 									 script))))
-	(message "Script %s not found" script-name)))))
+					;	(message "Script %s not found" script-name)
+	(catch 'exit
+	  ;; checks that the file matches only for synchronize
+	  (message "Script %s not found in database" script-name)
+	  (save-buffer)
+	  (switch-to-buffer-other-window buffer-name t)
+	  ;; we erase previous content
+	  (erase-buffer)
+	  ;; run a new listener if needed
+	  (unless proc
+	    (setq proc
+		  (fi:open-lisp-listener
+		   -1
+		   *ojs-compilation-buffer-name*))
+	    (set-process-query-on-exit-flag (get-process buffer-name) nil))
+	  (set-process-filter proc 'ojs-compilation-filter)
+	  ;; reset vars as needed
+	  (js-reset-vars (if (eq js-mode 'pjs-mode) 'pjs-compile 'ojs-compile))
+	  (let ((propagate (if (member "PROPAGATE" options) ":propagate cl:t" ""))
+		(raw-data (if (eq *script-compilation-mode* :remote) ":raw-data cl:t" ""))
+		(source (if (eq *script-compilation-mode* :remote) script-data filename)))
+	    (process-send-string *ojs-compilation-buffer-name* (format ;;"(cl:ignore-errors (cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\" %s %s) (:rjs-one \"%s\")))\n"
+								(if *print-error-when-recompiling-script*
+								    "(cl:handler-case  (cl:if (cl:fboundp %compile-raw-data) (%compile-raw-data \"%s\")) (cl:error (e) (format t \"~%%ERROR : ~%%~a\" (js::errormessage e))))\n"
+								  "(cl:if (cl:fboundp %compile-raw-data) (%compile-raw-data \"%s\"))\n"
+								  raw-data)))))
+	  
+	  
+	  ))))
 
 (defun generate-search-string (strings)
   (cond ((= (length strings) 1) (format "function\\s-+%s\\s-*([[:word:]_, ]*)" (downcase (car strings))))
