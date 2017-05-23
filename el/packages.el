@@ -21,7 +21,9 @@
 				  ;;newcomment
 				  fuzzy
 				  tabbar
-				  sr-speedbar))
+				  sr-speedbar
+				  ;;yasnippet
+				  ))
 
 (defun plw-packages-installed-p ()
   (loop for p in *plw-required-packages*
