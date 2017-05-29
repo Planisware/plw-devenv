@@ -8,8 +8,6 @@ el/common-plw.el
 el/connect-is.el
 el/eli-plw.el
 el/javascript-evaluator.el
-el/generate-run-command.el
-el/lep-debug.el
 el/opx2-js-cache.el
 el/opx2-js-mode.el
 el/opx2-js-mode-syntax.el
@@ -19,8 +17,5 @@ el/pjs-mode-debug.el
 el/pjs-mode.el
 el/pjs-mode-syntax.el
 el/pjs-semantic.el
-el/plw-copyright.el
-el/scriptmigration.el
 el/source-code-plw.el
 el/source-colorization.el
-themes/tangotango-theme.el
