@@ -51,7 +51,7 @@
 (when (eq *javascript-evaluator-mode* :repl)
   (load (fullpath-relative-to-current-file "el-scripts/javascript-evaluator.el")))
 
-(defvar *custom-theme* 'tangotango)
+(defvar *custom-theme* nil)
 
 ;; dark theme
 (when (and (>= emacs-major-version 24)
