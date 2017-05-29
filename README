@@ -3,3 +3,5 @@ This repository contains the source files used by the Planisware Runtime Develop
 To build the environment : 
 cd runtime
 make zip
+
+This work is provided under the MIT license, as mentionned in the files header and in the LICENSE file that must be provided with this source code. It is also provided "as is", with no warranty of any kind as mentionned in the license file
