@@ -1,5 +1,0 @@
-# -*- mode: snippet -*-
-#name : textkey.current
-#key : tkc
-# --
-#@"${1:identifier}".current$0

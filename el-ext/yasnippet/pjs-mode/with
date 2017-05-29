@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-#name : with
-#key : w
-# --
-with ( ${1:var}){
-    $0
-}
