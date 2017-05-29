@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+#name : Class
+# --
+class ${1:name} {
+    initialize = function (){
+
+    }
+    tostring = function (){
+        return "";
+    }
+    $0
+}

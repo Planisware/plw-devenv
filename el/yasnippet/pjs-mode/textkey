@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+#name : textkey
+#key : tk
+# --
+#@"${1:identifier}"$0
