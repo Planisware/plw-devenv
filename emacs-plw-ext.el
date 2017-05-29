@@ -46,13 +46,11 @@
 (when (eq *javascript-evaluator-mode* :repl)
   (load (fullpath-relative-to-current-file "el/javascript-evaluator.el")))
 
-(defvar *custom-theme* nil)
+(defvar *custom-theme* 'tangotango)
 
 ;; dark theme
 (when (and (>= emacs-major-version 24)
 	   *custom-theme*)
-  (add-to-list 'custom-theme-load-path (fullpath-relative-to-current-file "themes"))
-  (add-to-list 'custom-theme-load-path (fullpath-relative-to-current-file "custom-themes"))
   (load-theme *custom-theme* t))
 
 

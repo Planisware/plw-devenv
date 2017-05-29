@@ -13,7 +13,7 @@
 ;; MELPA source
 (require 'package)
 (add-to-list 'package-archives
-	     '("melpa" . "https://melpa.org/packages/") t)
+	     '("melpa" . "http://melpa.org/packages/") t)
 (package-initialize)
 
 (defvar *plw-required-packages* '((magit 24 4)
@@ -22,7 +22,8 @@
 				  fuzzy
 				  tabbar
 				  sr-speedbar
-				  ;;yasnippet
+                  tangotango-theme
+				  yasnippet
 				  ))
 
 (defun plw-packages-installed-p ()
