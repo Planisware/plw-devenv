@@ -1,5 +1,4 @@
-emacs-plw.el
-custom.el
+emacs-plw-ext.el
 el/ac-alisp.el
 el/ac-config.el
 el/ac-opx2js.el

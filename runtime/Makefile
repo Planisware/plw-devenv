@@ -13,7 +13,7 @@ ZIP=/usr/bin/zip -q
 SRC_DIR = src
 DIST_DIR = dist
 ZIP_DIR = zip
-ELI_DIR = eli
+ELI_DIR = ../eli
 EL_DIR = ../el
 
 ifdef VERSION
