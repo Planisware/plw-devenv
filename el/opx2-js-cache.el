@@ -1,13 +1,8 @@
-;;* 
-;;  COPYRIGHT (C) PLANISWARE 2016-05-27
-;;
-;;  All Rights Reserved
-;;
-;;  This program and the information contained herein are confidential to
-;;  and the property of PLANISWARE and are made available only to PLANISWARE
-;;  employees for the sole purpose of conducting PLANISWARE business.
-;;
-;;**************************************************************************
+;; -*- coding: windows-1252 -*- 
+;; COPYRIGHT (C) PLANISWARE 2017
+;; Distributed under the MIT License
+;; See accompanying file LICENSE file or copy at http://opensource.org/licenses/MIT
+
 (defvar *ojs-required-fixes* '(("sc8567" "3.41")
 			       ))
 

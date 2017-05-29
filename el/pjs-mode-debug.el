@@ -1,3 +1,8 @@
+;; -*- coding: windows-1252 -*- 
+;; COPYRIGHT (C) PLANISWARE 2017
+;; Distributed under the MIT License
+;; See accompanying file LICENSE file or copy at http://opensource.org/licenses/MIT
+
 (defvar *pjs-loudly-syntax-highlighting* t)
 
 (defun pjs-font-lock-default-fontify-region (beg end loudly)
