@@ -46,10 +46,10 @@
   ;;  (load (fullpath-relative-to-current-file "el-ext/yasnippet.el"))
   )
 
-(load (fullpath-relative-to-current-file "el-scripts/ac-config.el"))
+(load (fullpath-relative-to-current-file "el-ext/ac-config.el"))
 
 (when (eq *javascript-evaluator-mode* :repl)
-  (load (fullpath-relative-to-current-file "el-scripts/javascript-evaluator.el")))
+  (load (fullpath-relative-to-current-file "el-ext/javascript-evaluator.el")))
 
 (defvar *custom-theme* nil)
 
