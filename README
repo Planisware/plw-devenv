@@ -1,0 +1,5 @@
+This repository contains the source files used by the Planisware Runtime Development Environment.
+
+To build the environment : 
+cd runtime
+make zip
