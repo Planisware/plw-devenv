@@ -1,3 +1,0 @@
-[submodule "runtime/eli"]
-	path = runtime/eli
-	url = https://github.com/franzinc/eli.git
