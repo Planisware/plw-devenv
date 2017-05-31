@@ -78,7 +78,7 @@
 
   (define-key fi:common-lisp-mode-map "\C-c:" 'uncomment-region)
   
-  (define-key fi:common-lisp-mode-map "%" 'match-paren)
+;;  (define-key fi:common-lisp-mode-map "%" 'match-paren)
 
   ;;Common keys for all "lisp" modes
   (redefine-common-keys fi:common-lisp-mode-map))
