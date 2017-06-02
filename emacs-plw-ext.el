@@ -13,32 +13,32 @@
 ;; use opx2-js-mode
 (defvar *use-opx2-js-mode* t)
 
-(load (fullpath-relative-to-current-file "el/packages.el"))
-(load (fullpath-relative-to-current-file "el/common-plw.el"))
-(load (fullpath-relative-to-current-file "el/connect-is.el"))
-(load (fullpath-relative-to-current-file "el/source-code-plw.el"))
-(load (fullpath-relative-to-current-file "el/source-colorization.el"))
-(load (fullpath-relative-to-current-file "el/eli-plw.el"))
+(load (fullpath-relative-to-current-file "el/packages"))
+(load (fullpath-relative-to-current-file "el/common-plw"))
+(load (fullpath-relative-to-current-file "el/connect-is"))
+(load (fullpath-relative-to-current-file "el/source-code-plw"))
+(load (fullpath-relative-to-current-file "el/source-colorization"))
+(load (fullpath-relative-to-current-file "el/eli-plw"))
 
 
 (when *use-opx2-js-mode*
-  (load (fullpath-relative-to-current-file "el/opx2-js-cache.el"))
-  (load (fullpath-relative-to-current-file "el/opx2-js-mode-syntax.el"))
-  (load (fullpath-relative-to-current-file "el/opx2-js-mode.el"))
-  (load (fullpath-relative-to-current-file "el/ac-opx2js.el"))
+  (load (fullpath-relative-to-current-file "el/opx2-js-cache"))
+  (load (fullpath-relative-to-current-file "el/opx2-js-mode-syntax"))
+  (load (fullpath-relative-to-current-file "el/opx2-js-mode"))
+  (load (fullpath-relative-to-current-file "el/ac-opx2js"))
 
-;;  (load (fullpath-relative-to-current-file "el/pjs-semantic.el"))
-  (load (fullpath-relative-to-current-file "el/pjs-mode-syntax.el"))
-  (load (fullpath-relative-to-current-file "el/pjs-semantic.el"))
-  (load (fullpath-relative-to-current-file "el/ac-pjs.el"))
-  (load (fullpath-relative-to-current-file "el/pjs-mode.el"))
-  ;;  (load (fullpath-relative-to-current-file "el/yasnippet.el"))
+;;  (load (fullpath-relative-to-current-file "el/pjs-semantic"))
+  (load (fullpath-relative-to-current-file "el/pjs-mode-syntax"))
+  (load (fullpath-relative-to-current-file "el/pjs-semantic"))
+  (load (fullpath-relative-to-current-file "el/ac-pjs"))
+  (load (fullpath-relative-to-current-file "el/pjs-mode"))
+  ;;  (load (fullpath-relative-to-current-file "el/yasnippet"))
   )
 
-(load (fullpath-relative-to-current-file "el/ac-config.el"))
+(load (fullpath-relative-to-current-file "el/ac-config"))
 
 (when (eq *javascript-evaluator-mode* :repl)
-  (load (fullpath-relative-to-current-file "el/javascript-evaluator.el")))
+  (load (fullpath-relative-to-current-file "el/javascript-evaluator")))
 
 (defvar *custom-theme* 'tangotango)
 
