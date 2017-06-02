@@ -105,7 +105,7 @@
 		    (format "method.%s.%s" word
 			    (if (or (string= (car type) "plc")
 				    (string= (car type) "plw"))
-				(or (and (list-pjs-plc-types-to-kernel)
+				(or (and (cdr type) (list-pjs-plc-types-to-kernel)
 					 (gethash (cdr type) (list-pjs-plc-types-to-kernel)))
 				    (cdr type))
 			      (format "%s.%s" (car type) (cdr type)))))
@@ -121,7 +121,7 @@
 			    (match-string-no-properties 1)
 			    (if (or (string= (car type) "plc")
 				    (string= (car type) "plw"))
-				(or (and (list-pjs-plc-types-to-kernel)
+				(or (and (cdr type) (list-pjs-plc-types-to-kernel)
 					 (gethash (cdr type) (list-pjs-plc-types-to-kernel)))
 				    (cdr type))
 			      (format "%s.%s" (car type) (cdr type)))))
