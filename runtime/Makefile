@@ -29,12 +29,12 @@ ZIPFILE="emacs-runtime-${VERSION}.zip"
 ZIPTMPDIR=/tmp/runtime_`whoami`
 
 clean:
-	rm -rf ${DIST_DIR}
-	rm -rf ${ZIP_DIR}
+	@@rm -rf ${DIST_DIR}
 
-init: clean
-	mkdir -p ${DIST_DIR}    
-	mkdir -p ${ZIP_DIR}    
+init: 
+	@@test -d ${DIST_DIR} || mkdir ${DIST_DIR}
+	@@test -d ${DIST_DIR}/devenv/ || mkdir ${DIST_DIR}/devenv/
+	@@test -d ${DIST_DIR}/devenv/el || mkdir ${DIST_DIR}/devenv/el
 
 copyfiles:
 	@@echo "Building emacs runtime"
@@ -43,27 +43,34 @@ copyfiles:
 	@@cp -r ${SRC_DIR}/* ${DIST_DIR}
 
 	@@echo "Copying eli files"
-	@@mkdir -p ${DIST_DIR}/eli
-	@@cp -r ${ELI_DIR}/* ${DIST_DIR}/eli
+#@@mkdir ${DIST_DIR}/eli
+	@@cp -r ${ELI_DIR} ${DIST_DIR}
 
-	@@echo "Copying required patches"
+	@@echo "copying el files"
+	@@cp -r ${EL_DIR}/* ${DIST_DIR}/devenv/el
+	@@cp -r ../emacs-plw-ext.el ${DIST_DIR}/devenv/
+#	@@sh ./el/copyfiles.sh ${dist_dir}/devenv/
+
+patches:
+	@@echo "copying required patches"
 	@@sh ./el/copypatches.sh ${DIST_DIR}/patches/
 
-	@@echo "Copying el files"
-	@@sh ./el/copyfiles.sh ${DIST_DIR}/devenv/
-
-	@@echo "Adding version.txt"
+version:
+	@@echo "adding version.txt"
 	@@echo ${VERSION} > ${DIST_DIR}/version.txt
 	@@echo $(shell git describe --tags --abbrev=20) >> ${DIST_DIR}/version.txt
 
 buildzip:
-	@@echo "Zip files to ${ZIPFILE}"
-	@@mkdir -p ${ZIPTMPDIR}
+	@@rm -rf ${ZIP_DIR}
+	@@mkdir -p ${ZIP_DIR}    
+	@@echo "zip files to ${ZIPFILE}"
 	@@rm -rf ${ZIPTMPDIR}
 	@@mkdir -p ${ZIPTMPDIR}
 	@@cp -r dist/* ${ZIPTMPDIR}
-	@@cd ${ZIPTMPDIR}; ${ZIP} -r ${ZIPFILE} * -x \*CVS\*
-	@@echo "Move zip file to ${ZIP_DIR}."
+	@@cd ${ZIPTMPDIR}; ${ZIP} -r ${ZIPFILE} * -x \*cvs\*
+	@@echo "move zip file to ${ZIP_DIR}."
 	@@mv ${ZIPTMPDIR}/${ZIPFILE} ${ZIP_DIR}
 
-zip: init copyfiles buildzip
+zip: clean init copyfiles patches version buildzip
+
+env: init copyfiles
