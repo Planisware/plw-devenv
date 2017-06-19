@@ -1,7 +1,27 @@
 This repository contains the source files used by the Planisware Runtime Development Environment.
 
-To build the environment : 
+To build the environment from the source : 
+
+* Init the git submodule if needed :
+git submodule init && git submodule update
+
+* Git clone the repository : 
+git clone https://github.com/Planisware/plw-devenv.git
+
+* Install the environment
 cd runtime
-make zip
+make env
+
+* Then go in the folder runtime/dist and follow the installation instructions, apart from the unzip the file part.
+
+Your PATHTOINSTALLATIONDIRECTORY is here
+GITCLONEDIRECTORY/runtime/dist
+
+* Launch emacs !
+
+* To update from the git repository : 
+git pull
+cd runtime
+make env
 
 This work is provided under the MIT license, as mentionned in the files header and in the LICENSE file that must be provided with this source code. It is also provided "as is", with no warranty of any kind as mentionned in the license file
