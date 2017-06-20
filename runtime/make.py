@@ -14,19 +14,15 @@ ELI_DIR = '../eli'
 EL_DIR = '../el'
 DEVENV_DIR = DIST_DIR+'/devenv'
 
-PATCHES_SOURCE = '/E/versions/plw6/release/610SP1/updates/_en_dev/'
+PATCHES_SOURCE = 'E:/versions/plw6/release/610SP1/updates/_en_dev/' if sys.platform == 'win32' else '/E/versions/plw6/release/610SP1/updates/_en_dev/'
+
+TARGETS = {'zip' : ['clean', 'init', 'copyfiles', 'version', 'patches', 'buildzip'],
+           'env' : ['init', 'copyfiles'],
+           'clean' : ['clean']}
 
 def make(target):
-    if target == 'zip':
-        clean()
-        init()
-        copyfiles()
-        version()
-        patches()
-        buildzip()
-    elif target == 'env':
-        init()
-        copyfiles()
+    for _function in TARGETS[target]:
+        getattr(sys.modules[__name__],_function)()
 
 def getversion():
     if os.getenv('VERSION'):
@@ -93,10 +89,18 @@ def copyall(src, dst, symlinks=False, ignore=None):
         s = os.path.join(src, item)
         d = os.path.join(dst, item)
         if os.path.isdir(s):
-            shutil.copytree(s, d, symlinks, ignore)
+            if not os.path.isdir(d):
+                os.mkdir(d)
+                
+            copyall(s, d, symlinks, ignore)
         else:
             shutil.copy2(s, d)
 
 
 if __name__ == '__main__':
-    make(sys.argv[1] if len(sys.argv) > 0 else 'zip')
+    if len(sys.argv) != 2:
+        print "Usage : ./make.py target"
+        print "  target can be : " + ", ".join(TARGETS.keys())
+        sys.exit(1)
+    else:
+        make(sys.argv[1])
