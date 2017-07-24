@@ -195,34 +195,56 @@
       (setq *compiled-script-window* (selected-window))
       (if (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
 	  (catch 'exit
+	    (when (member "GENDEPS" options)
+	      (generate-script-dependances))
 	    ;; checks that the file matches only for synchronize	    
 	    (save-buffer)
 	    (switch-to-buffer-other-window buffer-name t)
 	    ;; we erase previous content
 	    (erase-buffer)
+	    
 	    ;; run a new listener if needed
 	    (unless proc
 	      (setq proc
 		    (fi:open-lisp-listener
 		     -1
 		     *ojs-compilation-buffer-name*))
-	      (set-process-query-on-exit-flag (get-process buffer-name) nil))
+	      (set-process-query-on-exit-flag (get-process buffer-name) nil))	    
+;;	    (insert (format "Start %s" (float-time)))
 	    (set-process-filter proc 'ojs-compilation-filter)
 	    ;; reset vars as needed
 	    (js-reset-vars (if (eq js-mode 'pjs-mode) 'pjs-compile 'ojs-compile))
-	    (let ((propagate (if (member "PROPAGATE" options) ":propagate cl:t" ""))
-		  (raw-data (if (eq *script-compilation-mode* :remote) ":raw-data cl:t" ""))
-		  (source (if (eq *script-compilation-mode* :remote) script-data filename)))
-	      (process-send-string *ojs-compilation-buffer-name* (format ;;"(cl:ignore-errors (cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source \"%s\" %s %s) (:rjs-one \"%s\")))\n"
-								  (if *print-error-when-recompiling-script*
-								      "(cl:handler-case  (cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source %S %s %s) (:rjs-one \"%s\")) (cl:error (e) (format t \"~%%ERROR : ~%%~a\" (js::errormessage e))))\n"
-								      "(cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source %S %s %s) (:rjs-one \"%s\"))\n")
-									 script
-									 source
-									 propagate
-									 raw-data
-									 script))))
+	    (let* ((propagate (if (member "PROPAGATE" options) ":propagate cl:t" ""))
+		   (raw-data (if (eq *script-compilation-mode* :remote) ":raw-data cl:t" ""))
+		   (source (if (eq *script-compilation-mode* :remote) script-data filename))
+		   (compile-script-string (format "(cl:let ((jvs::*store-javascript-dependances* cl:t)) (cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source %S %s %s) (:rjs-one \"%s\")))"
+						  script source propagate raw-data script))
+		   )
+	      (process-send-string *ojs-compilation-buffer-name* (if *print-error-when-recompiling-script*								      
+								     (format "(cl:handler-case %s (cl:error (e) (format t \"~%%ERROR : ~%%~a\" (js::errormessage e))))" compile-script-string)
+								   compile-script-string))
+	      ))
 	(message "Script %s not found" script-name)))))
+
+(defun generate-script-dependances ()
+  (interactive)
+  ;; find the PLWSCRIPT line
+  (save-excursion
+    (goto-char (point-min))
+    (when (re-search-forward "^/+\\s-*PLWSCRIPT\\s-*:\\s-*\\([[:alnum:]_-]*\\)\\(\\s-+|\\s-*\\([[:alnum:], ]*\\)\\)?" (point-max) t)
+      (let* ((script (match-string-no-properties 1))
+	     (dependances (fi:eval-in-lisp (format "(cl:format nil \"~{~a~^,~}\" (cl:sort (cl:mapcar '(lambda (o) (cl:symbol-name (object::oget o :name))) (opx2-lisp::ogetf (object::get-object 'jvs::javascript :%s) :compiled-dependances)) 'cl:string<))" script))))	
+	(unless (string= dependances "")
+	  (forward-line)
+	  (beginning-of-line)
+	  (if (looking-at "// DEPENDANCIES: ")
+	      (delete-region (line-beginning-position) (line-end-position))
+	    (progn (newline)
+		   (forward-line -1)
+		   (beginning-of-line)))
+	  ;; we are where we want
+	  (insert "// DEPENDANCIES: ")
+	  (insert dependances))))))
 
 (defun generate-search-string (strings)
   (cond ((= (length strings) 1) (format "function\\s-+%s\\s-*([[:word:]_, ]*)" (downcase (car strings))))
