@@ -237,14 +237,32 @@
 	(unless (string= dependances "")
 	  (forward-line)
 	  (beginning-of-line)
-	  (if (looking-at "// DEPENDANCIES: ")
-	      (delete-region (line-beginning-position) (line-end-position))
-	    (progn (newline)
-		   (forward-line -1)
-		   (beginning-of-line)))
+	  (cond ((or (looking-at "// DEPENDENCIES: ")
+		     (looking-at "// DEPENDANCIES: "))
+		 (delete-region (line-beginning-position) (line-end-position))
+		 (forward-line 1)
+		 (cond ((looking-at "// !!!")		     
+			(delete-region (line-beginning-position) (line-end-position))
+			(delete-backward-char 1))
+		       (t
+			(forward-line -1))))
+		(t
+		 (progn (newline)
+			(forward-line -1)
+			(beginning-of-line))))
+	  ;; delete the // !!! line if needed
+	  
 	  ;; we are where we want
-	  (insert "// DEPENDANCIES: ")
-	  (insert dependances))))))
+	  (insert "// DEPENDENCIES: ")
+	  (insert dependances)
+	  ;;; circular dependancies check :
+	  (let ((circular-dependances (fi:eval-in-lisp (format "(cl:when (cl:fboundp 'jvs::javascript-circular-dependancies-from-string) (jvs::javascript-circular-dependancies-from-string :%s \"%s\"))" script dependances))))
+	    (when circular-dependances
+	      (let ((message (format "!!!Circular dependencies detected : %s" (mapconcat 'identity circular-dependances ","))))
+		(message-box message)
+		(newline)
+		(insert "// ")
+		(insert message)))))))))
 
 (defun generate-search-string (strings)
   (cond ((= (length strings) 1) (format "function\\s-+%s\\s-*([[:word:]_, ]*)" (downcase (car strings))))
