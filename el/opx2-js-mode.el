@@ -197,8 +197,7 @@
 	  (catch 'exit	    
 	    (save-buffer)
 	    (switch-to-buffer-other-window buffer-name t)
-	    ;; we erase previous content
-	    (erase-buffer)
+	    ;; we erase previous content	    
 	    
 	    ;; run a new listener if needed
 	    (unless proc
@@ -211,12 +210,15 @@
 	    (set-process-filter proc 'ojs-compilation-filter)
 	    ;; reset vars as needed
 	    (js-reset-vars (if (eq js-mode 'pjs-mode) 'pjs-compile 'ojs-compile))
-	    (let* ((propagate (if (member "PROPAGATE" options) ":propagate cl:t" ""))
+	    (let* ((inhibit-read-only t)
+		   (propagate (if (member "PROPAGATE" options) ":propagate cl:t" ""))
 		   (raw-data (if (eq *script-compilation-mode* :remote) ":raw-data cl:t" ""))
 		   (source (if (eq *script-compilation-mode* :remote) script-data filename))
 		   (compile-script-string (format "(cl:let ((jvs::*store-javascript-dependances* cl:t)) (cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source %S %s %s) (:rjs-one \"%s\")))"
 						  script source propagate raw-data script))
 		   )
+	      (help-mode)
+	      (erase-buffer)
 	      (process-send-string *ojs-compilation-buffer-name* (if *print-error-when-recompiling-script*								      
 								     (format "(cl:handler-case %s (cl:error (e) (format t \"~%%ERROR : ~%%~a\" (js::errormessage e))))" compile-script-string)
 								   compile-script-string))))
@@ -255,11 +257,11 @@
 	  ;;; circular dependancies check :
 	  (let ((circular-dependances (fi:eval-in-lisp (format "(cl:when (cl:fboundp 'jvs::javascript-circular-dependancies-from-string) (jvs::javascript-circular-dependancies-from-string :%s \"%s\"))" script dependances))))
 	    (when circular-dependances
-	      (let ((message (format "!!!Circular dependencies detected : %s" (mapconcat 'identity circular-dependances ","))))
-		(message-box message)
-		(newline)
-		(insert "// ")
-		(insert message)))))))))
+	      (message-box (format "Circular dependencies detected : 
+%s" (mapconcat 'identity circular-dependances "\n")))
+	      (newline)
+	      (insert "// ")
+	      (insert (format "!!!Circular dependencies detected : %s" (mapconcat 'identity circular-dependances ","))))))))))
 
 (defun generate-search-string (strings)
   (cond ((= (length strings) 1) (format "function\\s-+%s\\s-*([[:word:]_, ]*)" (downcase (car strings))))
@@ -275,7 +277,8 @@
 	   (format "method\\s-+%s\\s-+on\\s-+%s\\s-*(.*" (downcase (second strings)) class-name)))))
 
 (defun ojs-compilation-filter (proc string)
-  (let (error?)
+  (let (error?
+	(inhibit-read-only t))
     (cond ((and (stringp string)
 		(string-match "Error while compiling the script" string)
 		(string-match "At line:\\([0-9]+\\),character:\\([0-9]+\\)" string))
