@@ -194,10 +194,7 @@
 ;;      (message (format "options are %s" options))
       (setq *compiled-script-window* (selected-window))
       (if (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
-	  (catch 'exit
-	    (when (member "GENDEPS" options)
-	      (generate-script-dependances))
-	    ;; checks that the file matches only for synchronize	    
+	  (catch 'exit	    
 	    (save-buffer)
 	    (switch-to-buffer-other-window buffer-name t)
 	    ;; we erase previous content
@@ -222,8 +219,7 @@
 		   )
 	      (process-send-string *ojs-compilation-buffer-name* (if *print-error-when-recompiling-script*								      
 								     (format "(cl:handler-case %s (cl:error (e) (format t \"~%%ERROR : ~%%~a\" (js::errormessage e))))" compile-script-string)
-								   compile-script-string))
-	      ))
+								   compile-script-string))))
 	(message "Script %s not found" script-name)))))
 
 (defun generate-script-dependances ()
@@ -231,8 +227,9 @@
   ;; find the PLWSCRIPT line
   (save-excursion
     (goto-char (point-min))
-    (when (re-search-forward "^/+\\s-*PLWSCRIPT\\s-*:\\s-*\\([[:alnum:]_-]*\\)\\(\\s-+|\\s-*\\([[:alnum:], ]*\\)\\)?" (point-max) t)
-      (let* ((script (match-string-no-properties 1))
+    (when (and (re-search-forward "^/+\\s-*PLWSCRIPT\\s-*:\\s-*\\([[:alnum:]_-]*\\)\\(\\s-+|\\s-*\\([[:alnum:], ]*\\)\\)?" (point-max) t)
+	       (member "GENDEPS" (split-string (match-string-no-properties 3) "[ \f\t\n\r\v,]+")))
+      (let* ((script (match-string-no-properties 1))		     
 	     (dependances (fi:eval-in-lisp (format "(cl:format nil \"~{~a~^,~}\" (cl:sort (cl:mapcar '(lambda (o) (cl:symbol-name (object::oget o :name))) (opx2-lisp::ogetf (object::get-object 'jvs::javascript :%s) :compiled-dependances)) 'cl:string<))" script))))	
 	(unless (string= dependances "")
 	  (forward-line)
@@ -316,6 +313,8 @@
 		(string-match ":EXIT-JS" string)) ;; exit when we read this, returned by the compilation functions
 	   (with-current-buffer (get-buffer *ojs-compilation-buffer-name*)
 	     (insert "----------------------------------------------------------------------------------------------"))
+	   (with-current-buffer (window-buffer *compiled-script-window*)
+	     (generate-script-dependances))
 	   (fi::subprocess-filter proc (substring string 0 (string-match ":EXIT-JS" string)))	   
 	   ;;(delete-process proc)
 	   )	  
