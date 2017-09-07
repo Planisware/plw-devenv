@@ -201,6 +201,10 @@
 (defconst *pjs-symbols*
   "#[[:alnum:]-_:.]+#")
 
+;; numbers
+(defconst *pjs-numbers*
+  "-?\\<[0-9]+\\(?:\\.[0-9]+\\)?\\>")
+
 ;; match a regexp and check that the character before is not a dot
 ;; usefull to match language words but not those used as a member or var name
 (defun pjs-match-constant (regexp end)
@@ -764,6 +768,9 @@
   
   ;; symbols
   (push (list *pjs-symbols* 0 font-lock-preprocessor-face) font-locks)  
+
+  ;; numbers
+  (push (list *pjs-numbers* 0 font-lock-preprocessor-face) font-locks)  
   
   ;; Function definition
   (push  (list *pjs-function-heading*
