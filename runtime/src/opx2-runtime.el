@@ -92,7 +92,7 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
 	(fi:common-lisp fi:common-lisp-buffer-name
 			satdir
 			exe
-			(append *start-emacs-lisp-interface*
+			(append ;;; *start-emacs-lisp-interface*
 				(when *display-windows-console* (list "+cc" "+p"))
 				(list
 				 "-H" newrootdir
