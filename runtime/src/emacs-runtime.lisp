@@ -9,6 +9,7 @@
 
 (defvar *emacs-runtime-initial-bindings 
     (list
+     'object::*load-fix-in-debug-mode* nil
      'intranet::*emacs-runtime-mode* t
      'sockets::*verbose-startup* nil
      'sockets::*running-under-watchdog* nil
