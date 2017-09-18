@@ -185,6 +185,7 @@
       (goto-char start)
       (setq found (or (re-search-forward regexp (or found end) t)
 		      found)))
+    (goto-char found)
     (if (eq found end)
 	nil
       found)))
