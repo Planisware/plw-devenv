@@ -217,7 +217,7 @@
 		   (compile-script-string (format "(cl:let ((jvs::*store-javascript-dependances* cl:t)) (cl:if (cl:fboundp :recompile-one-js) (:recompile-one-js \"%s\" :source %S %s %s) (:rjs-one \"%s\")))"
 						  script source propagate raw-data script))
 		   )
-	      (help-mode)
+;;	      (help-mode)
 	      (erase-buffer)
 	      (process-send-string *ojs-compilation-buffer-name* (if *print-error-when-recompiling-script*								      
 								     (format "(cl:handler-case %s (cl:error (e) (format t \"~%%ERROR : ~%%~a\" (js::errormessage e))))" compile-script-string)
