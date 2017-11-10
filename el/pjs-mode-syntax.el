@@ -625,6 +625,7 @@
 ;; we consider we are at the point between the var and its "father"
 ;; we return a cons (namespace . classname)
 (defun get-variable-type-in-context (&optional point )
+  (interactive)
   (unless point
     (setq point (point)))
   ;; use the parser
