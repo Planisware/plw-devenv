@@ -230,6 +230,7 @@
   (save-excursion
     (goto-char (point-min))
     (when (and (re-search-forward "^/+\\s-*PLWSCRIPT\\s-*:\\s-*\\([[:alnum:]_-]*\\)\\(\\s-+|\\s-*\\([[:alnum:], ]*\\)\\)?" (point-max) t)
+	       (match-string-no-properties 3)
 	       (member "GENDEPS" (split-string (match-string-no-properties 3) "[ \f\t\n\r\v,]+")))
       (let* ((script (match-string-no-properties 1))		     
 	     (dependances (fi:eval-in-lisp (format "(cl:format nil \"~{~a~^,~}\" (cl:sort (cl:mapcar '(lambda (o) (cl:symbol-name (object::oget o :name))) (opx2-lisp::ogetf (object::get-object 'jvs::javascript :%s) :compiled-dependances)) 'cl:string<))" script))))	
