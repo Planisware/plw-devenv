@@ -26,26 +26,30 @@
 (defvar *runtime-function-body*
   "(defun %s ()
     (interactive)
-    (runopx2runtime \"%s\" \"%s\"))")
+    (runopx2runtime \"%s\" \"%s\" %s))")
 
 (defvar *last-function-name* "runlast%s")
 
 (defvar *last-function-body*
   "(defun runlast%s ()
     (interactive)
-    (runopx2runtime \"%s\" \"%s\" \"%s\"))")
+    (runopx2runtime \"%s\" \"%s\" %s \"%s\"))")
 
 (defvar *runtime-exe* (if (on-ms-windows) "intranet.exe" "opx2-intranet.exe"))
 
 (defvar *runtime-dxl* (if (on-ms-windows) "intranet.dxl" "opx2-intranet.dxl"))
 
+(defvar *dev-dxl* (if (on-ms-windows) "intranetdev.dxl" "opx2-intranetdev.dxl"))
+
+(defvar *deb-dxl* (if (on-ms-windows) "intranetdebck.dxl" "opx2-intranetdebck.dxl"))
+
 (defvar *planisware-menu-name* "Planisware")
 
-(defvar *start-planisware-menu-item* "Start Planisware %s ...")
+(defvar *start-planisware-menu-item* "Start Planisware %s %s...")
 
 (defvar *last-items-titles* "Last intranet.ini used")
 
-(defvar *last-menu-item* "[%s] %s")
+(defvar *last-menu-item* "[%s%s] %s")
 
 (defvar *runtime-verbose* nil)
 
@@ -57,7 +61,7 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
   (replace-regexp-in-string "\\`[ \t\n]*" "" (replace-regexp-in-string "[ \t\n]*\\'" "" string))
 )
 
-(defun runopx2runtime (rootdir version &optional intranetini)
+(defun runopx2runtime (rootdir version devmode &optional intranetini)
   (catch 'exit
     (let* ((intranetini (or intranetini (read-file-name "Please enter the location of your intranet.ini file : " "~" "intranet.ini" t)))
 	   (satdir      (subseq intranetini 0 (min (1+ (position ?/ intranetini :from-end t))
@@ -75,9 +79,13 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
 	(setenv "OPX2_HOME" (substring rootdir 0 (1- (length rootdir)))))
       (let* ((mt (if (on-ms-windows) "" (format "/%s" (trim-string (shell-command-to-string (format "%sbin/machine" (replace-regexp-in-string "[ ]" "\\ " rootdir nil t)))))))
 	     (newrootdir (format "%sbin%s" rootdir mt))	     
-	     (exe (format "%s/%s" newrootdir *runtime-exe*)))
+	     (exe (format "%s/%s" newrootdir *runtime-exe*))
+	     (dxl (format "%s/%s" newrootdir (if devmode *dev-dxl* *runtime-dxl*))))
 	(unless (file-exists-p exe)
 	  (message "Planisware executable %s not found !!" exe)
+	  (throw 'exit nil))
+	(unless (file-exists-p dxl)
+	  (message "Planisware dxl %s not found !!" exe)
 	  (throw 'exit nil))
 	;;; first remove our item if found
 	(let (newlist
@@ -88,11 +96,11 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
 	  (setq newlist (reverse newlist))
 	  (push newitem newlist)
 	  (setq *last-intranet-ini* newlist))
-	(push-last-intranet version rootdir intranetini)
+	(push-last-intranet version rootdir intranetini devmode)
 	(fi:common-lisp fi:common-lisp-buffer-name
 			satdir
 			exe
-			(append ;;; *start-emacs-lisp-interface*
+			(append ;;*start-emacs-lisp-interface*
 				(when *display-windows-console* (list "+cc" "+p"))
 				(list
 				 "-H" newrootdir
@@ -100,15 +108,16 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
 				 "-e" "(setq excl::*restart-app-function* nil)"
 				 ))
 			fi:common-lisp-host
-			(format "%s/%s" newrootdir *runtime-dxl*))
+			dxl)
 	(process-send-string fi:common-lisp-buffer-name "(:start-emacs-runtime-mode)\n")
 	(switch-to-buffer fi:common-lisp-buffer-name)))))
 
-(defun push-last-intranet (version rootdir intranetini)
-  (let ((res (list (list version rootdir intranetini))))
+(defun push-last-intranet (version rootdir intranetini devmode)
+  (let ((res (list (list version rootdir intranetini devmode))))
     (dolist (last *last-intranet-ini*)
       (unless (and (equal (first last) version)
-		   (equal (third last) intranetini))
+		   (equal (third last) intranetini)
+		   (equal (fourth last) devmode))
 	(push last res)))
     (when (> (length res) *max-of-last-items*)
       (setq res (subseq res 0 *max-of-last-items*)))
@@ -170,13 +179,14 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
 			  i
 			  (file-name-as-directory (second last))
 			  (first last)
+			  (fourth last)
 			  (third last)))
 	  (eval-buffer))
 	(let ((funname (intern (format *last-function-name* i))))
 	  (define-key-after
 	    global-map
 	    (vector 'menu-bar 'plw funname)
-	    (cons (format *last-menu-item* (first last) (third last)) funname)))))))
+	    (cons (format *last-menu-item* (first last) (if (fourth last) " Dev" "") (third last)) funname)))))))
 
 (defun generate-runtime-functions ()
   (define-key-after
@@ -193,19 +203,35 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
 	  (version (nth i *opx2-installations-paths*) (nth i *opx2-installations-paths*))
 	  (path    (nth (1+ i) *opx2-installations-paths*) (nth (1+ i) *opx2-installations-paths*)))
 	((>= i (length *opx2-installations-paths*)))
-      (let ((funname (format *runtime-function-name* version)))
+      (let* ((funname (format *runtime-function-name* version))
+	     (funnamedev (concat funname "-dev")))
 	;; generate the run function
 	(with-temp-buffer
 	  (insert (format *runtime-function-body*
 			  funname
 			  (file-name-as-directory path)
-			  version))
+			  version 
+			  nil))
 	  (eval-buffer))
 	;; menu bar
 	(define-key-after
 	  global-map
 	  (vector 'menu-bar 'plw (intern funname))
-	  (cons (format *start-planisware-menu-item* version) (intern funname)))))
+	  (cons (format *start-planisware-menu-item* version "") (intern funname)))
+	;; generate the dev function
+	(with-temp-buffer
+	  (insert (format *runtime-function-body*
+			  funnamedev
+			  (file-name-as-directory path)
+			  version
+			  t))
+	  (eval-buffer))
+	;;menu bar
+	(define-key-after
+	  global-map
+	  (vector 'menu-bar 'plw (intern funnamedev))
+	  (cons (format *start-planisware-menu-item* version "Dev") (intern funnamedev)))
+	))
 	 ;; connect to existing IS	 
 	   
     (when (file-exists-p *last-intranet-ini-file*)
