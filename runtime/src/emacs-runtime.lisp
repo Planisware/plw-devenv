@@ -20,7 +20,9 @@
     (set var value))
   (:r)
   (startup::load-foreign-code) 
-  (load "intranet.ini") 
-  (:require-patch "sc9404")
-  ;;(:enable-debugger)
-  (intranet::main))
+  (unless user::*development-mode*
+    (load "intranet.ini") 
+    (:require-patch "sc9404")
+    ;;(:enable-debugger)
+    (intranet::main)))
+  
