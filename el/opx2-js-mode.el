@@ -230,39 +230,42 @@
   (save-excursion
     (goto-char (point-min))
     (when (and (re-search-forward "^/+\\s-*PLWSCRIPT\\s-*:\\s-*\\([[:alnum:]_-]*\\)\\(\\s-+|\\s-*\\([[:alnum:], ]*\\)\\)?" (point-max) t)
-	       (match-string-no-properties 3)
-	       (member "GENDEPS" (split-string (match-string-no-properties 3) "[ \f\t\n\r\v,]+")))
-      (let* ((script (match-string-no-properties 1))		     
-	     (dependances (fi:eval-in-lisp (format "(cl:format nil \"~{~a~^,~}\" (cl:sort (cl:mapcar '(lambda (o) (cl:symbol-name (object::oget o :name))) (opx2-lisp::ogetf (object::get-object 'jvs::javascript :%s) :compiled-dependances)) 'cl:string<))" script))))	
-	(unless (string= dependances "")
-	  (forward-line)
-	  (beginning-of-line)
-	  (cond ((or (looking-at "// DEPENDENCIES: ")
-		     (looking-at "// DEPENDANCIES: "))
-		 (delete-region (line-beginning-position) (line-end-position))
-		 (forward-line 1)
-		 (cond ((looking-at "// !!!")		     
-			(delete-region (line-beginning-position) (line-end-position))
-			(delete-backward-char 1))
-		       (t
-			(forward-line -1))))
-		(t
-		 (progn (newline)
-			(forward-line -1)
-			(beginning-of-line))))
-	  ;; delete the // !!! line if needed
+	       (member "GENDEPS" (save-match-data (split-string (or (match-string-no-properties 3) "") "[ \f\t\n\r\v,]+"))))
+      (let* ((script (match-string-no-properties 1)))
+	;;; check that script exists
+	(cond ((not (fi:eval-in-lisp (format "(when (object::get-object 'jvs::javascript :%s) cl:t)" script)))
+	       (warn "Script %s not found in database !!" script))
+	      (t
+	       (let ((dependances (fi:eval-in-lisp (format "(cl:format nil \"~{~a~^,~}\" (cl:sort (cl:mapcar '(lambda (o) (cl:symbol-name (object::oget o :name))) (opx2-lisp::ogetf (object::get-object 'jvs::javascript :%s) :compiled-dependances)) 'cl:string<))" script))))
+		 (unless (string= dependances "")
+		   (forward-line)
+		   (beginning-of-line)
+		   (cond ((or (looking-at "// DEPENDENCIES: ")
+			      (looking-at "// DEPENDANCIES: "))
+			  (delete-region (line-beginning-position) (line-end-position))
+			  (forward-line 1)
+			  (cond ((looking-at "// !!!")		     
+				 (delete-region (line-beginning-position) (line-end-position))
+				 (delete-backward-char 1))
+				(t
+				 (forward-line -1))))
+			 (t
+			  (progn (newline)
+				 (forward-line -1)
+				 (beginning-of-line))))
+		   ;; delete the // !!! line if needed
 	  
-	  ;; we are where we want
-	  (insert "// DEPENDENCIES: ")
-	  (insert dependances)
-	  ;;; circular dependancies check :
-	  (let ((circular-dependances (fi:eval-in-lisp (format "(cl:when (cl:fboundp 'jvs::javascript-circular-dependancies-from-string) (jvs::javascript-circular-dependancies-from-string :%s \"%s\"))" script dependances))))
-	    (when circular-dependances
-	      (message-box (format "Circular dependencies detected : 
+		   ;; we are where we want
+		   (insert "// DEPENDENCIES: ")
+		   (insert dependances)
+;;; circular dependancies check :
+		   (let ((circular-dependances (fi:eval-in-lisp (format "(cl:when (cl:fboundp 'jvs::javascript-circular-dependancies-from-string) (jvs::javascript-circular-dependancies-from-string :%s \"%s\"))" script dependances))))
+		     (when circular-dependances
+		       (message-box (format "Circular dependencies detected : 
 %s" (mapconcat 'identity circular-dependances "\n")))
-	      (newline)
-	      (insert "// ")
-	      (insert (format "!!!Circular dependencies detected : %s" (mapconcat 'identity circular-dependances ","))))))))))
+		       (newline)
+		       (insert "// ")
+		       (insert (format "!!!Circular dependencies detected : %s" (mapconcat 'identity circular-dependances ",")))))))))))))
 
 (defun generate-search-string (strings)
   (cond ((= (length strings) 1) (format "function\\s-+%s\\s-*([[:word:]_, ]*)" (downcase (car strings))))
