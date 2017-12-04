@@ -236,19 +236,22 @@
 	(cond ((not (fi:eval-in-lisp (format "(when (object::get-object 'jvs::javascript :%s) cl:t)" script)))
 	       (warn "Script %s not found in database !!" script))
 	      (t
-	       (let ((dependances (fi:eval-in-lisp (format "(cl:format nil \"~{~a~^,~}\" (cl:sort (cl:mapcar '(lambda (o) (cl:symbol-name (object::oget o :name))) (opx2-lisp::ogetf (object::get-object 'jvs::javascript :%s) :compiled-dependances)) 'cl:string<))" script))))
+	       (let ((dependances (fi:eval-in-lisp (format "(cl:format nil \"~{~a~^,~}\" (cl:sort (cl:mapcar '(lambda (o) (cl:symbol-name (object::oget o :name))) (opx2-lisp::ogetf (object::get-object 'jvs::javascript :%s) :compiled-dependances)) 'cl:string<))" script)))
+		     (insert t))
 		 (unless (string= dependances "")
 		   (forward-line)
 		   (beginning-of-line)
-		   (cond ((or (looking-at "// DEPENDENCIES: ")
-			      (looking-at "// DEPENDANCIES: "))
-			  (delete-region (line-beginning-position) (line-end-position))
-			  (forward-line 1)
-			  (cond ((looking-at "// !!!")		     
-				 (delete-region (line-beginning-position) (line-end-position))
-				 (delete-backward-char 1))
+		   (cond ((looking-at "// DEPEND[EA]NCIES: ")
+			  (cond ((looking-at (concatenate 'string "// DEPEND[EA]NCIES: " dependances "$"))
+				 (setq insert nil))
 				(t
-				 (forward-line -1))))
+				 (delete-region (line-beginning-position) (line-end-position))
+				 (forward-line 1)
+				 (cond ((looking-at "// !!!")		     
+					(delete-region (line-beginning-position) (line-end-position))
+					(delete-backward-char 1))
+				       (t
+					(forward-line -1))))))
 			 (t
 			  (progn (newline)
 				 (forward-line -1)
@@ -256,8 +259,10 @@
 		   ;; delete the // !!! line if needed
 	  
 		   ;; we are where we want
-		   (insert "// DEPENDENCIES: ")
-		   (insert dependances)
+		   (when insert
+		     (message (format "Inserting : %s" dependances))
+		     (insert "// DEPENDENCIES: ")
+		     (insert dependances))
 ;;; circular dependancies check :
 		   (let ((circular-dependances (fi:eval-in-lisp (format "(cl:when (cl:fboundp 'jvs::javascript-circular-dependancies-from-string) (jvs::javascript-circular-dependancies-from-string :%s \"%s\"))" script dependances))))
 		     (when circular-dependances
