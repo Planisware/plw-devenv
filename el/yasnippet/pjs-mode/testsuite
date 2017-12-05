@@ -1,17 +1,21 @@
+# -*- mode: snippet -*-
 # COPYRIGHT (C) PLANISWARE 2017
 # Distributed under the MIT License
 # See accompanying file LICENSE file or copy at http://opensource.org/licenses/MIT
+#name : testsuite
+# --
 
-namespace atbMod;
+namespace ${1:namespace};
 
-function ${1:name}(test_vars){
+function ${2:name}(testsuitemod.test_suite_variables test_vars){
 $0
 }
 
-function run_$1(run){
-  generate_atb_test_suite("Active Tab : ${2:desc}",
-			  $1,
-			  "TROCHE",
-			  run);
+function run_$2(run, cleanup : true){
+  generate_test_suite("${3:desc}",
+			  $2,
+			  "INTRANET",
+			  run,
+              cleanup : cleanup);
 }
-run_$1(false);
+run_$2(false);
