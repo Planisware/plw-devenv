@@ -260,7 +260,6 @@
 	  
 		   ;; we are where we want
 		   (when insert
-		     (message (format "Inserting : %s" dependances))
 		     (insert "// DEPENDENCIES: ")
 		     (insert dependances))
 ;;; circular dependancies check :
