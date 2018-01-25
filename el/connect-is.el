@@ -21,7 +21,7 @@
       (erase-buffer)
       (process-send-string (get-buffer-process "*common-lisp*")
 			   "(http-utils::declare-additional-log-stream *standard-output*)")
-      (fi:eval-in-lisp "(setq opx2-user::*db-in-prompt* t)")
+      (setq frame-title-format (format "[Connected to %s]" desc))
       (text-mode)))
   (delete-other-windows)
   (split-window-below)
@@ -53,6 +53,17 @@
 		    (message "There was an error connecting to the Intranet server")))))
 	  (t
 	   (message "Invalid url")))))
+
+(defun connect-is-old (host port)
+  (interactive "sHost: \nnPort: ")
+  (telnet host port)
+  (let* ((buf (current-buffer))
+	 (state :start)
+	 (proc (get-buffer-process buf)))
+    (when proc
+      (telnet-simple-send proc "TELNET"))
+    
+    ))
 
 (defun connect-is (host port)
   (interactive "sHost: \nnPort: ")
