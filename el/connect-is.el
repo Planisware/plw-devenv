@@ -1,5 +1,5 @@
 ;; -*- coding: windows-1252 -*- 
-;; COPYRIGHT (C) PLANISWARE 2017
+;; COPYRIGHT (C) PLANISWARE 2018
 ;; Distributed under the MIT License
 ;; See accompanying file LICENSE file or copy at http://opensource.org/licenses/MIT
 
@@ -7,10 +7,6 @@
 (defvar *connect-is-use-socks* nil)
 
 (require 'socks)
-
-;; example of socks proxy definition :
-;;  if your putty connection contains a redirection from local port 8165 in Dynamic mode
-;;(setq socks-server (list "Default server" "localhost"  8165 4))
 
 (defvar *inside-connect-is* nil)
 
@@ -43,7 +39,7 @@
     (%connect-is-with-url url host nil)))
 
 (defun connect-is-with-socks (url port-number)
-  (interactive "sUrl of the Intranet server: \nnPort: ")
+  (interactive "sUrl of the Intranet server: \nnPort of the socks proxy: ")
   (%connect-is-with-url url "localhost" port-number))
 
 (defun %connect-is-with-url (url host port)
@@ -169,13 +165,19 @@ subprocess mode."
 	(delete-char -1))
       (set-marker (process-mark process) (point))))
 
+;;eli/fi-utils.el
+;; to run with acl9
+(defvar fi::open-network-stream-retries 5
+  "The number of times fi::open-network-stream retries on error.")
+
+;;eli/fi-utils.el
 (defun fi::open-network-stream (name buffer host service)
   (let ((tries fi::open-network-stream-retries))
     (block fi::open-network-stream
       (dotimes (i tries)
 	(condition-case condition
 	    (return-from fi::open-network-stream
-	      ;; DLM 26-JAN-18 : use SOCKS if needede
+	      ;; DLM 26-JAN-18 : use SOCKS if needed
 	      (if *connect-is-use-socks* 
 		  (socks-open-network-stream name buffer host service)
 		(open-network-stream name buffer host service)))
