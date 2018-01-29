@@ -4,6 +4,14 @@
 ;; See accompanying file LICENSE file or copy at http://opensource.org/licenses/MIT
 
 
+(defvar *connect-is-use-socks* nil)
+
+(require 'socks)
+
+;; example of socks proxy definition :
+;;  if your putty connection contains a redirection from local port 8165 in Dynamic mode
+;;(setq socks-server (list "Default server" "localhost"  8165 4))
+
 (defvar *inside-connect-is* nil)
 
 (defvar *ignore-commands* (list "ex" "exi" "exit" "ki" "kil" "kill"))
@@ -30,11 +38,22 @@
 
 (defun connect-is-with-url (url)
   (interactive "sUrl of the Intranet server: ")
-  (let* ((file (make-temp-file "isconnect"))
-	 (baseurl (progn (string-match *base-url-regexp* url)
-			 (match-string 0 url)))
-	 (host (progn (string-match *host-regexp* url)
-		      (match-string 1 url))))
+  (let ((host (progn (string-match *host-regexp* url)
+		     (match-string 1 url))))
+    (%connect-is-with-url url host nil)))
+
+(defun connect-is-with-socks (url port-number)
+  (interactive "sUrl of the Intranet server: \nnPort: ")
+  (%connect-is-with-url url "localhost" port-number))
+
+(defun %connect-is-with-url (url host port)
+  (if (and port (stringp port))
+      (setq port (string port)))
+  (let ((file (make-temp-file "isconnect"))
+	(baseurl (progn (string-match *base-url-regexp* url)
+			(match-string 0 url)))
+	(*connect-is-use-socks* (if port t nil))
+	(socks-server (list "Default server" "localhost"  port 4)))
     (cond (baseurl
 	   (let ((data (with-current-buffer (url-retrieve-synchronously (format "%scomint" baseurl))
 			 (goto-char (point-min))
@@ -150,3 +169,93 @@ subprocess mode."
 	(delete-char -1))
       (set-marker (process-mark process) (point))))
 
+(defun fi::open-network-stream (name buffer host service)
+  (let ((tries fi::open-network-stream-retries))
+    (block fi::open-network-stream
+      (dotimes (i tries)
+	(condition-case condition
+	    (return-from fi::open-network-stream
+	      ;; DLM 26-JAN-18 : use SOCKS if needede
+	      (if *connect-is-use-socks* 
+		  (socks-open-network-stream name buffer host service)
+		(open-network-stream name buffer host service)))
+	  (error
+	   (cond
+	    ((< i (1- tries))
+	     (message "open-network-stream failed, retrying...")
+	     (sleep-for 1))
+	    (t
+	     (setq fi::last-network-condition condition)
+	     (when (not fi::muffle-open-network-stream-errors)
+	       (cond
+		((and (not (on-ms-windows))
+		      (not (file-readable-p "/etc/hosts")))
+		 (fi:error "
+Can't connect to host %s.  This is probably due to /etc/hosts not being
+readable.  The error from open-network-stream was:
+  %s"
+			   host (car (cdr condition))))
+		(t
+		 (cond
+		  ((and (string-match "xemacs" emacs-version)
+			(string= "21.4.17" (symbol-value 'emacs-program-version)))
+		   (fi:error "
+Can't connect to host %s.  The error from open-network-stream was:
+  %s
+
+You are running XEmacs 21.4.17, which has been known to contain a bug
+that prevents open-network-stream to signal an error when a numerical
+port is passed.  Try this workaround to the bug, by putting the following
+form into your .emacs:
+
+   (defadvice open-network-stream (around make-ports-be-strings)
+     (when (numberp service)
+       (setq service (format \"%%d\" service)))
+      ad-do-it)"
+			     host (car (cdr condition))))
+		  (t
+		   (fi:error "
+Can't connect to host %s.  The error from open-network-stream was:
+  %s"
+			     host (car (cdr condition))))))))
+	     nil))))))))
+
+;;socks.el
+(defun socks-open-network-stream (name buffer host service)
+  (message (format "connect to %s %d" host service))
+  (let* ((route (socks-find-route host service))
+	 proc info version atype)
+    (if (not route)
+	(socks-original-open-network-stream name buffer host service)
+      (setq proc (socks-open-connection route)
+	    info (gethash proc socks-connections)
+	    version (gethash 'server-protocol info))
+      (cond
+       ((equal version 4)
+	;; DLM 26-JAN-18 : difficult to use nslookup on Windows,
+	;;  this trick avoids it
+	(setq host 
+	      (if (equal host "localhost")
+		  (list 127 0 0 1)
+		(socks-nslookup-host host)))
+	(if (not (listp host))
+	    (error "Could not get IP address for: %s" host))
+	(setq host (apply 'format "%c%c%c%c" host))
+	(setq atype socks-address-type-v4))
+       (t
+	(setq atype socks-address-type-name)))
+      (socks-send-command proc
+			  socks-connect-command
+			  atype
+			  host
+			  (if (stringp service)
+			      (or
+			       (socks-find-services-entry service)
+			       (error "Unknown service: %s" service))
+			    service))
+      (puthash 'buffer buffer info)
+      (puthash 'host host info)
+      (puthash 'service host info)
+      (set-process-filter proc nil)
+      (set-process-buffer proc (if buffer (get-buffer-create buffer)))
+      proc)))
