@@ -3,9 +3,6 @@
 ;; Distributed under the MIT License
 ;; See accompanying file LICENSE file or copy at http://opensource.org/licenses/MIT
 
-
-(defvar *connect-is-use-socks* nil)
-
 (require 'socks)
 
 (defvar *inside-connect-is* nil)
@@ -36,20 +33,20 @@
   (interactive "sUrl of the Intranet server: ")
   (let ((host (progn (string-match *host-regexp* url)
 		     (match-string 1 url))))
-    (%connect-is-with-url url host nil)))
+    (%connect-is-with-url url host)))
 
 (defun connect-is-with-socks (url port-number)
   (interactive "sUrl of the Intranet server: \nnPort of the socks proxy: ")
-  (%connect-is-with-url url "localhost" port-number))
+  (cond
+   ((and port-number (integerp port-number))
+    (%connect-is-with-url url (concatenate 'string "localhost@" (int-to-string port-number))))
+   (t
+    (message (format "Invalid port number %s" port-number)))))
 
-(defun %connect-is-with-url (url host port)
-  (if (and port (stringp port))
-      (setq port (string port)))
+(defun %connect-is-with-url (url host)
   (let ((file (make-temp-file "isconnect"))
 	(baseurl (progn (string-match *base-url-regexp* url)
-			(match-string 0 url)))
-	(*connect-is-use-socks* (if port t nil))
-	(socks-server (list "Default server" "localhost"  port 4)))
+			(match-string 0 url))))
     (cond (baseurl
 	   (let ((data (with-current-buffer (url-retrieve-synchronously (format "%scomint" baseurl))
 			 (goto-char (point-min))
@@ -76,9 +73,7 @@
 	 (state :start)
 	 (proc (get-buffer-process buf)))
     (when proc
-      (telnet-simple-send proc "TELNET"))
-    
-    ))
+      (telnet-simple-send proc "TELNET"))))
 
 (defun connect-is (host port)
   (interactive "sHost: \nnPort: ")
@@ -178,9 +173,12 @@ subprocess mode."
 	(condition-case condition
 	    (return-from fi::open-network-stream
 	      ;; DLM 26-JAN-18 : use SOCKS if needed
-	      (if *connect-is-use-socks* 
-		  (socks-open-network-stream name buffer host service)
-		(open-network-stream name buffer host service)))
+	      ;; the hostname will be of the form "host@socksportnumber"
+	      (let ((pos (position 64 host)))
+		(if pos
+		    (let ((socks-server (list "Default server" "localhost"  (string-to-int (subseq host (1+ pos))) 4)))
+		      (socks-open-network-stream name buffer (subseq host 0 pos) service))
+		  (open-network-stream name buffer host service))))
 	  (error
 	   (cond
 	    ((< i (1- tries))
@@ -222,9 +220,9 @@ Can't connect to host %s.  The error from open-network-stream was:
 			     host (car (cdr condition))))))))
 	     nil))))))))
 
+
 ;;socks.el
 (defun socks-open-network-stream (name buffer host service)
-  (message (format "connect to %s %d" host service))
   (let* ((route (socks-find-route host service))
 	 proc info version atype)
     (if (not route)
