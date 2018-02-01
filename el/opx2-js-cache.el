@@ -15,7 +15,7 @@
 	  (if (check-fixes-configuration *ojs-required-fixes*)
 	      :ok :ko)))
   (cond ((and (eq *ojs-configuration-status* :ok)
-	      (fi::lep-open-connection-p))
+	      (fi::ensure-lep-connection))
 	 t)
 	(t
 	 nil)))

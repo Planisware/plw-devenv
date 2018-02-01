@@ -36,7 +36,7 @@
 
 (defun plw-source-colorize(win)
   "Update colors for the portion visible in window"
-  (when (fi::lep-open-connection-p)
+  (when (fi::ensure-lep-connection)
     (let ((colors (fi:eval-in-lisp (format "(:emacs-source-file %S)" (buffer-file-name (window-buffer win))))))      
       (when colors	
 	(dolist (color-spec colors)

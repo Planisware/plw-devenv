@@ -168,8 +168,8 @@
 	 *ojs-kernel-functions-cache*)
 	(*ojs-kernel-functions-present*
 	 (setq *ojs-kernel-functions-cache*
-	       (let ((functions-list (progn (setq *ojs-kernel-functions-present* (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(if (fboundp 'jvs::list-js-functions) t nil)")))
-					    (sort (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-js-functions)")) 'string<)))
+	       (let ((functions-list (progn (setq *ojs-kernel-functions-present* (when (fi::ensure-lep-connection) (fi:eval-in-lisp "(if (fboundp 'jvs::list-js-functions) t nil)")))
+					    (sort (when (fi::ensure-lep-connection) (fi:eval-in-lisp "(jvs::list-js-functions)")) 'string<)))
 		     regexp-list)
 		 
 		 (dolist (sublist (partition-list functions-list *regexp-elements-limit*))

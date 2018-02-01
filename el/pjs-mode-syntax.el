@@ -457,7 +457,7 @@
 	 *pjs-kernel-functions-cache*)
 	((pjs-configuration-ok)
 	 (setq *pjs-kernel-functions-cache*
-	       (let ((functions-list (sort (when (fi::lep-open-connection-p) (fi:eval-in-lisp "(jvs::list-all-js-functions t)")) 'string<))
+	       (let ((functions-list (sort (when (fi::ensure-lep-connection) (fi:eval-in-lisp "(jvs::list-all-js-functions t)")) 'string<))
 		     regexp-list)
 		 (dolist (sublist (partition-list functions-list *regexp-elements-limit*))
 		   (push (format "\\(\\(?:plw\\)?\\.%s\\)\\s-*(" (js--regexp-opt-symbol sublist)) regexp-list))
