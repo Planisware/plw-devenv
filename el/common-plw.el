@@ -68,7 +68,8 @@
     (setq *js-vars-to-reset* (make-hash-table :test 'eq)))
   `(progn
      (dolist (w (if (consp ,when) ,when (list ,when)))
-       (pushnew ',varname (gethash w *js-vars-to-reset*)))
+       (when (and w *js-vars-to-reset*)
+	 (pushnew ',varname (gethash w *js-vars-to-reset*))))
      ,(if local
 	  `(defvar-local ,varname ,def)
 	`(defvar ,varname ,def))))

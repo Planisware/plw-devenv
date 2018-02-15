@@ -853,7 +853,7 @@
   (set (make-local-variable 'comment-end) "")
 
   (when *pjs-font-lock-debug*
-    (load (format "%s/devenv/el/pjs-mode-debug.el" *opx2-network-folder-work-path*)))
+    (load (format "%s/devenv/el/pjs-mode-debug" *opx2-network-folder-work-path*)))
 
   (if *pjs-font-lock-debug*      
       (set (make-local-variable 'font-lock-defaults)

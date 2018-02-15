@@ -222,8 +222,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun js-reset-vars (type)
-  (dolist (item (gethash type *js-vars-to-reset*))
-    (setf (symbol-value item) nil)))
+  (when (and type *js-vars-to-reset*)
+    (dolist (item (gethash type *js-vars-to-reset*))
+      (setf (symbol-value item) nil))))
 
 
 (defun ojs-reset-cache-on-save ()
