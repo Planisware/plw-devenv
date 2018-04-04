@@ -184,10 +184,9 @@
 (defun get-simple-symbol-at-point (&optional up-p package)
   (let* ((symbol
 	  (cond
-	   ((looking-at "\\sw\\|\\s_\\||")
+	   ((looking-at "\\sw\\|\\s_\\|[|()]")
 	    (save-excursion
-	      ;; go at the beginning of the word, we include |
-	      (while (looking-at "\\sw\\|\\s_\\||")
+	      (while (looking-at "\\sw\\|\\s_\\|[|()]")
 		(backward-char 1))
 	      ;; advance until we have a "real" start of worf)
 	      (while (not (looking-at "\\sw\\|\\s_"))
@@ -197,9 +196,11 @@
 		(point)
 		(progn (forward-sexp 1)
 		       ;; advance if we have a |
+		       (when (looking-at "(")
+			 (forward-sexp 1))
 		       (when (looking-at "|")
 			 (or (re-search-forward "|" (line-end-position) t 2)
-			     (forward-sexp 1)))
+			     (forward-sexp 1)))		       		       
 		       (while (looking-at "\\s'")
 			 (forward-char 1))
 		       (point))))))		
