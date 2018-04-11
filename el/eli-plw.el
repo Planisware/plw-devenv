@@ -179,6 +179,23 @@
 		 (format "METHOD.%s.%s" (upcase symbol) (upcase class))))))
     (get-simple-symbol-at-point nil nil)))
 
+(defun get-script-symbol-at-point ()
+  (when (looking-at "\\sw\\|\\s_")
+    (save-excursion
+      (while (looking-at "\\sw\\|\\s_")
+	(backward-char 1))
+      ;; advance until we have a "real" start of worf)
+      (while (not (looking-at "\\sw\\|\\s_"))
+	(forward-char 1))
+      (fi::defontify-string
+       (buffer-substring-no-properties
+	(point)
+	(progn (forward-sexp 1)
+	       ;; advance if we have a |
+	       (while (looking-at "\\s'")
+		 (forward-char 1))
+	       (point)))))))  
+
 ;; comes from fi::get-symbol-at-point
 ;; redefined from fi-lep.el
 (defun get-simple-symbol-at-point (&optional up-p package)
@@ -251,9 +268,12 @@
 ;; ie the symbol
 ;; and if we are on a defmethod, get the method symbol
 (defun fi::get-symbol-at-point (&optional up-p no-method)
-  (if no-method
-      (get-simple-symbol-at-point up-p nil)
-    (get-method-symbol-at-point up-p)))
+  (cond ((memq major-mode '(opx2-js-mode pjs-mode))
+	 (get-script-symbol-at-point))
+	(no-method
+	 (get-simple-symbol-at-point up-p nil))
+	(t
+	 (get-method-symbol-at-point up-p))))
 
 ;; redefined from fi-utils.el
 ;; optional argument method?
