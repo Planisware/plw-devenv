@@ -170,6 +170,8 @@
 
 (defvar *print-error-when-recompiling-script* nil)
 
+(defvar *allow-unknown-scripts* nil)
+
 (defun do-compile-and-sync-ojs-file (type)
   ;; find the script name
   (when (ojs-configuration-ok)
@@ -191,6 +193,9 @@
 	   (js-mode major-mode)
 	   (filename (buffer-file-name))
 	   )
+      (unless (or (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
+		  (null *allow-unknown-scripts*))
+	(fi:eval-in-lisp (format "(when (object::make-object 'jvs::javascript :name :%s :dataset 'object::unbound) t)" script)))
 ;;      (message (format "options are %s" options))
       (setq *compiled-script-window* (selected-window))
       (if (and script (fi:eval-in-lisp (format "(if (object::get-object 'jvs::javascript %S) t nil)" script)))
