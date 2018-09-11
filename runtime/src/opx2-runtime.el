@@ -194,6 +194,12 @@ White space here is any of: space, tab, emacs newline (line feed, ASCII 10)."
       [menu-bar plw]
       (cons *planisware-menu-name* (make-sparse-keymap "plw"))
       'tools )
+
+  (define-key-after
+    global-map
+    [menu-bar plw connect-is-with-comint]
+    (cons "Connect to comint..." 'connect-is-with-comint))
+  
   (define-key-after
     global-map
     [menu-bar plw connect-is-with-url]

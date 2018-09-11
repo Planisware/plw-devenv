@@ -35,6 +35,10 @@
 		     (match-string 1 url))))
     (%connect-is-with-url url host)))
 
+(defun connect-is-with-comint ()
+  (interactive)
+    (%connect-is-with-url "http://localhost:8080/sat0-ldap/OPX2/localhost:8400/comint" "localhost@1080"))
+
 (defun connect-is-with-socks (url port-number)
   (interactive "sUrl of the Intranet server: \nnPort of the socks proxy: ")
   (cond
