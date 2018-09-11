@@ -43,7 +43,7 @@ def getversion():
   elif os.getenv('BUILD_NUMBER'):
     return "incremental-"+os.getenv('BUILD_NUMBER')
   else:
-    tag = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=10']).strip("\n\r ")
+    tag = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=10']).decode().strip()
     return "incremental-"+tag
 
 def buildzip():
@@ -71,7 +71,7 @@ def version():
     os.remove(vfile)
   with open(vfile, 'w') as _f:
     _f.write(getversion() + '\n')
-    tag = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=100']).strip("\n\r ")
+    tag = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=100']).decode().strip()
     _f.write(tag + '\n')
 
 def init():
