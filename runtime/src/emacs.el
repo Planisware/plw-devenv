@@ -3,6 +3,11 @@
 ;; Distributed under the MIT License
 ;; See accompanying file LICENSE file or copy at http://opensource.org/licenses/MIT
 
-(load (format "%seli/fi-site-init.el" *opx2-network-folder-work-path*))
-(load (format "%sdevenv/emacs-plw-ext.el" *opx2-network-folder-work-path*))
-(load (format "%sopx2-runtime.el" *opx2-network-folder-work-path*))
+(dolist (file (list "%seli/fi-site-init.el"
+                    "%sdevenv/emacs-plw-ext.el"
+                    "%sopx2-runtime.el"
+                    "%sdevenv/emacs4dummies.el"
+                    ))
+  (let ((path (format file *opx2-network-folder-work-path*)))
+    (when (file-exists-p path)
+      (load path))))
