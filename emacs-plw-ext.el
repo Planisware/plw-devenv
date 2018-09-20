@@ -105,6 +105,19 @@
 (global-unset-key [(control down-mouse-3)]) ;;to allow mouse-3 to work
 (global-set-key [(control mouse-3)] 'mouse-get-thing)
 
+;;---------------------- CVS bindings ----------------------------
+
+(require 'vc)
+(require 'vc-cvs)
+
+(defun cvs-commit()  
+  (interactive)
+  (let* ((filename (buffer-file-name))
+	 (scname (when (string-match "\\(sc[0-9]\\{4\\}\\)\\.lisp" filename)
+		   (match-string 1 filename)))
+	 (files (list filename)))    
+    (vc-checkin files 'CVS)))
+
 ;; use yasnippets
 (when (require 'yasnippet nil 'noerror)
 
